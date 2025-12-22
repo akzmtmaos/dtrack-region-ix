@@ -7,7 +7,7 @@ const Logout: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Logout immediately when component mounts
+    // Logout immediately when component mounts (confirmation already done in Navbar)
     logout()
     // Redirect to login page after a short delay
     setTimeout(() => {

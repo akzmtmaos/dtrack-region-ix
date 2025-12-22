@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import LogoutConfirmation from './LogoutConfirmation'
 
 const Navbar: React.FC = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isReferenceTablesOpen, setIsReferenceTablesOpen] = useState(false)
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false)
 
   // Keep menu open if we're on any reference-tables route
   useEffect(() => {
@@ -196,30 +199,27 @@ const Navbar: React.FC = () => {
           >
             Office with Overdue
           </Link>
-          <Link 
-            to="/logout" 
-            className={`transition-colors font-medium px-4 py-2 rounded ${
+          <button
+            onClick={() => setShowLogoutConfirmation(true)}
+            disabled={showLogoutConfirmation}
+            className={`transition-colors font-medium px-4 py-2 rounded w-full text-left ${
               location.pathname === '/logout' 
                 ? 'bg-green-100 text-green-900' 
                 : 'text-green-700 hover:text-green-900 hover:bg-green-50'
-            }`}
+            } ${showLogoutConfirmation ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Logout
-          </Link>
-          </div>
-        </div>
-        {/* User/Profile Icon at the bottom - Fixed */}
-        <div className="flex-shrink-0 border-t border-gray-200 py-4 px-4 flex flex-col items-center w-full bg-white">
-          <button className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors mb-4">
-            <svg 
-              className="w-6 h-6 text-green-700" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
           </button>
+          
+          <LogoutConfirmation
+            isOpen={showLogoutConfirmation}
+            onClose={() => setShowLogoutConfirmation(false)}
+            onConfirm={() => {
+              setShowLogoutConfirmation(false)
+              navigate('/logout')
+            }}
+          />
+          </div>
         </div>
       </div>
     </nav>

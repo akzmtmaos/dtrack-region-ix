@@ -40,7 +40,7 @@ const Login: React.FC = () => {
               <img src={logo} alt="DOH Logo" className="w-20 h-20 object-contain" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
-              Department of Health
+              DTRACK REGION IX
             </h2>
             <p className="text-sm text-gray-600 mt-2">
               Online Document Tracking Information System
