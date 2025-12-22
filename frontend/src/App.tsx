@@ -41,7 +41,7 @@ function AppContent() {
             <div className="min-h-screen bg-gray-50">
               <Header />
               <Navbar />
-              <div className="ml-64 pt-20">
+              <div className="ml-64 pt-4">
                 <Routes>
                   <Route path="/" element={<Outbox />} />
                   <Route path="/inbox" element={<Inbox />} />
