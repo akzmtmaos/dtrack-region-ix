@@ -39,9 +39,6 @@ const DocumentByControlNo: React.FC = () => {
     }
   }
 
-  // Helper for red asterisk
-  const RequiredAsterisk = () => <span className="text-red-500">*</span>;
-
   return (
     <div className="container mx-auto px-4 pt-4 pb-8">
       <h1 className="text-3xl font-bold text-gray-800 mb-4">Document By Control No.</h1>
