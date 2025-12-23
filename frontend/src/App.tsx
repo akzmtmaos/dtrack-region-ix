@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
+import { useNavbar } from './context/NavbarContext'
 import Header from './components/Header'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -27,9 +28,15 @@ import DocumentByReleasingOfficer from './pages/reports/DocumentByReleasingOffic
 import DocumentByDateAndTime from './pages/reports/DocumentByDateAndTime'
 import DocumentByControlNo from './pages/reports/DocumentByControlNo'
 import DocumentBySubject from './pages/reports/DocumentBySubject'
+import DocumentByOffice from './pages/reports/DocumentByOffice'
+import DocumentByOfficeControlNo from './pages/reports/DocumentByOfficeControlNo'
+import DocumentByActionOfficer from './pages/reports/DocumentByActionOfficer'
+import OverdueReport from './pages/reports/OverdueReport'
+import AuditTrail from './pages/reports/AuditTrail'
 
 function AppContent() {
   const { isAuthenticated } = useAuth()
+  const { isMinimized } = useNavbar()
 
   return (
     <Router>
@@ -46,7 +53,10 @@ function AppContent() {
             <div className="min-h-screen bg-gray-50">
               <Header />
               <Navbar />
-              <div className="ml-64 pt-4">
+              <div 
+                className="pt-4 transition-all duration-300"
+                style={{ marginLeft: isMinimized ? '64px' : '256px' }}
+              >
                 <Routes>
                   {/* main routes */}
                   <Route path="/" element={<Outbox />} />
@@ -69,6 +79,11 @@ function AppContent() {
                   <Route path="/reports/document-by-date-and-time" element={<DocumentByDateAndTime />} />
                   <Route path="/reports/document-by-control-no" element={<DocumentByControlNo />} />
                   <Route path="/reports/document-by-subject" element={<DocumentBySubject />} />
+                  <Route path="/reports/document-by-office" element={<DocumentByOffice />} />
+                  <Route path="/reports/document-by-office-control-no" element={<DocumentByOfficeControlNo />} />
+                  <Route path="/reports/document-by-action-officer" element={<DocumentByActionOfficer />} />
+                  <Route path="/reports/overdue-report" element={<OverdueReport />} />
+                  <Route path="/reports/audit-trail" element={<AuditTrail />} />
                 </Routes>
               </div>
             </div>

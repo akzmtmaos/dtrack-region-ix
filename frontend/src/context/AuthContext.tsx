@@ -24,25 +24,28 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [user, setUser] = useState<User | null>(null)
-
-  // Check if user is logged in on mount
-  useEffect(() => {
+  // Initialize auth state synchronously from localStorage to prevent redirect on refresh
+  const initializeAuth = () => {
     const storedAuth = localStorage.getItem('isAuthenticated')
     const storedUser = localStorage.getItem('user')
     if (storedAuth === 'true' && storedUser) {
       try {
         const userData = JSON.parse(storedUser)
-        setIsAuthenticated(true)
-        setUser(userData)
+        return { isAuthenticated: true, user: userData }
       } catch (error) {
         // If parsing fails, treat as old string format
-        setIsAuthenticated(true)
-        setUser({ id: 0, username: storedUser, email: storedUser })
+        return { 
+          isAuthenticated: true, 
+          user: { id: 0, username: storedUser, email: storedUser } as User 
+        }
       }
     }
-  }, [])
+    return { isAuthenticated: false, user: null }
+  }
+
+  const initialAuth = initializeAuth()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(initialAuth.isAuthenticated)
+  const [user, setUser] = useState<User | null>(initialAuth.user)
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
