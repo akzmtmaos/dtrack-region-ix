@@ -1,25 +1,46 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+interface User {
+  id: number
+  username: string
+  email: string
+  avatar?: string
+  email_verified?: boolean
+  date_joined?: string
+  displayName?: string
+  bio?: string
+  phone?: string
+  dob?: string
+  location?: string
+}
+
 interface AuthContextType {
   isAuthenticated: boolean
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
-  user: string | null
+  user: User | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [user, setUser] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Check if user is logged in on mount
   useEffect(() => {
     const storedAuth = localStorage.getItem('isAuthenticated')
     const storedUser = localStorage.getItem('user')
     if (storedAuth === 'true' && storedUser) {
-      setIsAuthenticated(true)
-      setUser(storedUser)
+      try {
+        const userData = JSON.parse(storedUser)
+        setIsAuthenticated(true)
+        setUser(userData)
+      } catch (error) {
+        // If parsing fails, treat as old string format
+        setIsAuthenticated(true)
+        setUser({ id: 0, username: storedUser, email: storedUser })
+      }
     }
   }, [])
 
@@ -28,10 +49,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // TODO: Replace with actual API call to Django backend
       // For now, using mock authentication
       if (username && password) {
+        // When you connect to the API, parse the user object from response
+        // For now, create a simple user object
+        const userData: User = {
+          id: 0,
+          username: username,
+          email: username
+        }
         setIsAuthenticated(true)
-        setUser(username)
+        setUser(userData)
         localStorage.setItem('isAuthenticated', 'true')
-        localStorage.setItem('user', username)
+        localStorage.setItem('user', JSON.stringify(userData))
         return true
       }
       return false

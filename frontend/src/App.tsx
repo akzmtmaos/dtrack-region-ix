@@ -22,6 +22,11 @@ import Office from './pages/reference-tables/Office'
 import Region from './pages/reference-tables/Region'
 import UserLevels from './pages/reference-tables/UserLevels'
 import OfficeWithOverdue from './pages/OfficeWithOverdue'
+// reports stuff
+import DocumentByReleasingOfficer from './pages/reports/DocumentByReleasingOfficer'
+import DocumentByDateAndTime from './pages/reports/DocumentByDateAndTime'
+import DocumentByControlNo from './pages/reports/DocumentByControlNo'
+import DocumentBySubject from './pages/reports/DocumentBySubject'
 
 function AppContent() {
   const { isAuthenticated } = useAuth()
@@ -43,12 +48,13 @@ function AppContent() {
               <Navbar />
               <div className="ml-64 pt-4">
                 <Routes>
+                  {/* main routes */}
                   <Route path="/" element={<Outbox />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/personal-group" element={<PersonalGroup />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/office-with-overdue" element={<OfficeWithOverdue />} />
-
+                  {/* reference tables routes */}
                   <Route path="/reference-tables/action-required" element={<ActionRequired />} />
                   <Route path="/reference-tables/action-officer" element={<ActionOfficer />} />
                   <Route path="/reference-tables/action-taken" element={<ActionTaken />} />
@@ -58,6 +64,11 @@ function AppContent() {
                   <Route path="/reference-tables/office" element={<Office />} />
                   <Route path="/reference-tables/region" element={<Region />} />
                   <Route path="/reference-tables/user-levels" element={<UserLevels />} />
+                  {/* reports routes */}
+                  <Route path="/reports/document-by-releasing-officer" element={<DocumentByReleasingOfficer />} />
+                  <Route path="/reports/document-by-date-and-time" element={<DocumentByDateAndTime />} />
+                  <Route path="/reports/document-by-control-no" element={<DocumentByControlNo />} />
+                  <Route path="/reports/document-by-subject" element={<DocumentBySubject />} />
                 </Routes>
               </div>
             </div>
