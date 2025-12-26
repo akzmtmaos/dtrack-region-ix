@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 interface Document {
   id: number
@@ -12,6 +12,9 @@ interface Document {
 
 const Outbox: React.FC = () => {
   const documents: Document[] = []
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages] = useState(1)
+  const [pageInput, setPageInput] = useState('1')
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -42,9 +45,47 @@ const Outbox: React.FC = () => {
   // Helper for red asterisk
   const RequiredAsterisk = () => <span className="text-red-500">*</span>;
 
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+      setPageInput(page.toString())
+    }
+  }
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value)
+  }
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const page = parseInt(pageInput)
+    if (!isNaN(page)) {
+      handlePageChange(page)
+    } else {
+      setPageInput(currentPage.toString())
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 pt-4 pb-8">
       <h1 className="text-3xl font-bold text-gray-800 mb-4">Outbox</h1>
+      
+      <div className="flex justify-end mb-3">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors w-64"
+          />
+          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <hr className="mb-4 border-gray-300" />
       
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
@@ -160,17 +201,37 @@ const Outbox: React.FC = () => {
               </p>
             </div>
             <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              <nav className="relative z-0 inline-flex items-center rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <span className="sr-only">Previous</span>
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </button>
-                <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                  1
-                </button>
-                <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                <div className="flex items-center border-t border-b border-gray-300 bg-white px-2">
+                  <span className="text-sm text-gray-700 mr-2">Page</span>
+                  <form onSubmit={handlePageInputSubmit} className="flex items-center">
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={pageInput}
+                      onChange={handlePageInputChange}
+                      onBlur={handlePageInputSubmit}
+                      className="w-12 px-1 py-1 text-center text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </form>
+                  <span className="text-sm text-gray-700 ml-2">of {totalPages}</span>
+                </div>
+                <button 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <span className="sr-only">Next</span>
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />

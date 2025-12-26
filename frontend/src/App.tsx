@@ -18,7 +18,6 @@ import ActionOfficer from './pages/reference-tables/ActionOfficer'
 import ActionTaken from './pages/reference-tables/ActionTaken'
 import DocumentType from './pages/reference-tables/DocumentType'
 import DocumentActionRequiredDays from './pages/reference-tables/DocumentActionRequiredDays'
-import Calendar from './pages/reference-tables/Calendar'
 import Office from './pages/reference-tables/Office'
 import Region from './pages/reference-tables/Region'
 import UserLevels from './pages/reference-tables/UserLevels'
@@ -70,7 +69,6 @@ function AppContent() {
                   <Route path="/reference-tables/action-taken" element={<ActionTaken />} />
                   <Route path="/reference-tables/document-type" element={<DocumentType />} />
                   <Route path="/reference-tables/document-action-required-days" element={<DocumentActionRequiredDays />} />
-                  <Route path="/reference-tables/calendar" element={<Calendar />} />
                   <Route path="/reference-tables/office" element={<Office />} />
                   <Route path="/reference-tables/region" element={<Region />} />
                   <Route path="/reference-tables/user-levels" element={<UserLevels />} />
