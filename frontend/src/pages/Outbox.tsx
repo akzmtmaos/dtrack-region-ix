@@ -1,10 +1,13 @@
 import React, { useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
 import AddDocumentModal from '../components/outbox/AddDocumentModal'
 import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
 import ActionButtons from '../components/outbox/ActionButtons'
 import RoutingSlipModal from '../components/outbox/RoutingSlipModal'
 import InlineEditModal from '../components/outbox/InlineEditModal'
 import Pagination from '../components/Pagination'
+import Button from '../components/Button'
+import Input from '../components/Input'
 
 interface Document {
   id: number
@@ -32,6 +35,7 @@ interface Document {
 }
 
 const Outbox: React.FC = () => {
+  const { theme } = useTheme()
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -157,86 +161,121 @@ const Outbox: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 pt-4 pb-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">Outbox</h1>
+    <div className="container mx-auto px-6 pt-6 pb-8">
+      <h1 className={`text-2xl font-semibold mb-6 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      }`}>Outbox</h1>
       
-      <div className="flex justify-end items-center gap-3 mb-3">
-        <button
+      <div className="flex justify-end items-center gap-3 mb-4">
+        <Button
           onClick={handleDeleteSelected}
           disabled={selectedItems.length === 0}
-          className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            selectedItems.length === 0
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-red-600 text-white hover:bg-red-700'
-          }`}
+          variant="danger"
         >
           Delete Selected Items {selectedItems.length > 0 && `(${selectedItems.length})`}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+          variant="primary"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          }
+          iconPosition="left"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Add</span>
-        </button>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors w-64"
-          />
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          Add
+        </Button>
+        <Input
+          type="text"
+          placeholder="Search..."
+          className="w-64"
+          icon={
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-          </div>
-        </div>
+          }
+          iconPosition="left"
+        />
       </div>
       
-      <hr className="mb-4 border-gray-300" />
+      <hr 
+        className={`mb-4 ${theme === 'dark' ? '' : 'border-gray-300'}`}
+        style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+      />
       
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div 
+        className={`rounded-xl shadow-sm overflow-hidden ${
+          theme === 'dark'
+            ? 'bg-discord-dark border'
+            : 'bg-white border border-gray-200/50'
+        }`}
+        style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+      >
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${
+            theme === 'dark' ? 'divide-discord-hover' : 'divide-gray-200'
+          }`}>
+            <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50/50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   <input
                     type="checkbox"
                     checked={documents.length > 0 && selectedItems.length === documents.length}
                     onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    className={`rounded text-green-600 focus:ring-green-500 ${
+                      theme === 'dark' ? 'bg-discord-dark' : 'border-gray-300'
+                    }`}
+                    style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Document Control No. <RequiredAsterisk />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Route No. <RequiredAsterisk />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Office Control No. <RequiredAsterisk />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Subject <RequiredAsterisk />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Document Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Source Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`divide-y ${
+              theme === 'dark' ? 'bg-discord-dark divide-discord-hover' : 'bg-white divide-gray-200'
+            }`}>
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={8} className={`px-6 py-8 text-center text-sm ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-500'
+                  }`}>
                     No documents found
                   </td>
                 </tr>
@@ -244,7 +283,9 @@ const Outbox: React.FC = () => {
                 documents.map((doc) => (
                   <tr 
                     key={doc.id} 
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className={`transition-colors cursor-pointer ${
+                      theme === 'dark' ? 'hover:bg-discord-hover' : 'hover:bg-gray-50'
+                    }`}
                     onClick={() => handleRowClick(doc)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -252,25 +293,39 @@ const Outbox: React.FC = () => {
                         type="checkbox"
                         checked={selectedItems.includes(doc.id)}
                         onChange={() => handleSelectItem(doc.id)}
-                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        className={`rounded text-green-600 focus:ring-green-500 ${
+                          theme === 'dark' ? 'border-discord-hover bg-discord-dark' : 'border-gray-300'
+                        }`}
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
                       {doc.documentControlNo}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.routeNo}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.officeControlNo}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className={`px-6 py-4 text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.subject}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.documentType || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.sourceType || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>

@@ -9,6 +9,15 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease;
+}
+
+body.dark {
+  background-color: #0d0c0e;
+}
+
+body:not(.dark) {
+  background-color: #f7f8fa;
 }
 
 code {
@@ -16,22 +25,33 @@ code {
     monospace;
 }
 
-/* Custom Scrollbar Styles */
+/* Custom Scrollbar Styles - Discord-like */
 .overflow-y-auto::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: transparent;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: rgba(100, 154, 70, 0.5);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 154, 70, 0.7);
+  background: rgba(0, 0, 0, 0.3);
+  background-clip: padding-box;
+}
+
+/* Dark mode scrollbar */
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 

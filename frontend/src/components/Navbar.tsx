@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useNavbar } from '../context/NavbarContext'
+import { useTheme } from '../context/ThemeContext'
 import LogoutConfirmation from './LogoutConfirmation'
 import Tooltip from './Tooltip'
 
 const Navbar: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { isMinimized, toggleNavbar } = useNavbar()
+  const { isMinimized, isMobileOpen, toggleNavbar, closeMobileNavbar } = useNavbar()
+  const { theme } = useTheme()
   const [isReferenceTablesOpen, setIsReferenceTablesOpen] = useState(false)
   const [isReportsOpen, setIsReportsOpen] = useState(false)
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false)
+
+  // Close mobile navbar when route changes
+  useEffect(() => {
+    closeMobileNavbar()
+  }, [location.pathname, closeMobileNavbar])
 
   // Keep menu open if we're on any reference-tables or reports route
   useEffect(() => {
@@ -31,22 +38,76 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav 
-      className={`bg-white shadow-md fixed top-20 left-0 flex flex-col z-30 transition-all duration-300 ${
-        isMinimized ? 'w-16' : 'w-64'
-      }`} 
-      style={{ top: '80px', height: 'calc(100vh - 80px)' }}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          style={{ top: '80px' }}
+          onClick={closeMobileNavbar}
+        />
+      )}
+      
+      <nav 
+        className={`fixed left-0 flex flex-col z-40 transition-all duration-300 shadow-sm ${
+          theme === 'dark' 
+            ? '' 
+            : 'bg-white'
+        } ${
+          // Mobile: slide in/out, Desktop: width based on minimized state
+          isMinimized ? 'w-16' : 'w-64'
+        } ${
+          // Mobile responsive: hidden by default, slide in when open
+          isMobileOpen 
+            ? 'translate-x-0' 
+            : '-translate-x-full md:translate-x-0'
+        }`} 
+        style={{ 
+          top: '80px', 
+          height: 'calc(100vh - 80px)',
+          backgroundColor: theme === 'dark' ? '#070609' : undefined
+        }}
+      >
       <div className="flex flex-col h-full">
         {/* Toggle Button */}
-        <div className="flex justify-end p-2 border-b border-gray-200">
+        <div 
+          className={`flex justify-between items-center p-3 border-b ${
+            theme === 'dark' ? '' : 'border-gray-200/50'
+          }`}
+          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+        >
+          {/* Mobile Close Button */}
+          <button
+            onClick={closeMobileNavbar}
+            className={`md:hidden p-1.5 rounded-lg transition-all duration-150 ${
+              theme === 'dark'
+                ? 'hover:bg-discord-hover text-gray-300'
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
+            title="Close menu"
+          >
+            <svg 
+              className="w-5 h-5"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          {/* Desktop Toggle Button */}
           <button
             onClick={toggleNavbar}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 ${
+              theme === 'dark'
+                ? 'hover:bg-discord-hover text-gray-300'
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
             title={isMinimized ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <svg 
-              className={`w-5 h-5 text-gray-600 transition-transform ${isMinimized ? 'rotate-180' : ''}`}
+              className={`w-5 h-5 transition-transform duration-200 ${isMinimized ? 'rotate-180' : ''}`}
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -57,17 +118,19 @@ const Navbar: React.FC = () => {
         </div>
         
         {/* Scrollable Navigation Links */}
-        <div className="flex-1 overflow-y-auto py-8 px-4">
-          <div className="flex flex-col w-full space-y-3">
+        <div className="flex-1 overflow-y-auto py-3 px-2">
+          <div className="flex flex-col w-full space-y-0.5">
             <Tooltip text="Outbox" isMinimized={isMinimized}>
               <Link 
                 to="/" 
-                className={`transition-colors font-medium rounded flex items-center ${
-                  isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2'
+                className={`transition-all duration-150 font-medium rounded-lg flex items-center ${
+                  isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
                 } ${
                   location.pathname === '/' 
-                    ? 'bg-green-100 text-green-900' 
-                    : 'text-green-700 hover:text-green-900 hover:bg-green-50'
+                    ? 'bg-green-500 text-white shadow-sm' 
+                    : theme === 'dark'
+                      ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
                 }`}
               >
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,12 +142,14 @@ const Navbar: React.FC = () => {
             <Tooltip text="Inbox" isMinimized={isMinimized}>
               <Link 
                 to="/inbox" 
-                className={`transition-colors font-medium rounded flex items-center ${
-                  isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2'
+                className={`transition-all duration-150 font-medium rounded-lg flex items-center ${
+                  isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
                 } ${
                   location.pathname === '/inbox' 
-                    ? 'bg-green-100 text-green-900' 
-                    : 'text-green-700 hover:text-green-900 hover:bg-green-50'
+                    ? 'bg-green-500 text-white shadow-sm' 
+                    : theme === 'dark'
+                      ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
                 }`}
               >
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,12 +161,14 @@ const Navbar: React.FC = () => {
             <Tooltip text="Personal Group" isMinimized={isMinimized}>
               <Link 
                 to="/personal-group" 
-                className={`transition-colors font-medium rounded flex items-center ${
-                  isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2'
+                className={`transition-all duration-150 font-medium rounded-lg flex items-center ${
+                  isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
                 } ${
                   location.pathname === '/personal-group' 
-                    ? 'bg-green-100 text-green-900' 
-                    : 'text-green-700 hover:text-green-900 hover:bg-green-50'
+                    ? 'bg-green-500 text-white shadow-sm' 
+                    : theme === 'dark'
+                      ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
                 }`}
               >
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,8 +183,12 @@ const Navbar: React.FC = () => {
               <Tooltip text="Reference Tables" isMinimized={isMinimized} verticalOffset={0}>
                 <button 
                   onClick={toggleReferenceTables}
-                  className={`text-green-700 hover:text-green-900 transition-colors font-medium rounded hover:bg-green-50 flex items-center w-full ${
-                    isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2'
+                  className={`transition-all duration-150 font-medium rounded-lg flex items-center w-full ${
+                    isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
+                  } ${
+                    theme === 'dark'
+                      ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                      : 'text-gray-700 hover:text-green-600 hover:bg-gray-100'
                   }`}
                 >
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,18 +212,23 @@ const Navbar: React.FC = () => {
               
               {/* Sub-items */}
               {isReferenceTablesOpen && (
-                <div className={`mt-2 space-y-1 ${isMinimized ? 'ml-0' : 'ml-4 border-l-2 border-green-200 pl-4'} ${isMinimized ? 'bg-green-50 rounded-lg p-1' : ''}`}>
+                <div 
+                  className={`mt-1 space-y-0.5 ${isMinimized ? 'ml-0' : `ml-4 border-l-2 ${theme === 'dark' ? '' : 'border-green-300'} pl-3`} ${isMinimized ? `${theme === 'dark' ? 'bg-discord-hover' : 'bg-gray-50'} rounded-lg p-1` : ''}`}
+                  style={theme === 'dark' && !isMinimized ? { borderColor: '#4a4b4c' } : undefined}
+                >
                   <Tooltip text="Action Required" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/action-required" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/action-required'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -168,14 +244,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Action Officer" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/action-officer" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/action-officer'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -191,14 +269,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Action Taken" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/action-taken" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/action-taken'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -214,14 +294,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document Type" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/document-type" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/document-type'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -237,14 +319,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document/Action Required Days" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/document-action-required-days" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/document-action-required-days'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -260,14 +344,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Office" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/office" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/office'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -283,14 +369,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Region" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/region" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/region'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -306,14 +394,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="User Levels" isMinimized={isMinimized}>
                     <Link 
                       to="/reference-tables/user-levels" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reference-tables/user-levels'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -335,8 +425,12 @@ const Navbar: React.FC = () => {
               <Tooltip text="Reports" isMinimized={isMinimized} verticalOffset={0}>
                 <button 
                   onClick={toggleReports}
-                  className={`text-green-700 hover:text-green-900 transition-colors font-medium rounded hover:bg-green-50 flex items-center w-full ${
-                    isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2'
+                  className={`transition-all duration-150 font-medium rounded-lg flex items-center w-full ${
+                    isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
+                  } ${
+                    theme === 'dark'
+                      ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                      : 'text-gray-700 hover:text-green-600 hover:bg-gray-100'
                   }`}
                 >
                   <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,18 +452,23 @@ const Navbar: React.FC = () => {
                 </button>
               </Tooltip>
               {isReportsOpen && (
-                <div className={`mt-2 space-y-1 ${isMinimized ? 'ml-0' : 'ml-4 border-l-2 border-green-200 pl-4'} ${isMinimized ? 'bg-green-50 rounded-lg p-1' : ''}`}>
+                <div 
+                  className={`mt-1 space-y-0.5 ${isMinimized ? 'ml-0' : `ml-4 border-l-2 ${theme === 'dark' ? '' : 'border-green-300'} pl-3`} ${isMinimized ? `${theme === 'dark' ? 'bg-discord-hover' : 'bg-gray-50'} rounded-lg p-1` : ''}`}
+                  style={theme === 'dark' && !isMinimized ? { borderColor: '#4a4b4c' } : undefined}
+                >
                   <Tooltip text="Document By Releasing Officer" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-releasing-officer" 
-                      className={`transition-colors text-sm font-medium rounded flex items-center ${
+                      className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                         isMinimized 
                           ? 'px-2 py-2 justify-center' 
-                          : 'px-4 py-2'
+                          : 'px-3 py-2'
                       } ${
                         location.pathname === '/reports/document-by-releasing-officer'
-                          ? 'bg-green-100 text-green-900'
-                          : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                          ? 'bg-green-500 text-white shadow-sm'
+                          : theme === 'dark'
+                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -385,14 +484,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document By Date and Time" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-date-and-time" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/document-by-date-and-time'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Document By Date and Time" : undefined}
@@ -409,14 +510,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document By Control No." isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-control-no" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/document-by-control-no'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Document By Control No." : undefined}
@@ -433,14 +536,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document By Subject" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-subject" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/document-by-subject'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Document By Subject" : undefined}
@@ -457,14 +562,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document By Office" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-office" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/document-by-office'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Document By Office" : undefined}
@@ -481,14 +588,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document By Office Control No." isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-office-control-no" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/document-by-office-control-no'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Document By Office Control No." : undefined}
@@ -505,14 +614,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Document By Action Officer" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/document-by-action-officer" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/document-by-action-officer'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Document By Action Officer" : undefined}
@@ -529,14 +640,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Overdue Report" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/overdue-report" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/overdue-report'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Overdue Report" : undefined}
@@ -553,14 +666,16 @@ const Navbar: React.FC = () => {
                   <Tooltip text="Audit Trail" isMinimized={isMinimized}>
                     <Link 
                       to="/reports/audit-trail" 
-                    className={`transition-colors text-sm font-medium rounded flex items-center ${
+                    className={`transition-all duration-150 text-sm font-medium rounded-lg flex items-center ${
                       isMinimized 
                         ? 'px-2 py-2 justify-center' 
-                        : 'px-4 py-2'
+                        : 'px-3 py-2'
                     } ${
                       location.pathname === '/reports/audit-trail'
-                        ? 'bg-green-100 text-green-900'
-                        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
                     title={isMinimized ? "Audit Trail" : undefined}
@@ -581,12 +696,14 @@ const Navbar: React.FC = () => {
             <Tooltip text="Office with Overdue" isMinimized={isMinimized}>
               <Link 
                 to="/office-with-overdue" 
-              className={`transition-colors font-medium rounded flex items-center ${
-                isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2'
+              className={`transition-all duration-150 font-medium rounded-lg flex items-center ${
+                isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
               } ${
                 location.pathname === '/office-with-overdue' 
-                  ? 'bg-green-100 text-green-900' 
-                  : 'text-green-700 hover:text-green-900 hover:bg-green-50'
+                  ? 'bg-green-500 text-white shadow-sm' 
+                  : theme === 'dark'
+                    ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
               }`}
               title="Office with Overdue"
             >
@@ -600,12 +717,14 @@ const Navbar: React.FC = () => {
               <button
               onClick={() => setShowLogoutConfirmation(true)}
               disabled={showLogoutConfirmation}
-              className={`transition-colors font-medium rounded flex items-center w-full ${
-                isMinimized ? 'px-2 py-2 justify-center' : 'px-4 py-2 text-left'
+              className={`transition-all duration-150 font-medium rounded-lg flex items-center w-full ${
+                isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5 text-left'
               } ${
                 location.pathname === '/logout' 
-                  ? 'bg-green-100 text-green-900' 
-                  : 'text-green-700 hover:text-green-900 hover:bg-green-50'
+                  ? 'bg-green-500 text-white shadow-sm' 
+                  : theme === 'dark'
+                    ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
               } ${showLogoutConfirmation ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Logout"
             >
@@ -628,7 +747,8 @@ const Navbar: React.FC = () => {
         </div>
       </div>
     </nav>
-  );
-};
+    </>
+  )
+}
 
 export default Navbar;

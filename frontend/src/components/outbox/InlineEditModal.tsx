@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { useTheme } from '../../context/ThemeContext'
+import Button from '../Button'
 
 interface Document {
   id: number
@@ -33,6 +35,7 @@ interface InlineEditModalProps {
 }
 
 const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, document, onSave }) => {
+  const { theme } = useTheme()
   const [formData, setFormData] = useState<Document | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -42,7 +45,7 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
     }
   }, [document])
 
-  const RequiredAsterisk = () => <span className="text-red-500">*</span>
+  const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     if (!formData) return
@@ -101,18 +104,29 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
   if (!isOpen || !document || !formData) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Inline Edit</h2>
-          <p className="text-sm text-gray-600 mt-1">Quick edit for essential fields</p>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={handleClose}>
+      <div className={`rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
+        theme === 'dark' ? 'bg-discord-dark' : 'bg-white'
+      }`} onClick={(e) => e.stopPropagation()}>
+        <div className={`px-6 py-4 border-b ${
+          theme === 'dark' ? '' : 'border-gray-200'
+        }`}>
+          <h2 className={`text-xl font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-800'
+          }`}>Inline Edit</h2>
+          <p className={`text-sm mt-1 ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          }`}>Quick edit for essential fields</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="px-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
             {/* Document Control No. */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Document Control No. <RequiredAsterisk />
               </label>
               <input
@@ -121,17 +135,23 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
                 value={formData.documentControlNo}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                  errors.documentControlNo ? 'border-red-500' : 'border-gray-300'
+                  errors.documentControlNo 
+                    ? 'border-red-500' 
+                    : theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                      : 'border-gray-300'
                 }`}
               />
               {errors.documentControlNo && (
-                <p className="mt-1 text-sm text-red-600">{errors.documentControlNo}</p>
+                <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errors.documentControlNo}</p>
               )}
             </div>
 
             {/* Route No. */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Route No. <RequiredAsterisk />
               </label>
               <input
@@ -150,7 +170,9 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
 
             {/* Office Control No. */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Office Control No. <RequiredAsterisk />
               </label>
               <input
@@ -169,7 +191,9 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
 
             {/* Subject */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Subject <RequiredAsterisk />
               </label>
               <input
@@ -188,14 +212,20 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
 
             {/* Document Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Document Type
               </label>
               <select
                 name="documentType"
                 value={formData.documentType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                    : 'border-gray-300'
+                }`}
               >
                 <option value="">Select document type</option>
                 <option value="Memo">Memo</option>
@@ -207,14 +237,20 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
 
             {/* Source Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Source Type
               </label>
               <select
                 name="sourceType"
                 value={formData.sourceType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                    : 'border-gray-300'
+                }`}
               >
                 <option value="">Select source type</option>
                 <option value="Internal">Internal</option>
@@ -224,7 +260,9 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
 
             {/* Remarks */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Remarks
               </label>
               <textarea
@@ -232,25 +270,35 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
                 value={formData.remarks}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                    : 'border-gray-300'
+                }`}
               />
             </div>
           </div>
+          </div>
 
-          <div className="flex justify-end space-x-3 mt-6 pb-4">
-            <button
+          {/* Sticky Footer with Buttons */}
+          <div className={`border-t px-6 py-4 flex justify-end space-x-3 ${
+            theme === 'dark' 
+              ? 'border-discord-hover bg-discord-dark' 
+              : 'border-gray-200 bg-white'
+          }`}>
+            <Button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+              variant="primary"
             >
               Save Changes
-            </button>
+            </Button>
           </div>
         </form>
       </div>

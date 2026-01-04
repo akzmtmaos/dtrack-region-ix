@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
 import { useNavbar } from './context/NavbarContext'
+import { useTheme } from './context/ThemeContext'
 import Header from './components/Header'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -36,6 +38,16 @@ import AuditTrail from './pages/reports/AuditTrail'
 function AppContent() {
   const { isAuthenticated } = useAuth()
   const { isMinimized } = useNavbar()
+  const { theme } = useTheme()
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   return (
     <Router>
@@ -49,12 +61,22 @@ function AppContent() {
         <Route path="/logout" element={<Logout />} />
         <Route path="/*" element={
           <ProtectedRoute>
-            <div className="min-h-screen bg-gray-50">
+            <div className={`min-h-screen transition-colors duration-300 ${
+              theme === 'dark' ? '' : 'bg-[#f7f8fa]'
+            }`}
+            style={theme === 'dark' ? { backgroundColor: '#0d0c0e' } : undefined}
+            >
               <Header />
               <Navbar />
               <div 
-                className="pt-4 transition-all duration-300"
-                style={{ marginLeft: isMinimized ? '64px' : '256px' }}
+                className="pt-6 px-4 md:px-6 transition-all duration-300"
+                style={{ 
+                  marginTop: '80px',
+                  marginLeft: isMobile 
+                    ? '0' 
+                    : (isMinimized ? '64px' : '256px'),
+                  minHeight: 'calc(100vh - 80px)'
+                }}
               >
                 <Routes>
                   {/* main routes */}

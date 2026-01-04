@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 interface PaginationProps {
   currentPage: number
@@ -15,6 +16,7 @@ const Pagination: React.FC<PaginationProps> = ({
   totalItems = 0,
   itemsPerPage = 10
 }) => {
+  const { theme } = useTheme()
   const [pageInput, setPageInput] = useState(currentPage.toString())
 
   useEffect(() => {
@@ -58,20 +60,37 @@ const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+    <div 
+      className={`px-4 py-3 flex items-center justify-between sm:px-6 ${
+        theme === 'dark'
+          ? 'bg-discord-hover/50 border-t'
+          : 'bg-gray-50 border-t border-gray-200'
+      }`}
+      style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+    >
       {/* Mobile pagination */}
       <div className="flex-1 flex justify-between sm:hidden">
         <button
           onClick={handlePrevious}
           disabled={currentPage === 1}
-          className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
+            theme === 'dark'
+              ? 'text-gray-300 bg-discord-dark hover:bg-discord-hover hover:text-white'
+              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+          }`}
+          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
         >
           Previous
         </button>
         <button
           onClick={handleNext}
           disabled={currentPage === totalPages}
-          className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
+            theme === 'dark'
+              ? 'text-discord-text bg-discord-dark hover:bg-discord-hover'
+              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+          }`}
+          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
         >
           Next
         </button>
@@ -80,9 +99,11 @@ const Pagination: React.FC<PaginationProps> = ({
       {/* Desktop pagination */}
       <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{startItem}</span> to <span className="font-medium">{endItem}</span> of{' '}
-            <span className="font-medium">{totalItems}</span> results
+          <p className={`text-sm ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+          }`}>
+            Showing <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{startItem}</span> to <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{endItem}</span> of{' '}
+            <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{totalItems}</span> results
           </p>
         </div>
         <div>
@@ -90,15 +111,29 @@ const Pagination: React.FC<PaginationProps> = ({
             <button
               onClick={handlePrevious}
               disabled={currentPage === 1}
-              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                theme === 'dark'
+                  ? 'bg-discord-dark text-gray-300 hover:bg-discord-hover hover:text-white'
+                  : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
+              }`}
+              style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
             >
               <span className="sr-only">Previous</span>
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </button>
-            <div className="flex items-center border-t border-b border-gray-300 bg-white px-2">
-              <span className="text-sm text-gray-700 mr-2">Page</span>
+            <div 
+              className={`flex items-center border-t border-b px-2 ${
+                theme === 'dark'
+                  ? 'bg-discord-dark'
+                  : 'border-gray-300 bg-white'
+              }`}
+              style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+            >
+              <span className={`text-sm mr-2 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>Page</span>
               <form onSubmit={handlePageInputSubmit} className="flex items-center">
                 <input
                   type="number"
@@ -107,15 +142,30 @@ const Pagination: React.FC<PaginationProps> = ({
                   value={pageInput}
                   onChange={handlePageInputChange}
                   onBlur={handlePageInputBlur}
-                  className="w-12 px-1 py-1 text-center text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-12 px-1 py-1 text-center text-sm border rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  style={theme === 'dark' ? { 
+                    backgroundColor: '#202225',
+                    borderColor: '#4a4b4c'
+                  } : undefined}
                 />
               </form>
-              <span className="text-sm text-gray-700 ml-2">of {totalPages}</span>
+              <span className={`text-sm ml-2 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>of {totalPages}</span>
             </div>
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                theme === 'dark'
+                  ? 'bg-discord-dark text-gray-300 hover:bg-discord-hover hover:text-white'
+                  : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
+              }`}
+              style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
             >
               <span className="sr-only">Next</span>
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">

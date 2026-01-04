@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
 import Pagination from '../components/Pagination'
+import Input from '../components/Input'
 
 interface Document {
   id: number
@@ -12,6 +14,7 @@ interface Document {
 }
 
 const Inbox: React.FC = () => {
+  const { theme } = useTheme()
   const documents: Document[] = []
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages] = useState(1)
@@ -23,100 +26,163 @@ const Inbox: React.FC = () => {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Sent':
-        return 'bg-green-100 text-green-800'
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Failed':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+    if (theme === 'dark') {
+      switch (status) {
+        case 'Sent':
+          return 'bg-green-500/20 text-green-400'
+        case 'Pending':
+          return 'bg-yellow-500/20 text-yellow-400'
+        case 'Failed':
+          return 'bg-red-500/20 text-red-400'
+        default:
+          return 'bg-gray-500/20 text-gray-400'
+      }
+    } else {
+      switch (status) {
+        case 'Sent':
+          return 'bg-green-100 text-green-800'
+        case 'Pending':
+          return 'bg-yellow-100 text-yellow-800'
+        case 'Failed':
+          return 'bg-red-100 text-red-800'
+        default:
+          return 'bg-gray-100 text-gray-800'
+      }
     }
   }
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High':
-        return 'bg-red-100 text-red-800'
-      case 'Medium':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Low':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+    if (theme === 'dark') {
+      switch (priority) {
+        case 'High':
+          return 'bg-red-500/20 text-red-400'
+        case 'Medium':
+          return 'bg-yellow-500/20 text-yellow-400'
+        case 'Low':
+          return 'bg-blue-500/20 text-blue-400'
+        default:
+          return 'bg-gray-500/20 text-gray-400'
+      }
+    } else {
+      switch (priority) {
+        case 'High':
+          return 'bg-red-100 text-red-800'
+        case 'Medium':
+          return 'bg-yellow-100 text-yellow-800'
+        case 'Low':
+          return 'bg-blue-100 text-blue-800'
+        default:
+          return 'bg-gray-100 text-gray-800'
+      }
     }
   }
 
   return (
     <div className="container mx-auto px-4 pt-4 pb-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">Inbox</h1>
+      <h1 className={`text-3xl font-bold mb-4 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-800'
+      }`}>Inbox</h1>
       
       <div className="flex justify-end items-center gap-3 mb-3">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors w-64"
-          />
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <Input
+          type="text"
+          placeholder="Search..."
+          className="w-64"
+          icon={
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-          </div>
-        </div>
+          }
+          iconPosition="left"
+        />
       </div>
       
-      <hr className="mb-4 border-gray-300" />
+      <hr className={`mb-4 ${
+        theme === 'dark' ? '' : 'border-gray-300'
+      }`} />
       
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className={`rounded-lg overflow-hidden ${
+        theme === 'dark'
+          ? 'bg-discord-dark border'
+          : 'bg-white shadow-md'
+      }`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${
+            theme === 'dark' ? 'divide-discord-hover' : 'divide-gray-200'
+          }`}>
+            <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Document Control No. 
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Route No. 
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Subject 
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Document Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Received
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Action Required
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                }`}>
                   Option
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`divide-y ${
+              theme === 'dark' ? 'bg-discord-dark divide-discord-hover' : 'bg-white divide-gray-200'
+            }`}>
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={7} className={`px-6 py-8 text-center text-sm ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-500'
+                  }`}>
                     No documents found
                   </td>
                 </tr>
               ) : (
                 documents.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={doc.id} className={`transition-colors ${
+                    theme === 'dark' ? 'hover:bg-discord-hover' : 'hover:bg-gray-50'
+                  }`}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
                       {doc.documentNumber}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className={`px-6 py-4 text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.subject}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.recipient}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {doc.dateSent}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -132,7 +198,11 @@ const Inbox: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          className="text-green-600 hover:text-green-900 transition-colors"
+                          className={`transition-colors ${
+                            theme === 'dark'
+                              ? 'text-green-400 hover:text-green-300'
+                              : 'text-green-600 hover:text-green-900'
+                          }`}
                           title="View"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +211,11 @@ const Inbox: React.FC = () => {
                           </svg>
                         </button>
                         <button
-                          className="text-blue-600 hover:text-blue-900 transition-colors"
+                          className={`transition-colors ${
+                            theme === 'dark'
+                              ? 'text-blue-400 hover:text-blue-300'
+                              : 'text-blue-600 hover:text-blue-900'
+                          }`}
                           title="Edit"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +223,11 @@ const Inbox: React.FC = () => {
                           </svg>
                         </button>
                         <button
-                          className="text-red-600 hover:text-red-900 transition-colors"
+                          className={`transition-colors ${
+                            theme === 'dark'
+                              ? 'text-red-400 hover:text-red-300'
+                              : 'text-red-600 hover:text-red-900'
+                          }`}
                           title="Delete"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

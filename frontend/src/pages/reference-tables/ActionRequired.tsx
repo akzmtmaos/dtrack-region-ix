@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 
 interface Document {
@@ -93,7 +94,9 @@ const ActionRequired: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={7} className={`px-6 py-8 text-center text-sm ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-500'
+                  }`}>
                     No documents found
                   </td>
                 </tr>

@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useTheme } from '../../context/ThemeContext'
+import Button from '../Button'
 
 interface Document {
   id: number
@@ -16,6 +18,7 @@ interface RoutingSlipModalProps {
 }
 
 const RoutingSlipModal: React.FC<RoutingSlipModalProps> = ({ isOpen, onClose, document }) => {
+  const { theme } = useTheme()
   const [routingData, setRoutingData] = useState({
     from: '',
     to: '',
@@ -51,19 +54,30 @@ const RoutingSlipModal: React.FC<RoutingSlipModalProps> = ({ isOpen, onClose, do
   if (!isOpen || !document) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Routing Slip</h2>
-          <p className="text-sm text-gray-600 mt-1">Document Control No.: {document.documentControlNo}</p>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={handleClose}>
+      <div className={`rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
+        theme === 'dark' ? 'bg-discord-dark' : 'bg-white'
+      }`} onClick={(e) => e.stopPropagation()}>
+        <div className={`px-6 py-4 border-b ${
+          theme === 'dark' ? '' : 'border-gray-200'
+        }`}>
+          <h2 className={`text-xl font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-800'
+          }`}>Routing Slip</h2>
+          <p className={`text-sm mt-1 ${
+            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          }`}>Document Control No.: {document.documentControlNo}</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="px-6 py-4">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-4">
             {/* From */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                From <span className="text-red-500">*</span>
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                From <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
               </label>
               <input
                 type="text"
@@ -71,15 +85,21 @@ const RoutingSlipModal: React.FC<RoutingSlipModalProps> = ({ isOpen, onClose, do
                 value={routingData.from}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                    ? 'bg-discord-dark text-white placeholder-gray-400'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter source office/employee"
               />
             </div>
 
             {/* To */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                To <span className="text-red-500">*</span>
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                To <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
               </label>
               <input
                 type="text"
@@ -87,15 +107,21 @@ const RoutingSlipModal: React.FC<RoutingSlipModalProps> = ({ isOpen, onClose, do
                 value={routingData.to}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                    ? 'bg-discord-dark text-white placeholder-gray-400'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter destination office/employee"
               />
             </div>
 
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date <span className="text-red-500">*</span>
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Date <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
               </label>
               <input
                 type="date"
@@ -103,13 +129,19 @@ const RoutingSlipModal: React.FC<RoutingSlipModalProps> = ({ isOpen, onClose, do
                 value={routingData.date}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                    ? 'border-discord-hover bg-discord-dark text-white'
+                    : 'border-gray-300'
+                }`}
               />
             </div>
 
             {/* Remarks */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Remarks
               </label>
               <textarea
@@ -117,26 +149,36 @@ const RoutingSlipModal: React.FC<RoutingSlipModalProps> = ({ isOpen, onClose, do
                 value={routingData.remarks}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  theme === 'dark'
+                    ? 'bg-discord-dark text-white placeholder-gray-400'
+                    : 'border-gray-300'
+                }`}
                 placeholder="Enter routing remarks"
               />
             </div>
           </div>
+          </div>
 
-          <div className="flex justify-end space-x-3 mt-6 pb-4">
-            <button
+          {/* Sticky Footer with Buttons */}
+          <div className={`border-t px-6 py-4 flex justify-end space-x-3 ${
+            theme === 'dark' 
+              ? 'border-discord-hover bg-discord-dark' 
+              : 'border-gray-200 bg-white'
+          }`}>
+            <Button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+              variant="primary"
             >
               Submit Routing Slip
-            </button>
+            </Button>
           </div>
         </form>
       </div>

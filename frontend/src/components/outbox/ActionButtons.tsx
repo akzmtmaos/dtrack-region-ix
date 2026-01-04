@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTheme } from '../../context/ThemeContext'
 
 interface Document {
   id: number
@@ -40,6 +41,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onEdit,
   onInlineEdit
 }) => {
+  const { theme } = useTheme()
+  
   return (
     <div className="flex space-x-2">
       {/* View Button */}
@@ -48,7 +51,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           e.stopPropagation()
           onView(document)
         }}
-        className="text-green-600 hover:text-green-900 transition-colors"
+        className={`transition-colors ${
+          theme === 'dark'
+            ? 'text-green-400 hover:text-green-300'
+            : 'text-green-600 hover:text-green-900'
+        }`}
         title="View"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +70,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           e.stopPropagation()
           onRoutingSlip(document)
         }}
-        className="text-blue-600 hover:text-blue-900 transition-colors"
+        className={`transition-colors ${
+          theme === 'dark'
+            ? 'text-blue-400 hover:text-blue-300'
+            : 'text-blue-600 hover:text-blue-900'
+        }`}
         title="Routing Slip"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +88,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           e.stopPropagation()
           onEdit(document)
         }}
-        className="text-purple-600 hover:text-purple-900 transition-colors"
+        className={`transition-colors ${
+          theme === 'dark'
+            ? 'text-purple-400 hover:text-purple-300'
+            : 'text-purple-600 hover:text-purple-900'
+        }`}
         title="Edit"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +106,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           e.stopPropagation()
           onInlineEdit(document)
         }}
-        className="text-orange-600 hover:text-orange-900 transition-colors"
+        className={`transition-colors ${
+          theme === 'dark'
+            ? 'text-orange-400 hover:text-orange-300'
+            : 'text-orange-600 hover:text-orange-900'
+        }`}
         title="Inline Edit"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useTheme } from '../../context/ThemeContext'
+import Button from '../Button'
 
 interface AddDocumentModalProps {
   isOpen: boolean
@@ -7,11 +9,9 @@ interface AddDocumentModalProps {
 }
 
 const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd }) => {
+  const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState('basic')
   const [formData, setFormData] = useState({
-    documentControlNo: '',
-    routeNo: '',
-    officeControlNo: '',
     subject: '',
     documentType: '',
     sourceType: '',
@@ -34,7 +34,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const RequiredAsterisk = () => <span className="text-red-500">*</span>
+  const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -53,15 +53,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   const validate = () => {
     const newErrors: Record<string, string> = {}
     
-    if (!formData.documentControlNo.trim()) {
-      newErrors.documentControlNo = 'Document Control No. is required'
-    }
-    if (!formData.routeNo.trim()) {
-      newErrors.routeNo = 'Route No. is required'
-    }
-    if (!formData.officeControlNo.trim()) {
-      newErrors.officeControlNo = 'Office Control No. is required'
-    }
     if (!formData.subject.trim()) {
       newErrors.subject = 'Subject is required'
     }
@@ -93,9 +84,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       
       // Reset form
       const emptyForm = {
-        documentControlNo: '',
-        routeNo: '',
-        officeControlNo: '',
         subject: '',
         documentType: '',
         sourceType: '',
@@ -124,9 +112,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
   const handleClose = () => {
     const emptyForm = {
-      documentControlNo: '',
-      routeNo: '',
-      officeControlNo: '',
       subject: '',
       documentType: '',
       sourceType: '',
@@ -163,14 +148,24 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   ]
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Add New Document</h2>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={handleClose}>
+      <div className={`rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
+        theme === 'dark' ? 'bg-discord-dark' : 'bg-white'
+      }`} onClick={(e) => e.stopPropagation()}>
+        <div 
+          className={`px-6 py-4 border-b ${theme === 'dark' ? '' : 'border-gray-200'}`}
+          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+        >
+          <h2 className={`text-xl font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-800'
+          }`}>Add New Document</h2>
         </div>
         
         {/* Tabs */}
-        <div className="border-b border-gray-200 px-6">
+        <div 
+          className={`border-b px-6 ${theme === 'dark' ? '' : 'border-gray-200'}`}
+          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+        >
           <div className="flex space-x-1">
             {tabs.map(tab => (
               <button
@@ -179,8 +174,10 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'text-green-600 border-b-2 border-green-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-green-500 border-b-2 border-green-500'
+                    : theme === 'dark'
+                      ? 'text-discord-text hover:text-white hover:bg-discord-hover'
+                      : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {tab.label}
@@ -189,66 +186,15 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4">
-          {/* Basic Information Tab */}
-          {activeTab === 'basic' && (
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Basic Information Tab */}
+            {activeTab === 'basic' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Document Control No. <RequiredAsterisk />
-                </label>
-                <input
-                  type="text"
-                  name="documentControlNo"
-                  value={formData.documentControlNo}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.documentControlNo ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.documentControlNo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.documentControlNo}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Route No. <RequiredAsterisk />
-                </label>
-                <input
-                  type="text"
-                  name="routeNo"
-                  value={formData.routeNo}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.routeNo ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.routeNo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.routeNo}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Office Control No. <RequiredAsterisk />
-                </label>
-                <input
-                  type="text"
-                  name="officeControlNo"
-                  value={formData.officeControlNo}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.officeControlNo ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.officeControlNo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.officeControlNo}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Subject <RequiredAsterisk />
                 </label>
                 <input
@@ -257,23 +203,33 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   value={formData.subject}
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.subject ? 'border-red-500' : 'border-gray-300'
+                    errors.subject 
+                      ? 'border-red-500' 
+                      : theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
                   }`}
                 />
                 {errors.subject && (
-                  <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
+                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errors.subject}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Document Type
                 </label>
                 <select
                   name="documentType"
                   value={formData.documentType}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 >
                   <option value="">Select document type</option>
                   <option value="Memo">Memo</option>
@@ -284,14 +240,20 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Source Type
                 </label>
                 <select
                   name="sourceType"
                   value={formData.sourceType}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 >
                   <option value="">Select source type</option>
                   <option value="Internal">Internal</option>
@@ -305,7 +267,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
           {activeTab === 'originating' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Internal Originating Office <RequiredAsterisk />
                 </label>
                 <input
@@ -323,7 +287,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Internal Originating Employee <RequiredAsterisk />
                 </label>
                 <input
@@ -341,7 +307,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   If External Source, Originating Office
                 </label>
                 <input
@@ -357,7 +325,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   If External Source, Originating Employee <RequiredAsterisk />
                 </label>
                 <input
@@ -383,7 +353,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
           {activeTab === 'attachments' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   No. of Pages
                 </label>
                 <input
@@ -392,12 +364,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   value={formData.noOfPages}
                   onChange={handleChange}
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Attached Document Filename
                 </label>
                 <input
@@ -405,12 +383,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="attachedDocumentFilename"
                   value={formData.attachedDocumentFilename}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Attachment List
                 </label>
                 <textarea
@@ -418,7 +402,11 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   value={formData.attachmentList}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
             </div>
@@ -428,7 +416,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
           {activeTab === 'references' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Reference Document Control No. (1)
                 </label>
                 <input
@@ -436,12 +426,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="referenceDocumentControlNo1"
                   value={formData.referenceDocumentControlNo1}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Reference Document Control No. (2)
                 </label>
                 <input
@@ -449,12 +445,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="referenceDocumentControlNo2"
                   value={formData.referenceDocumentControlNo2}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Reference Document Control No. (3)
                 </label>
                 <input
@@ -462,12 +464,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="referenceDocumentControlNo3"
                   value={formData.referenceDocumentControlNo3}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Reference Document Control No. (4)
                 </label>
                 <input
@@ -475,12 +483,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="referenceDocumentControlNo4"
                   value={formData.referenceDocumentControlNo4}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Reference Document Control No. (5)
                 </label>
                 <input
@@ -488,7 +502,11 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="referenceDocumentControlNo5"
                   value={formData.referenceDocumentControlNo5}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
             </div>
@@ -498,7 +516,9 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
           {activeTab === 'additional' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   User ID
                 </label>
                 <input
@@ -506,12 +526,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="userid"
                   value={formData.userid}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   In Sequence (action)
                 </label>
                 <input
@@ -519,12 +545,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   name="inSequence"
                   value={formData.inSequence}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                    theme === 'dark'
+                      ? 'border-discord-hover bg-discord-dark text-white'
+                      : 'border-gray-300'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Remarks <RequiredAsterisk />
                 </label>
                 <textarea
@@ -533,30 +565,41 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   rows={4}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.remarks ? 'border-red-500' : 'border-gray-300'
+                    errors.remarks 
+                      ? 'border-red-500' 
+                      : theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
                   }`}
                 />
                 {errors.remarks && (
-                  <p className="mt-1 text-sm text-red-600">{errors.remarks}</p>
+                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errors.remarks}</p>
                 )}
               </div>
             </div>
           )}
+          </div>
 
-          <div className="flex justify-end space-x-3 mt-6 pb-4 border-t border-gray-200 pt-4">
-            <button
+          {/* Sticky Footer with Buttons */}
+          <div 
+            className={`border-t px-6 py-4 flex justify-end space-x-3 ${
+              theme === 'dark' 
+                ? 'bg-discord-dark' 
+              : 'border-gray-200 bg-white'
+          }`}>
+            <Button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+              variant="primary"
             >
               Add Document
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { useTheme } from '../../context/ThemeContext'
+import Button from '../Button'
 
 interface Document {
   id: number
@@ -40,6 +42,7 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   onUpdate,
   mode = 'view' 
 }) => {
+  const { theme } = useTheme()
   const [isEditMode, setIsEditMode] = useState(mode === 'edit')
   const [activeTab, setActiveTab] = useState('basic')
   const [formData, setFormData] = useState<Document | null>(null)
@@ -129,24 +132,32 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   ]
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={onClose}>
+      <div className={`rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
+        theme === 'dark' ? 'bg-discord-dark' : 'bg-white'
+      }`} onClick={(e) => e.stopPropagation()}>
+        <div className={`px-6 py-4 border-b flex justify-between items-center ${
+          theme === 'dark' ? '' : 'border-gray-200'
+        }`}>
+          <h2 className={`text-xl font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-800'
+          }`}>
             {isEditMode ? 'Edit Document' : 'Document Details'}
           </h2>
           {!isEditMode && (
-            <button
+            <Button
               onClick={() => setIsEditMode(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+              variant="primary"
             >
               Edit
-            </button>
+            </Button>
           )}
         </div>
         
         {/* Tabs */}
-        <div className="border-b border-gray-200 px-6">
+        <div className={`border-b px-6 ${
+          theme === 'dark' ? '' : 'border-gray-200'
+        }`}>
           <div className="flex space-x-1">
             {tabs.map(tab => (
               <button
@@ -155,8 +166,10 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'text-green-600 border-b-2 border-green-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-green-500 border-b-2 border-green-500'
+                    : theme === 'dark'
+                      ? 'text-discord-text hover:text-white hover:bg-discord-hover'
+                      : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {tab.label}
@@ -170,7 +183,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           {activeTab === 'basic' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Document Control No. <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -189,12 +204,18 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     )}
                   </>
                 ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.documentControlNo || '-'}</p>
+                  <p className={`px-3 py-2 rounded-lg ${
+                    theme === 'dark' 
+                      ? 'text-gray-300 bg-discord-hover/50' 
+                      : 'text-gray-900 bg-gray-50'
+                  }`}>{formData.documentControlNo || '-'}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Route No. <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -218,7 +239,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Office Control No. <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -242,7 +265,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Subject <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -266,7 +291,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Document Type
                 </label>
                 {isEditMode ? (
@@ -274,7 +301,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     name="documentType"
                     value={formData.documentType}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   >
                     <option value="">Select document type</option>
                     <option value="Memo">Memo</option>
@@ -288,7 +319,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Source Type
                 </label>
                 {isEditMode ? (
@@ -296,7 +329,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     name="sourceType"
                     value={formData.sourceType}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   >
                     <option value="">Select source type</option>
                     <option value="Internal">Internal</option>
@@ -313,7 +350,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           {activeTab === 'originating' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Internal Originating Office <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -337,7 +376,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Internal Originating Employee <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -361,7 +402,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   If External Source, Originating Office
                 </label>
                 {isEditMode ? (
@@ -381,7 +424,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   If External Source, Originating Employee <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -413,7 +458,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           {activeTab === 'attachments' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   No. of Pages
                 </label>
                 {isEditMode ? (
@@ -423,7 +470,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     value={formData.noOfPages}
                     onChange={handleChange}
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   />
                 ) : (
                   <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.noOfPages || '-'}</p>
@@ -431,7 +482,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Attached Document Filename
                 </label>
                 {isEditMode ? (
@@ -440,7 +493,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     name="attachedDocumentFilename"
                     value={formData.attachedDocumentFilename}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   />
                 ) : (
                   <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.attachedDocumentFilename || '-'}</p>
@@ -448,7 +505,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Attachment List
                 </label>
                 {isEditMode ? (
@@ -457,7 +516,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     value={formData.attachmentList}
                     onChange={handleChange}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   />
                 ) : (
                   <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg whitespace-pre-wrap">{formData.attachmentList || '-'}</p>
@@ -473,7 +536,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 const fieldName = `referenceDocumentControlNo${num}` as keyof Document
                 return (
                   <div key={num}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                       Reference Document Control No. ({num})
                     </label>
                     {isEditMode ? (
@@ -482,7 +547,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                         name={fieldName}
                         value={formData[fieldName] || ''}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                       />
                     ) : (
                       <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData[fieldName] || '-'}</p>
@@ -497,7 +566,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           {activeTab === 'additional' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   User ID
                 </label>
                 {isEditMode ? (
@@ -506,7 +577,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     name="userid"
                     value={formData.userid}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   />
                 ) : (
                   <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.userid || '-'}</p>
@@ -514,7 +589,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   In Sequence (action)
                 </label>
                 {isEditMode ? (
@@ -523,7 +600,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     name="inSequence"
                     value={formData.inSequence}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                      theme === 'dark'
+                        ? 'bg-discord-dark text-white'
+                        : 'border-gray-300'
+                    }`}
                   />
                 ) : (
                   <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.inSequence || '-'}</p>
@@ -531,7 +612,9 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Remarks <RequiredAsterisk />
                 </label>
                 {isEditMode ? (
@@ -557,29 +640,33 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+        <div className={`px-6 py-4 border-t flex justify-end space-x-3 ${
+          theme === 'dark' 
+            ? 'border-discord-hover bg-discord-dark' 
+            : 'border-gray-200 bg-white'
+        }`}>
           {isEditMode ? (
             <>
-              <button
+              <Button
                 onClick={handleCancel}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                variant="secondary"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSave}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                variant="primary"
               >
                 Save Changes
-              </button>
+              </Button>
             </>
           ) : (
-            <button
+            <Button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              variant="secondary"
             >
               Close
-            </button>
+            </Button>
           )}
         </div>
       </div>

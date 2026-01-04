@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -18,6 +19,16 @@ export default {
           700: '#1d4ed8',
           800: '#1e40af',
           900: '#1e3a8a',
+        },
+        discord: {
+          dark: '#2f3136',
+          darker: '#202225',
+          darkest: '#1a1b1e',
+          hover: '#36393f',
+          text: '#b9bbbe',
+          blue: '#5865F2',
+          green: '#3BA55C',
+          red: '#ED4245',
         },
       },
     },
