@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import Pagination from '../components/Pagination'
 import Input from '../components/Input'
+import Table from '../components/Table'
 
 interface Document {
   id: number
@@ -97,20 +98,23 @@ const Inbox: React.FC = () => {
         />
       </div>
       
-      <hr className={`mb-4 ${
-        theme === 'dark' ? '' : 'border-gray-300'
-      }`} />
+      <hr 
+        className={`mb-4 ${theme === 'dark' ? '' : 'border-gray-300'}`}
+        style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+      />
       
-      <div className={`rounded-lg overflow-hidden ${
-        theme === 'dark'
-          ? 'bg-discord-dark border'
-          : 'bg-white shadow-md'
-      }`}>
-        <div className="overflow-x-auto">
-          <table className={`min-w-full divide-y ${
-            theme === 'dark' ? 'divide-discord-hover' : 'divide-gray-200'
-          }`}>
-            <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50'}>
+      <Table
+        pagination={
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={documents.length}
+            itemsPerPage={10}
+          />
+        }
+      >
+        <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50/50'}>
               <tr>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -240,18 +244,7 @@ const Inbox: React.FC = () => {
                 ))
               )}
             </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          totalItems={documents.length}
-          itemsPerPage={10}
-        />
-      </div>
+      </Table>
     </div>
   )
 }

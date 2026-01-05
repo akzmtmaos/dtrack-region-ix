@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
+import Input from '../../components/Input'
+import Table from '../../components/Table'
 
 interface Document {
   id: number
@@ -24,8 +26,8 @@ const ActionOfficer: React.FC = () => {
     }
   }
 
-  const getStatusColor = (status: string, isDark: boolean) => {
-    if (isDark) {
+  const getStatusColor = (status: string) => {
+    if (theme === 'dark') {
       switch (status) {
         case 'Sent':
           return 'bg-green-500/20 text-green-400'
@@ -50,8 +52,8 @@ const ActionOfficer: React.FC = () => {
     }
   }
 
-  const getPriorityColor = (priority: string, isDark: boolean) => {
-    if (isDark) {
+  const getPriorityColor = (priority: string) => {
+    if (theme === 'dark') {
       switch (priority) {
         case 'High':
           return 'bg-red-500/20 text-red-400'
@@ -85,40 +87,36 @@ const ActionOfficer: React.FC = () => {
       }`}>Action Officer</h1>
       
       <div className="flex justify-end items-center gap-3 mb-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            className={`pl-9 pr-3 py-2 text-sm rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all duration-150 w-64 ${
-              theme === 'dark'
-                ? 'bg-discord-dark border-discord-hover text-white placeholder-gray-400'
-                : 'border border-gray-300'
-            }`}
-          />
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-            <svg className={`h-4 w-4 ${
-              theme === 'dark' ? 'text-gray-400' : 'text-gray-400'
-            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <Input
+          type="text"
+          placeholder="Search..."
+          className="w-64"
+          icon={
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-          </div>
-        </div>
+          }
+          iconPosition="left"
+        />
       </div>
       
-      <hr className={`mb-4 ${
-        theme === 'dark' ? 'border-discord-hover/50' : 'border-gray-300'
-      }`} />
+      <hr 
+        className={`mb-4 ${theme === 'dark' ? '' : 'border-gray-300'}`}
+        style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+      />
       
-      <div className={`rounded-lg overflow-hidden ${
-        theme === 'dark'
-          ? 'bg-discord-dark border border-discord-hover/50'
-          : 'bg-white border border-gray-200/50 shadow-sm'
-      }`}>
-        <div className="overflow-x-auto">
-          <table className={`min-w-full divide-y ${
-            theme === 'dark' ? 'divide-discord-hover' : 'divide-gray-200'
-          }`}>
-            <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50/50'}>
+      <Table
+        pagination={
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={documents.length}
+            itemsPerPage={10}
+          />
+        }
+      >
+        <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50/50'}>
               <tr>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -210,14 +208,14 @@ const ActionOfficer: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        getStatusColor(doc.status, theme === 'dark')
+                        getStatusColor(doc.status)
                       }`}>
                         {doc.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        getPriorityColor(doc.priority, theme === 'dark')
+                        getPriorityColor(doc.priority)
                       }`}>
                         {doc.priority}
                       </span>
@@ -267,18 +265,7 @@ const ActionOfficer: React.FC = () => {
                 ))
               )}
             </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          totalItems={documents.length}
-          itemsPerPage={10}
-        />
-      </div>
+      </Table>
     </div>
   )
 }

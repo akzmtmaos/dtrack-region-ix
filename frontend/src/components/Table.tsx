@@ -1,0 +1,35 @@
+import React from 'react'
+import { useTheme } from '../context/ThemeContext'
+
+export interface TableProps {
+  children: React.ReactNode
+  className?: string
+  pagination?: React.ReactNode
+}
+
+const Table: React.FC<TableProps> = ({ children, className = '', pagination }) => {
+  const { theme } = useTheme()
+
+  return (
+    <div 
+      className={`rounded-xl shadow-sm overflow-hidden ${
+        theme === 'dark'
+          ? 'bg-discord-dark border'
+          : 'bg-white border border-gray-200/50'
+      } ${className}`}
+      style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+    >
+      <div className="overflow-x-auto">
+        <table className={`min-w-full divide-y ${
+          theme === 'dark' ? 'divide-discord-hover' : 'divide-gray-200'
+        }`}>
+          {children}
+        </table>
+      </div>
+      {pagination}
+    </div>
+  )
+}
+
+export default Table
+
