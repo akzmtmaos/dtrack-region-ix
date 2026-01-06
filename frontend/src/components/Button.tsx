@@ -28,21 +28,21 @@ const Button: React.FC<ButtonProps> = ({
 
   const getVariantClasses = () => {
     if (variant === 'primary') {
-      // Discord green: #3BA55C
+      // Green: #3BA55C
       return 'bg-[#3BA55C] text-white hover:bg-[#2d8f4a] active:bg-[#267a3f]'
     }
     if (variant === 'secondary') {
       if (theme === 'dark') {
-        return 'bg-discord-hover text-gray-300 border hover:bg-discord-hover/80 hover:text-white'
+        return 'bg-dark-hover text-gray-300 border hover:bg-dark-hover/80 hover:text-white'
       }
       return 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
     }
     if (variant === 'danger') {
-      // Discord red: #ED4245
+      // Red: #ED4245
       return 'bg-[#ED4245] text-white hover:bg-[#d63639] active:bg-[#c02d30]'
     }
     if (variant === 'success') {
-      // Discord blue: #5865F2
+      // Blue: #5865F2
       return 'bg-[#5865F2] text-white hover:bg-[#4752C4] active:bg-[#3c45a5]'
     }
     return ''

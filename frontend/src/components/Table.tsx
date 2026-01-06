@@ -14,14 +14,14 @@ const Table: React.FC<TableProps> = ({ children, className = '', pagination }) =
     <div 
       className={`rounded-xl shadow-sm overflow-hidden ${
         theme === 'dark'
-          ? 'bg-discord-dark border'
+          ? 'bg-dark-panel border'
           : 'bg-white border border-gray-200/50'
       } ${className}`}
       style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
     >
       <div className="overflow-x-auto">
         <table className={`min-w-full divide-y ${
-          theme === 'dark' ? 'divide-discord-hover' : 'divide-gray-200'
+          theme === 'dark' ? 'divide-dark-hover' : 'divide-gray-200'
         }`}>
           {children}
         </table>

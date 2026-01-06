@@ -150,7 +150,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={handleClose}>
       <div className={`rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
-        theme === 'dark' ? 'bg-discord-dark' : 'bg-white'
+        theme === 'dark' ? 'bg-dark-panel' : 'bg-white'
       }`} onClick={(e) => e.stopPropagation()}>
         <div 
           className={`px-6 py-4 border-b ${theme === 'dark' ? '' : 'border-gray-200'}`}
@@ -176,7 +176,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   activeTab === tab.id
                     ? 'text-green-500 border-b-2 border-green-500'
                     : theme === 'dark'
-                      ? 'text-discord-text hover:text-white hover:bg-discord-hover'
+                      ? 'text-dark-text hover:text-white hover:bg-dark-hover'
                       : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -206,7 +206,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     errors.subject 
                       ? 'border-red-500' 
                       : theme === 'dark'
-                        ? 'bg-discord-dark text-white'
+                        ? 'bg-dark-panel text-white'
                         : 'border-gray-300'
                   }`}
                 />
@@ -227,7 +227,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 >
@@ -251,7 +251,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 >
@@ -366,7 +366,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   min="0"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -385,7 +385,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -404,7 +404,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   rows={4}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -428,7 +428,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -447,7 +447,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -466,7 +466,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -485,7 +485,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -504,7 +504,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -528,7 +528,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -547,7 +547,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                     theme === 'dark'
-                      ? 'border-discord-hover bg-discord-dark text-white'
+                      ? 'border-dark-hover bg-dark-panel text-white'
                       : 'border-gray-300'
                   }`}
                 />
@@ -568,7 +568,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     errors.remarks 
                       ? 'border-red-500' 
                       : theme === 'dark'
-                        ? 'bg-discord-dark text-white'
+                        ? 'bg-dark-panel text-white'
                         : 'border-gray-300'
                   }`}
                 />
@@ -584,7 +584,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
           <div 
             className={`border-t px-6 py-4 flex justify-end space-x-3 ${
               theme === 'dark' 
-                ? 'bg-discord-dark' 
+                ? 'bg-dark-panel' 
               : 'border-gray-200 bg-white'
           }`}>
             <Button

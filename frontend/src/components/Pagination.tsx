@@ -63,7 +63,7 @@ const Pagination: React.FC<PaginationProps> = ({
     <div 
       className={`px-4 py-3 flex items-center justify-between sm:px-6 ${
         theme === 'dark'
-          ? 'bg-discord-hover/50 border-t'
+          ? 'bg-dark-hover/50 border-t'
           : 'bg-gray-50 border-t border-gray-200'
       }`}
       style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
@@ -75,7 +75,7 @@ const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage === 1}
           className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
             theme === 'dark'
-              ? 'text-gray-300 bg-discord-dark hover:bg-discord-hover hover:text-white'
+              ? 'text-gray-300 bg-dark-panel hover:bg-dark-hover hover:text-white'
               : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
           }`}
           style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
@@ -87,7 +87,7 @@ const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage === totalPages}
           className={`ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
             theme === 'dark'
-              ? 'text-discord-text bg-discord-dark hover:bg-discord-hover'
+              ? 'text-dark-text bg-dark-panel hover:bg-dark-hover'
               : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
           }`}
           style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
@@ -113,7 +113,7 @@ const Pagination: React.FC<PaginationProps> = ({
               disabled={currentPage === 1}
               className={`relative inline-flex items-center px-2 py-2 rounded-l-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
                 theme === 'dark'
-                  ? 'bg-discord-dark text-gray-300 hover:bg-discord-hover hover:text-white'
+                  ? 'bg-dark-panel text-gray-300 hover:bg-dark-hover hover:text-white'
                   : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
               }`}
               style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
@@ -126,7 +126,7 @@ const Pagination: React.FC<PaginationProps> = ({
             <div 
               className={`flex items-center border-t border-b px-2 ${
                 theme === 'dark'
-                  ? 'bg-discord-dark'
+                  ? 'bg-dark-panel'
                   : 'border-gray-300 bg-white'
               }`}
               style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
@@ -162,7 +162,7 @@ const Pagination: React.FC<PaginationProps> = ({
               disabled={currentPage === totalPages}
               className={`relative inline-flex items-center px-2 py-2 rounded-r-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
                 theme === 'dark'
-                  ? 'bg-discord-dark text-gray-300 hover:bg-discord-hover hover:text-white'
+                  ? 'bg-dark-panel text-gray-300 hover:bg-dark-hover hover:text-white'
                   : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
               }`}
               style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}

@@ -118,7 +118,7 @@ interface Document {
             />
           }
         >
-          <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50/50'}>
+          <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
             <tr>
               <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -168,7 +168,7 @@ interface Document {
             </tr>
           </thead>
           <tbody className={`divide-y ${
-            theme === 'dark' ? 'bg-discord-dark divide-discord-hover' : 'bg-white divide-gray-200'
+            theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
           }`}>
             {documents.length === 0 ? (
               <tr>
@@ -183,7 +183,7 @@ interface Document {
                 <tr 
                   key={doc.id} 
                   className={`transition-colors ${
-                    theme === 'dark' ? 'hover:bg-discord-hover' : 'hover:bg-gray-50'
+                    theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
                   }`}
                 >
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${

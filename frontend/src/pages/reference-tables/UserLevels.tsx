@@ -32,7 +32,7 @@ const UserLevels: React.FC = () => {
       
       <div className={`rounded-lg p-6 ${
         theme === 'dark'
-          ? 'bg-discord-dark border'
+          ? 'bg-dark-panel border'
           : 'bg-white shadow-md'
       }`}
       style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}

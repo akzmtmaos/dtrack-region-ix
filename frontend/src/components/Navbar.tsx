@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
             onClick={closeMobileNavbar}
             className={`md:hidden p-1.5 rounded-lg transition-all duration-150 ${
               theme === 'dark'
-                ? 'hover:bg-discord-hover text-gray-300'
+                ? 'hover:bg-dark-hover text-gray-300'
                 : 'hover:bg-gray-100 text-gray-600'
             }`}
             title="Close menu"
@@ -101,7 +101,7 @@ const Navbar: React.FC = () => {
             onClick={toggleNavbar}
             className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 ${
               theme === 'dark'
-                ? 'hover:bg-discord-hover text-gray-300'
+                ? 'hover:bg-dark-hover text-gray-300'
                 : 'hover:bg-gray-100 text-gray-600'
             }`}
             title={isMinimized ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -129,7 +129,7 @@ const Navbar: React.FC = () => {
                   location.pathname === '/' 
                     ? 'bg-green-500 text-white shadow-sm' 
                     : theme === 'dark'
-                      ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                      ? 'text-gray-300 hover:bg-dark-hover hover:text-white'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
                 }`}
               >
@@ -148,7 +148,7 @@ const Navbar: React.FC = () => {
                   location.pathname === '/inbox' 
                     ? 'bg-green-500 text-white shadow-sm' 
                     : theme === 'dark'
-                      ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                      ? 'text-gray-300 hover:bg-dark-hover hover:text-white'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
                 }`}
               >
@@ -167,7 +167,7 @@ const Navbar: React.FC = () => {
                   location.pathname === '/personal-group' 
                     ? 'bg-green-500 text-white shadow-sm' 
                     : theme === 'dark'
-                      ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                      ? 'text-gray-300 hover:bg-dark-hover hover:text-white'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
                 }`}
               >
@@ -187,7 +187,7 @@ const Navbar: React.FC = () => {
                     isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
                   } ${
                     theme === 'dark'
-                      ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                      ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                       : 'text-gray-700 hover:text-green-600 hover:bg-gray-100'
                   }`}
                 >
@@ -213,7 +213,7 @@ const Navbar: React.FC = () => {
               {/* Sub-items */}
               {isReferenceTablesOpen && (
                 <div 
-                  className={`mt-1 space-y-0.5 ${isMinimized ? 'ml-0' : `ml-4 border-l-2 ${theme === 'dark' ? '' : 'border-green-300'} pl-3`} ${isMinimized ? `${theme === 'dark' ? 'bg-discord-hover' : 'bg-gray-50'} rounded-lg p-1` : ''}`}
+                  className={`mt-1 space-y-0.5 ${isMinimized ? 'ml-0' : `ml-4 border-l-2 ${theme === 'dark' ? '' : 'border-green-300'} pl-3`} ${isMinimized ? `${theme === 'dark' ? 'bg-dark-hover' : 'bg-gray-50'} rounded-lg p-1` : ''}`}
                   style={theme === 'dark' && !isMinimized ? { borderColor: '#4a4b4c' } : undefined}
                 >
                   <Tooltip text="Action Required" isMinimized={isMinimized}>
@@ -227,7 +227,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/action-required'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -252,7 +252,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/action-officer'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -277,7 +277,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/action-taken'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -302,7 +302,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/document-type'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -327,7 +327,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/document-action-required-days'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -352,7 +352,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/office'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -377,7 +377,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/region'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -402,7 +402,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reference-tables/user-levels'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -429,7 +429,7 @@ const Navbar: React.FC = () => {
                     isMinimized ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
                   } ${
                     theme === 'dark'
-                      ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                      ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                       : 'text-gray-700 hover:text-green-600 hover:bg-gray-100'
                   }`}
                 >
@@ -453,7 +453,7 @@ const Navbar: React.FC = () => {
               </Tooltip>
               {isReportsOpen && (
                 <div 
-                  className={`mt-1 space-y-0.5 ${isMinimized ? 'ml-0' : `ml-4 border-l-2 ${theme === 'dark' ? '' : 'border-green-300'} pl-3`} ${isMinimized ? `${theme === 'dark' ? 'bg-discord-hover' : 'bg-gray-50'} rounded-lg p-1` : ''}`}
+                  className={`mt-1 space-y-0.5 ${isMinimized ? 'ml-0' : `ml-4 border-l-2 ${theme === 'dark' ? '' : 'border-green-300'} pl-3`} ${isMinimized ? `${theme === 'dark' ? 'bg-dark-hover' : 'bg-gray-50'} rounded-lg p-1` : ''}`}
                   style={theme === 'dark' && !isMinimized ? { borderColor: '#4a4b4c' } : undefined}
                 >
                   <Tooltip text="Document By Releasing Officer" isMinimized={isMinimized}>
@@ -467,7 +467,7 @@ const Navbar: React.FC = () => {
                         location.pathname === '/reports/document-by-releasing-officer'
                           ? 'bg-green-500 text-white shadow-sm'
                           : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                            ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                             : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                       }`}
                       onClick={(e) => e.stopPropagation()}
@@ -492,7 +492,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/document-by-date-and-time'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -518,7 +518,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/document-by-control-no'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -544,7 +544,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/document-by-subject'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -570,7 +570,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/document-by-office'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -596,7 +596,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/document-by-office-control-no'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -622,7 +622,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/document-by-action-officer'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -648,7 +648,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/overdue-report'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -674,7 +674,7 @@ const Navbar: React.FC = () => {
                       location.pathname === '/reports/audit-trail'
                         ? 'bg-green-500 text-white shadow-sm'
                         : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-discord-hover'
+                          ? 'text-gray-300 hover:text-white hover:bg-dark-hover'
                           : 'text-gray-600 hover:text-green-600 hover:bg-gray-100'
                     }`}
                     onClick={(e) => e.stopPropagation()}
@@ -702,7 +702,7 @@ const Navbar: React.FC = () => {
                 location.pathname === '/office-with-overdue' 
                   ? 'bg-green-500 text-white shadow-sm' 
                   : theme === 'dark'
-                    ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                    ? 'text-gray-300 hover:bg-dark-hover hover:text-white'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
               }`}
               title="Office with Overdue"
@@ -723,7 +723,7 @@ const Navbar: React.FC = () => {
                 location.pathname === '/logout' 
                   ? 'bg-green-500 text-white shadow-sm' 
                   : theme === 'dark'
-                    ? 'text-gray-300 hover:bg-discord-hover hover:text-white'
+                    ? 'text-gray-300 hover:bg-dark-hover hover:text-white'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
               } ${showLogoutConfirmation ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Logout"

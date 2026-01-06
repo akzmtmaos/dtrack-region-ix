@@ -31,7 +31,7 @@ const OfficeWithOverdue: React.FC = () => {
       
       <div className={`rounded-lg p-6 ${
         theme === 'dark'
-          ? 'bg-discord-dark border'
+          ? 'bg-dark-panel border'
           : 'bg-white shadow-md'
       }`}>
         <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Document Type content will be displayed here.</p>

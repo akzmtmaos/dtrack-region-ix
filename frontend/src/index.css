@@ -25,7 +25,7 @@ code {
     monospace;
 }
 
-/* Custom Scrollbar Styles - Discord-like */
+/* Custom Scrollbar Styles */
 .overflow-y-auto::-webkit-scrollbar {
   width: 10px;
 }

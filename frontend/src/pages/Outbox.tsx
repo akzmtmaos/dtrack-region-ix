@@ -216,7 +216,7 @@ const Outbox: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-discord-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
               <tr>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -226,7 +226,7 @@ const Outbox: React.FC = () => {
                     checked={documents.length > 0 && selectedItems.length === documents.length}
                     onChange={handleSelectAll}
                     className={`rounded text-green-600 focus:ring-green-500 ${
-                      theme === 'dark' ? 'bg-discord-dark' : 'border-gray-300'
+                      theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
                     }`}
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
@@ -269,7 +269,7 @@ const Outbox: React.FC = () => {
               </tr>
             </thead>
             <tbody className={`divide-y ${
-              theme === 'dark' ? 'bg-discord-dark divide-discord-hover' : 'bg-white divide-gray-200'
+              theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
             }`}>
               {documents.length === 0 ? (
                 <tr>
@@ -284,7 +284,7 @@ const Outbox: React.FC = () => {
                   <tr 
                     key={doc.id} 
                     className={`transition-colors cursor-pointer ${
-                      theme === 'dark' ? 'hover:bg-discord-hover' : 'hover:bg-gray-50'
+                      theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
                     }`}
                     onClick={() => handleRowClick(doc)}
                   >
@@ -294,7 +294,7 @@ const Outbox: React.FC = () => {
                         checked={selectedItems.includes(doc.id)}
                         onChange={() => handleSelectItem(doc.id)}
                         className={`rounded text-green-600 focus:ring-green-500 ${
-                          theme === 'dark' ? 'border-discord-hover bg-discord-dark' : 'border-gray-300'
+                          theme === 'dark' ? 'border-dark-hover bg-dark-panel' : 'border-gray-300'
                         }`}
                       />
                     </td>

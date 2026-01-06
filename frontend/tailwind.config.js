@@ -20,9 +20,9 @@ export default {
           800: '#1e40af',
           900: '#1e3a8a',
         },
-        discord: {
-          dark: '#2f3136',
-          darker: '#202225',
+        dark: {
+          panel: '#2f3136',
+          background: '#202225',
           darkest: '#1a1b1e',
           hover: '#36393f',
           text: '#b9bbbe',
