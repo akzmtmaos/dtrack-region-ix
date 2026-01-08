@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import action_required, action_officer, action_taken, document_type
+from .views import action_required, action_officer, action_taken, document_type, document_action_required_days
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
@@ -34,5 +34,12 @@ urlpatterns = [
     path('document-type/<int:item_id>/', document_type.document_type_update, name='document-type-update'),
     path('document-type/<int:item_id>/delete/', document_type.document_type_delete, name='document-type-delete'),
     path('document-type/bulk-delete/', document_type.document_type_bulk_delete, name='document-type-bulk-delete'),
+    
+    # Document Action Required Days endpoints
+    path('document-action-required-days/', document_action_required_days.document_action_required_days_list, name='document-action-required-days-list'),
+    path('document-action-required-days/create/', document_action_required_days.document_action_required_days_create, name='document-action-required-days-create'),
+    path('document-action-required-days/<int:item_id>/', document_action_required_days.document_action_required_days_update, name='document-action-required-days-update'),
+    path('document-action-required-days/<int:item_id>/delete/', document_action_required_days.document_action_required_days_delete, name='document-action-required-days-delete'),
+    path('document-action-required-days/bulk-delete/', document_action_required_days.document_action_required_days_bulk_delete, name='document-action-required-days-bulk-delete'),
 ]
 

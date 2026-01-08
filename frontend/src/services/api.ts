@@ -212,6 +212,49 @@ class ApiService {
       body: JSON.stringify({ ids }),
     })
   }
+
+  // Document Action Required Days endpoints
+  async getDocumentActionRequiredDays(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/document-action-required-days/')
+  }
+
+  async createDocumentActionRequiredDays(data: {
+    documentType: string
+    actionRequired: string
+    requiredDays: number
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>('/document-action-required-days/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateDocumentActionRequiredDays(
+    id: number,
+    data: {
+      documentType?: string
+      actionRequired?: string
+      requiredDays?: number
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/document-action-required-days/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteDocumentActionRequiredDays(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/document-action-required-days/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteDocumentActionRequiredDays(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/document-action-required-days/bulk-delete/', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
 }
 
 export const apiService = new ApiService()

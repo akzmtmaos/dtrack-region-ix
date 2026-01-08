@@ -1,24 +1,58 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
+import Button from '../../components/Button'
+import DocumentActionRequiredDaysModal from '../../components/reference-tables/DocumentActionRequiredDaysModal'
+import { apiService } from '../../services/api'
 
-interface Document {
+interface DocumentActionRequiredDaysItem {
   id: number
-  documentNumber: string
-  subject: string
-  recipient: string
-  dateSent: string
-  status: string
-  priority: string
+  documentType: string
+  actionRequired: string
+  requiredDays: number
 }
 
 const DocumentActionRequiredDays: React.FC = () => {
   const { theme } = useTheme()
-  const documents: Document[] = []
+  const [items, setItems] = useState<DocumentActionRequiredDaysItem[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages] = useState(1)
+  const [selectedItems, setSelectedItems] = useState<number[]>([])
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<DocumentActionRequiredDaysItem | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch items from API on component mount
+  useEffect(() => {
+    fetchItems()
+  }, [])
+
+  const fetchItems = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await apiService.getDocumentActionRequiredDays()
+      if (response.success && response.data) {
+        // Map database snake_case to frontend camelCase
+        const mappedItems = response.data.map((item: any) => ({
+          id: item.id,
+          documentType: item.document_type || '',
+          actionRequired: item.action_required || '',
+          requiredDays: item.required_days || 0
+        }))
+        setItems(mappedItems)
+      } else {
+        setError(response.error || 'Failed to fetch items')
+      }
+    } catch (err) {
+      setError('An error occurred while fetching items')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -26,59 +60,128 @@ const DocumentActionRequiredDays: React.FC = () => {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    if (theme === 'dark') {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-500/20 text-green-400'
-        case 'Pending':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Failed':
-          return 'bg-red-500/20 text-red-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
-      }
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedItems(items.map(item => item.id))
     } else {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-100 text-green-800'
-        case 'Pending':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Failed':
-          return 'bg-red-100 text-red-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
+      setSelectedItems([])
+    }
+  }
+
+  const handleSelectItem = (id: number) => {
+    setSelectedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(itemId => itemId !== id)
+        : [...prev, id]
+    )
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) return
+    
+    if (window.confirm(`Are you sure you want to delete ${selectedItems.length} selected item(s)?`)) {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await apiService.bulkDeleteDocumentActionRequiredDays(selectedItems)
+        if (response.success) {
+          setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
+          setSelectedItems([])
+        } else {
+          setError(response.error || 'Failed to delete items')
+        }
+      } catch (err) {
+        setError('An error occurred while deleting items')
+      } finally {
+        setLoading(false)
       }
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    if (theme === 'dark') {
-      switch (priority) {
-        case 'High':
-          return 'bg-red-500/20 text-red-400'
-        case 'Medium':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Low':
-          return 'bg-blue-500/20 text-blue-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
+  const handleAdd = () => {
+    setEditingItem(null)
+    setIsModalOpen(true)
+  }
+
+  const handleEdit = (item: DocumentActionRequiredDaysItem) => {
+    setEditingItem(item)
+    setIsModalOpen(true)
+  }
+
+  const handleSave = async (data: { documentType: string; actionRequired: string; requiredDays: string }) => {
+    setLoading(true)
+    setError(null)
+    try {
+      if (editingItem) {
+        // Update existing item
+        const response = await apiService.updateDocumentActionRequiredDays(editingItem.id, {
+          ...data,
+          requiredDays: parseInt(data.requiredDays)
+        })
+        if (response.success && response.data) {
+          // Map database response to frontend format
+          const updatedItem = {
+            id: response.data.id,
+            documentType: response.data.document_type || data.documentType,
+            actionRequired: response.data.action_required || data.actionRequired,
+            requiredDays: response.data.required_days || parseInt(data.requiredDays)
+          }
+          setItems(prev => prev.map(item => 
+            item.id === editingItem.id ? updatedItem : item
+          ))
+          setIsModalOpen(false)
+          setEditingItem(null)
+        } else {
+          setError(response.error || 'Failed to update item')
+        }
+      } else {
+        // Add new item
+        const response = await apiService.createDocumentActionRequiredDays({
+          ...data,
+          requiredDays: parseInt(data.requiredDays)
+        })
+        if (response.success && response.data) {
+          // Map database response to frontend format
+          const newItem = {
+            id: response.data.id,
+            documentType: response.data.document_type || data.documentType,
+            actionRequired: response.data.action_required || data.actionRequired,
+            requiredDays: response.data.required_days || parseInt(data.requiredDays)
+          }
+          setItems(prev => [...prev, newItem])
+          setIsModalOpen(false)
+          setEditingItem(null)
+        } else {
+          setError(response.error || 'Failed to create item')
+        }
       }
-    } else {
-      switch (priority) {
-        case 'High':
-          return 'bg-red-100 text-red-800'
-        case 'Medium':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Low':
-          return 'bg-blue-100 text-blue-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
+    } catch (err) {
+      setError('An error occurred while saving')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await apiService.deleteDocumentActionRequiredDays(id)
+        if (response.success) {
+          setItems(prev => prev.filter(item => item.id !== id))
+        } else {
+          setError(response.error || 'Failed to delete item')
+        }
+      } catch (err) {
+        setError('An error occurred while deleting item')
+      } finally {
+        setLoading(false)
       }
     }
   }
   
-  const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>;
+  const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
   return (
     <div className="pt-4 pb-8">
@@ -86,7 +189,35 @@ const DocumentActionRequiredDays: React.FC = () => {
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>Document Action Required Days</h1>
       
+      {error && (
+        <div className={`mb-4 p-3 rounded-md ${
+          theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
+        }`}>
+          {error}
+        </div>
+      )}
+      
       <div className="flex justify-end items-center gap-3 mb-3">
+        <Button
+          onClick={handleDeleteSelected}
+          disabled={selectedItems.length === 0 || loading}
+          variant="danger"
+        >
+          Delete {selectedItems.length > 0 && `(${selectedItems.length})`}
+        </Button>
+        <Button
+          onClick={handleAdd}
+          disabled={loading}
+          variant="primary"
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          }
+          iconPosition="left"
+        >
+          Add
+        </Button>
         <Input
           type="text"
           placeholder="Search..."
@@ -111,29 +242,49 @@ const DocumentActionRequiredDays: React.FC = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
-            totalItems={documents.length}
+            totalItems={items.length}
             itemsPerPage={10}
           />
         }
       >
         <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
           <tr>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            }`}>
+              {items.length > 0 && (
+                <input
+                  type="checkbox"
+                  checked={items.length > 0 && selectedItems.length === items.length}
+                  onChange={handleSelectAll}
+                  className={`rounded text-green-600 focus:ring-green-500 ${
+                    theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
+                  }`}
+                  style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+                />
+              )}
+            </th>
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            }`}>
+              ID
+            </th>
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Document Type <RequiredAsterisk />
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Action Required <RequiredAsterisk />
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Required Days <RequiredAsterisk />
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               ACTIONS
@@ -143,97 +294,110 @@ const DocumentActionRequiredDays: React.FC = () => {
         <tbody className={`divide-y ${
           theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
         }`}>
-          {documents.length === 0 ? (
+          {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={5} className={`px-6 py-8 text-center text-sm ${
+              <td colSpan={6} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
-                No documents found
+                Loading...
+              </td>
+            </tr>
+          ) : items.length === 0 ? (
+            <tr>
+              <td colSpan={6} className={`px-4 py-4 text-center text-sm ${
+                theme === 'dark' ? 'text-white' : 'text-gray-500'
+              }`}>
+                No items found
               </td>
             </tr>
           ) : (
-            documents.map((doc) => (
+            items.map((item) => (
               <tr 
-                key={doc.id} 
+                key={item.id} 
                 className={`transition-colors ${
                   theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
                     type="checkbox"
+                    checked={selectedItems.includes(item.id)}
+                    onChange={() => handleSelectItem(item.id)}
                     className={`rounded text-green-600 focus:ring-green-500 ${
                       theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
                     }`}
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
+                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {item.id}
+                </td>
+                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {item.documentType}
+                </td>
+                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {item.actionRequired}
+                </td>
+                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {item.requiredDays}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                  <div className="flex items-center gap-1">
                     <button
-                      className={`transition-colors ${
+                      onClick={() => handleEdit(item)}
+                      className={`p-1.5 rounded transition-colors ${
                         theme === 'dark'
-                          ? 'text-green-400 hover:text-green-300'
-                          : 'text-green-600 hover:text-green-900'
-                      }`}
-                      title="View"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-                    <button
-                      className={`transition-colors ${
-                        theme === 'dark'
-                          ? 'text-blue-400 hover:text-blue-300'
-                          : 'text-blue-600 hover:text-blue-900'
+                          ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                       }`}
                       title="Edit"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
                     <button
-                      className={`transition-colors ${
+                      onClick={() => handleDelete(item.id)}
+                      className={`p-1.5 rounded transition-colors ${
                         theme === 'dark'
-                          ? 'text-red-400 hover:text-red-300'
-                          : 'text-red-600 hover:text-red-900'
+                          ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                       }`}
                       title="Delete"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {doc.documentNumber}
-                </td>
-                <td className={`px-6 py-4 text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {doc.subject}
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {doc.recipient}
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </Table>
+
+      <DocumentActionRequiredDaysModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingItem(null)
+        }}
+        onSave={handleSave}
+        initialData={editingItem ? { id: editingItem.id, document_type: editingItem.documentType, action_required: editingItem.actionRequired, required_days: editingItem.requiredDays } : null}
+      />
     </div>
   )
 }
-
 
 export default DocumentActionRequiredDays
