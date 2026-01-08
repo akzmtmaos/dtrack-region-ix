@@ -74,35 +74,14 @@ WSGI_APPLICATION = 'doh_tracking.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Use Supabase PostgreSQL if credentials are provided, otherwise fall back to SQLite
-SUPABASE_DB_NAME = os.getenv('SUPABASE_DB_NAME')
-SUPABASE_DB_USER = os.getenv('SUPABASE_DB_USER')
-SUPABASE_DB_PASSWORD = os.getenv('SUPABASE_DB_PASSWORD')
-SUPABASE_DB_HOST = os.getenv('SUPABASE_DB_HOST')
-SUPABASE_DB_PORT = os.getenv('SUPABASE_DB_PORT', '5432')
-
-if all([SUPABASE_DB_NAME, SUPABASE_DB_USER, SUPABASE_DB_PASSWORD, SUPABASE_DB_HOST]):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': SUPABASE_DB_NAME,
-            'USER': SUPABASE_DB_USER,
-            'PASSWORD': SUPABASE_DB_PASSWORD,
-            'HOST': SUPABASE_DB_HOST,
-            'PORT': SUPABASE_DB_PORT,
-            'OPTIONS': {
-                'sslmode': 'require',
-            },
-        }
+# Using SQLite for Django's internal database
+# Note: We're using Supabase REST API for all application data, not direct DB connections
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Fallback to SQLite for local development if Supabase credentials are not set
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 
 # Password validation

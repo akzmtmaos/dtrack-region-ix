@@ -7,9 +7,9 @@ const OfficeWithOverdue: React.FC = () => {
   
   return (
     <div className="pt-4 pb-8">
-      <h1 className={`text-3xl font-bold mb-4 ${
-        theme === 'dark' ? 'text-white' : 'text-gray-800'
-      }`}>Office With Overdue</h1>
+      <h1 className={`text-2xl font-semibold mb-4 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>Office With Overdue</h1>
       
       <div className="flex justify-end items-center gap-3 mb-3">
         <Input
