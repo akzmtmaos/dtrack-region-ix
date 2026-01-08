@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
-import Button from '../Button'
 
 interface AddDocumentModalProps {
   isOpen: boolean
@@ -10,7 +9,6 @@ interface AddDocumentModalProps {
 
 const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd }) => {
   const { theme } = useTheme()
-  const [activeTab, setActiveTab] = useState('basic')
   const [formData, setFormData] = useState({
     subject: '',
     documentType: '',
@@ -25,11 +23,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     userid: '',
     inSequence: '',
     remarks: '',
-    referenceDocumentControlNo1: '',
-    referenceDocumentControlNo2: '',
-    referenceDocumentControlNo3: '',
-    referenceDocumentControlNo4: '',
-    referenceDocumentControlNo5: ''
+    referenceDocuments: ['']
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -48,6 +42,31 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         [name]: ''
       }))
     }
+  }
+
+  const handleReferenceDocumentChange = (index: number, value: string) => {
+    setFormData(prev => {
+      const newReferences = [...prev.referenceDocuments]
+      newReferences[index] = value
+      return {
+        ...prev,
+        referenceDocuments: newReferences
+      }
+    })
+  }
+
+  const addReferenceDocument = () => {
+    setFormData(prev => ({
+      ...prev,
+      referenceDocuments: [...prev.referenceDocuments, '']
+    }))
+  }
+
+  const removeReferenceDocument = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      referenceDocuments: prev.referenceDocuments.filter((_, i) => i !== index)
+    }))
   }
 
   const validate = () => {
@@ -77,12 +96,31 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     e.preventDefault()
     
     if (validate()) {
-      onAdd({
+      const referenceDocs = formData.referenceDocuments.filter(ref => ref.trim() !== '')
+      const documentData: any = {
         id: Date.now(),
-        ...formData
-      })
+        subject: formData.subject,
+        documentType: formData.documentType,
+        sourceType: formData.sourceType,
+        internalOriginatingOffice: formData.internalOriginatingOffice,
+        internalOriginatingEmployee: formData.internalOriginatingEmployee,
+        externalOriginatingOffice: formData.externalOriginatingOffice,
+        externalOriginatingEmployee: formData.externalOriginatingEmployee,
+        noOfPages: formData.noOfPages,
+        attachedDocumentFilename: formData.attachedDocumentFilename,
+        attachmentList: formData.attachmentList,
+        userid: formData.userid,
+        inSequence: formData.inSequence,
+        remarks: formData.remarks,
+        referenceDocumentControlNo1: referenceDocs[0] || '',
+        referenceDocumentControlNo2: referenceDocs[1] || '',
+        referenceDocumentControlNo3: referenceDocs[2] || '',
+        referenceDocumentControlNo4: referenceDocs[3] || '',
+        referenceDocumentControlNo5: referenceDocs[4] || ''
+      }
       
-      // Reset form
+      onAdd(documentData)
+      
       const emptyForm = {
         subject: '',
         documentType: '',
@@ -97,15 +135,10 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         userid: '',
         inSequence: '',
         remarks: '',
-        referenceDocumentControlNo1: '',
-        referenceDocumentControlNo2: '',
-        referenceDocumentControlNo3: '',
-        referenceDocumentControlNo4: '',
-        referenceDocumentControlNo5: ''
+        referenceDocuments: ['']
       }
       setFormData(emptyForm)
       setErrors({})
-      setActiveTab('basic')
       onClose()
     }
   }
@@ -125,111 +158,159 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       userid: '',
       inSequence: '',
       remarks: '',
-      referenceDocumentControlNo1: '',
-      referenceDocumentControlNo2: '',
-      referenceDocumentControlNo3: '',
-      referenceDocumentControlNo4: '',
-      referenceDocumentControlNo5: ''
+      referenceDocuments: ['']
     }
     setFormData(emptyForm)
     setErrors({})
-    setActiveTab('basic')
     onClose()
   }
 
   if (!isOpen) return null
 
-  const tabs = [
-    { id: 'basic', label: 'Basic Information' },
-    { id: 'originating', label: 'Originating Information' },
-    { id: 'attachments', label: 'Attachments' },
-    { id: 'references', label: 'References' },
-    { id: 'additional', label: 'Additional' }
-  ]
+  const modalBg = theme === 'dark' ? '#171717' : '#ffffff'
+  const borderColor = theme === 'dark' ? '#262626' : '#e5e5e5'
+  const textPrimary = theme === 'dark' ? '#fafafa' : '#171717'
+  const textSecondary = theme === 'dark' ? '#a3a3a3' : '#525252'
+  const inputBg = theme === 'dark' ? '#171717' : '#ffffff'
+  const inputBorder = theme === 'dark' ? '#262626' : '#e5e5e5'
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={handleClose}>
-      <div className={`rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
-        theme === 'dark' ? 'bg-dark-panel' : 'bg-white'
-      }`} onClick={(e) => e.stopPropagation()}>
-        <div 
-          className={`px-6 py-4 border-b ${theme === 'dark' ? '' : 'border-gray-200'}`}
-          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
-        >
-          <h2 className={`text-xl font-semibold ${
-            theme === 'dark' ? 'text-white' : 'text-gray-800'
-          }`}>Add New Document</h2>
-        </div>
-        
-        {/* Tabs */}
-        <div 
-          className={`border-b px-6 ${theme === 'dark' ? '' : 'border-gray-200'}`}
-          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
-        >
-          <div className="flex space-x-1">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-green-500 border-b-2 border-green-500'
-                    : theme === 'dark'
-                      ? 'text-dark-text hover:text-white hover:bg-dark-hover'
-                      : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-[9999]" 
+      onClick={handleClose}
+      style={{ backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)' }}
+    >
+      <div 
+        className="rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
+        style={{ backgroundColor: modalBg, border: `1px solid ${borderColor}` }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <h2 className="text-lg font-semibold mb-1" style={{ color: textPrimary }}>
+            Add New Document
+          </h2>
+          <p className="text-xs" style={{ color: textSecondary }}>
+            Fill in the document details below. All required fields are marked with an asterisk.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            {/* Basic Information Tab */}
-            {activeTab === 'basic' && (
+          <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+              {/* Subject */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
                   Subject <RequiredAsterisk />
                 </label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.subject 
-                      ? 'border-red-500' 
-                      : theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                  }`}
-                />
-                {errors.subject && (
-                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errors.subject}</p>
-                )}
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    placeholder="Enter document subject"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                    style={{
+                      backgroundColor: inputBg,
+                      border: `1px solid ${errors.subject ? '#ef4444' : inputBorder}`,
+                      color: textPrimary
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                    onBlur={(e) => e.target.style.borderColor = errors.subject ? '#ef4444' : inputBorder}
+                  />
+                  {errors.subject && (
+                    <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.subject}</p>
+                  )}
+                </div>
               </div>
 
+              {/* Reference Documents */}
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+                <div className="flex items-start gap-3 mb-2">
+                  <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px', paddingTop: '4px' }}>
+                    Reference Document Control No.
+                  </label>
+                  <div className="flex-1 space-y-2">
+                    {formData.referenceDocuments.map((refDoc, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder={`Reference Document ${index + 1}`}
+                          value={refDoc}
+                          onChange={(e) => handleReferenceDocumentChange(index, e.target.value)}
+                          className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                          style={{
+                            backgroundColor: inputBg,
+                            border: `1px solid ${inputBorder}`,
+                            color: textPrimary
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                          onBlur={(e) => e.target.style.borderColor = inputBorder}
+                        />
+                        {formData.referenceDocuments.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeReferenceDocument(index)}
+                            className="p-1.5 rounded-md transition-colors"
+                            style={{
+                              color: '#ef4444',
+                              backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.15)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)'}
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addReferenceDocument}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-md border border-dashed transition-colors flex items-center justify-center gap-1.5"
+                      style={{
+                        borderColor: inputBorder,
+                        color: textSecondary,
+                        backgroundColor: 'transparent'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#3ecf8e'
+                        e.currentTarget.style.color = '#3ecf8e'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = inputBorder
+                        e.currentTarget.style.color = textSecondary
+                      }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Reference Document
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Document Type */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
                   Document Type
                 </label>
                 <select
                   name="documentType"
                   value={formData.documentType}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
+                  className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                  style={{
+                    backgroundColor: inputBg,
+                    border: `1px solid ${inputBorder}`,
+                    color: textPrimary
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                  onBlur={(e) => e.target.style.borderColor = inputBorder}
                 >
                   <option value="">Select document type</option>
                   <option value="Memo">Memo</option>
@@ -239,123 +320,142 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 </select>
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+              {/* Source Type */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
                   Source Type
                 </label>
                 <select
                   name="sourceType"
                   value={formData.sourceType}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
+                  className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                  style={{
+                    backgroundColor: inputBg,
+                    border: `1px solid ${inputBorder}`,
+                    color: textPrimary
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                  onBlur={(e) => e.target.style.borderColor = inputBorder}
                 >
                   <option value="">Select source type</option>
                   <option value="Internal">Internal</option>
                   <option value="External">External</option>
                 </select>
               </div>
-            </div>
-          )}
 
-          {/* Originating Information Tab */}
-          {activeTab === 'originating' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Internal Originating Office <RequiredAsterisk />
-                </label>
-                <input
-                  type="text"
-                  name="internalOriginatingOffice"
-                  value={formData.internalOriginatingOffice}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.internalOriginatingOffice ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.internalOriginatingOffice && (
-                  <p className="mt-1 text-sm text-red-600">{errors.internalOriginatingOffice}</p>
-                )}
-              </div>
+              {/* Internal sub-form */}
+              {formData.sourceType === 'Internal' && (
+                <div className="space-y-4 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                      Internal Originating Office <RequiredAsterisk />
+                    </label>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        name="internalOriginatingOffice"
+                        value={formData.internalOriginatingOffice}
+                        onChange={handleChange}
+                        placeholder="Enter internal originating office"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                        style={{
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.internalOriginatingOffice ? '#ef4444' : inputBorder}`,
+                          color: textPrimary
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                        onBlur={(e) => e.target.style.borderColor = errors.internalOriginatingOffice ? '#ef4444' : inputBorder}
+                      />
+                      {errors.internalOriginatingOffice && (
+                        <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.internalOriginatingOffice}</p>
+                      )}
+                    </div>
+                  </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Internal Originating Employee <RequiredAsterisk />
-                </label>
-                <input
-                  type="text"
-                  name="internalOriginatingEmployee"
-                  value={formData.internalOriginatingEmployee}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.internalOriginatingEmployee ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.internalOriginatingEmployee && (
-                  <p className="mt-1 text-sm text-red-600">{errors.internalOriginatingEmployee}</p>
-                )}
-              </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                      Internal Originating Employee <RequiredAsterisk />
+                    </label>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        name="internalOriginatingEmployee"
+                        value={formData.internalOriginatingEmployee}
+                        onChange={handleChange}
+                        placeholder="Enter internal originating employee"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                        style={{
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.internalOriginatingEmployee ? '#ef4444' : inputBorder}`,
+                          color: textPrimary
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                        onBlur={(e) => e.target.style.borderColor = errors.internalOriginatingEmployee ? '#ef4444' : inputBorder}
+                      />
+                      {errors.internalOriginatingEmployee && (
+                        <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.internalOriginatingEmployee}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  If External Source, Originating Office
-                </label>
-                <input
-                  type="text"
-                  name="externalOriginatingOffice"
-                  value={formData.externalOriginatingOffice}
-                  onChange={handleChange}
-                  disabled={formData.sourceType !== 'External'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    formData.sourceType !== 'External' ? 'bg-gray-100 cursor-not-allowed' : ''
-                  }`}
-                />
-              </div>
+              {/* External sub-form */}
+              {formData.sourceType === 'External' && (
+                <div className="space-y-4 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                      External Originating Office
+                    </label>
+                    <input
+                      type="text"
+                      name="externalOriginatingOffice"
+                      value={formData.externalOriginatingOffice}
+                      onChange={handleChange}
+                      placeholder="Enter external originating office"
+                      className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                      style={{
+                        backgroundColor: inputBg,
+                        border: `1px solid ${inputBorder}`,
+                        color: textPrimary
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                      onBlur={(e) => e.target.style.borderColor = inputBorder}
+                    />
+                  </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  If External Source, Originating Employee <RequiredAsterisk />
-                </label>
-                <input
-                  type="text"
-                  name="externalOriginatingEmployee"
-                  value={formData.externalOriginatingEmployee}
-                  onChange={handleChange}
-                  disabled={formData.sourceType !== 'External'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    formData.sourceType !== 'External' ? 'bg-gray-100 cursor-not-allowed' : ''
-                  } ${
-                    errors.externalOriginatingEmployee ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.externalOriginatingEmployee && (
-                  <p className="mt-1 text-sm text-red-600">{errors.externalOriginatingEmployee}</p>
-                )}
-              </div>
-            </div>
-          )}
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                      External Originating Employee <RequiredAsterisk />
+                    </label>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        name="externalOriginatingEmployee"
+                        value={formData.externalOriginatingEmployee}
+                        onChange={handleChange}
+                        placeholder="Enter external originating employee"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                        style={{
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.externalOriginatingEmployee ? '#ef4444' : inputBorder}`,
+                          color: textPrimary
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                        onBlur={(e) => e.target.style.borderColor = errors.externalOriginatingEmployee ? '#ef4444' : inputBorder}
+                      />
+                      {errors.externalOriginatingEmployee && (
+                        <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.externalOriginatingEmployee}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-          {/* Attachments Tab */}
-          {activeTab === 'attachments' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+              {/* No. of Pages */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
                   No. of Pages
                 </label>
                 <input
@@ -364,242 +464,105 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   value={formData.noOfPages}
                   onChange={handleChange}
                   min="0"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
+                  placeholder="Enter number of pages"
+                  className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                  style={{
+                    backgroundColor: inputBg,
+                    border: `1px solid ${inputBorder}`,
+                    color: textPrimary
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                  onBlur={(e) => e.target.style.borderColor = inputBorder}
                 />
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Attached Document Filename
+              {/* Attach Document */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                  Attach Document Filename
                 </label>
-                <input
-                  type="text"
-                  name="attachedDocumentFilename"
-                  value={formData.attachedDocumentFilename}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      setFormData(prev => ({
+                        ...prev,
+                        attachedDocumentFilename: file ? file.name : ''
+                      }))
+                    }}
+                    className="w-full text-xs file:mr-3 file:px-2.5 file:py-1.5 file:rounded-md file:border-0 file:text-xs file:font-medium cursor-pointer"
+                    style={{
+                      color: textSecondary
+                    }}
+                  />
+                  {formData.attachedDocumentFilename && (
+                    <p className="mt-1.5 text-xs" style={{ color: textSecondary }}>
+                      Selected: {formData.attachedDocumentFilename}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Attachment List
-                </label>
-                <textarea
-                  name="attachmentList"
-                  value={formData.attachmentList}
-                  onChange={handleChange}
-                  rows={4}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* References Tab */}
-          {activeTab === 'references' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Reference Document Control No. (1)
-                </label>
-                <input
-                  type="text"
-                  name="referenceDocumentControlNo1"
-                  value={formData.referenceDocumentControlNo1}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Reference Document Control No. (2)
-                </label>
-                <input
-                  type="text"
-                  name="referenceDocumentControlNo2"
-                  value={formData.referenceDocumentControlNo2}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Reference Document Control No. (3)
-                </label>
-                <input
-                  type="text"
-                  name="referenceDocumentControlNo3"
-                  value={formData.referenceDocumentControlNo3}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Reference Document Control No. (4)
-                </label>
-                <input
-                  type="text"
-                  name="referenceDocumentControlNo4"
-                  value={formData.referenceDocumentControlNo4}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Reference Document Control No. (5)
-                </label>
-                <input
-                  type="text"
-                  name="referenceDocumentControlNo5"
-                  value={formData.referenceDocumentControlNo5}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Additional Tab */}
-          {activeTab === 'additional' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  User ID
-                </label>
-                <input
-                  type="text"
-                  name="userid"
-                  value={formData.userid}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  In Sequence (action)
-                </label>
-                <input
-                  type="text"
-                  name="inSequence"
-                  value={formData.inSequence}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    theme === 'dark'
-                      ? 'border-dark-hover bg-dark-panel text-white'
-                      : 'border-gray-300'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+              {/* Remarks */}
+              <div className="flex items-start gap-3">
+                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px', paddingTop: '4px' }}>
                   Remarks <RequiredAsterisk />
                 </label>
-                <textarea
-                  name="remarks"
-                  value={formData.remarks}
-                  onChange={handleChange}
-                  rows={4}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                    errors.remarks 
-                      ? 'border-red-500' 
-                      : theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                  }`}
-                />
-                {errors.remarks && (
-                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errors.remarks}</p>
-                )}
+                <div className="flex-1">
+                  <textarea
+                    name="remarks"
+                    value={formData.remarks}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Enter remarks or additional notes"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors resize-none"
+                    style={{
+                      backgroundColor: inputBg,
+                      border: `1px solid ${errors.remarks ? '#ef4444' : inputBorder}`,
+                      color: textPrimary
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                    onBlur={(e) => e.target.style.borderColor = errors.remarks ? '#ef4444' : inputBorder}
+                  />
+                  {errors.remarks && (
+                    <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.remarks}</p>
+                  )}
+                </div>
               </div>
             </div>
-          )}
           </div>
 
-          {/* Sticky Footer with Buttons */}
+          {/* Footer */}
           <div 
-            className={`border-t px-6 py-4 flex justify-end space-x-3 ${
-              theme === 'dark' 
-                ? 'bg-dark-panel' 
-              : 'border-gray-200 bg-white'
-          }`}>
-            <Button
+            className="px-6 py-4 flex justify-end gap-2"
+            style={{ borderTop: `1px solid ${borderColor}`, backgroundColor: modalBg }}
+          >
+            <button
               type="button"
               onClick={handleClose}
-              variant="secondary"
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+              style={{
+                color: textSecondary,
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              variant="primary"
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+              style={{
+                color: '#ffffff',
+                backgroundColor: '#3ecf8e'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#35b87a'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3ecf8e'}
             >
-              Add Document
-            </Button>
+              Add Destination
+            </button>
           </div>
         </form>
       </div>
@@ -608,4 +571,3 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 }
 
 export default AddDocumentModal
-

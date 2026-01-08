@@ -21,11 +21,11 @@ const Input: React.FC<InputProps> = ({
   const { theme } = useTheme()
 
   const baseInputClasses = `
-    px-3 py-2
-    text-sm
-    rounded-lg
+    px-2.5 py-1.5
+    text-xs
+    rounded-md
     transition-all duration-150
-    focus:ring-2 focus:ring-green-500 focus:border-green-500
+    focus:ring-1 focus:ring-green-500 focus:border-green-500
     outline-none
     border
     ${fullWidth ? 'w-full' : ''}
@@ -38,19 +38,19 @@ const Input: React.FC<InputProps> = ({
 
   const iconWrapperClasses = `
     absolute inset-y-0 flex items-center pointer-events-none
-    ${iconPosition === 'left' ? 'left-0 pl-2.5' : 'right-0 pr-2.5'}
+    ${iconPosition === 'left' ? 'left-0 pl-2' : 'right-0 pr-2'}
   `
 
   const inputWithIconClasses = iconPosition === 'left' 
-    ? 'pl-9' 
+    ? 'pl-7' 
     : iconPosition === 'right' 
-      ? 'pr-9' 
+      ? 'pr-7' 
       : ''
 
   return (
     <div className={fullWidth ? 'w-full' : ''}>
       {label && (
-        <label className={`block text-sm font-medium mb-1 ${
+        <label className={`block text-xs font-medium mb-1 ${
           theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
         }`}>
           {label}
@@ -74,7 +74,7 @@ const Input: React.FC<InputProps> = ({
         />
       </div>
       {error && (
-        <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+        <p className={`mt-1 text-xs ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
           {error}
         </p>
       )}

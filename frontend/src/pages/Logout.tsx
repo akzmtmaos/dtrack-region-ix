@@ -16,7 +16,7 @@ const Logout: React.FC = () => {
   }, [logout, navigate])
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="py-8">
       <div className="bg-white rounded-lg shadow-md p-6 text-center">
         <p className="text-gray-700">Logging out...</p>
       </div>

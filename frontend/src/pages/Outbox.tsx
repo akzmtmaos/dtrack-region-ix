@@ -162,129 +162,144 @@ const Outbox: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 pt-6 pb-8">
-      <h1 className={`text-2xl font-semibold mb-6 ${
-        theme === 'dark' ? 'text-white' : 'text-gray-800'
-      }`}>Outbox</h1>
-      
-      <div className="flex justify-end items-center gap-3 mb-4">
-        <Button
-          onClick={handleDeleteSelected}
-          disabled={selectedItems.length === 0}
-          variant="danger"
-        >
-          Delete Selected Items {selectedItems.length > 0 && `(${selectedItems.length})`}
-        </Button>
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          variant="primary"
-          icon={
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          }
-          iconPosition="left"
-        >
-          Add
-        </Button>
-        <Input
-          type="text"
-          placeholder="Search..."
-          className="w-64"
-          icon={
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          }
-          iconPosition="left"
-        />
-      </div>
-      
-      <hr 
-        className={`mb-4 ${theme === 'dark' ? '' : 'border-gray-300'}`}
-        style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
-      />
-      
-      <Table
-        pagination={
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            totalItems={documents.length}
-            itemsPerPage={10}
+    <div className="pt-4 pb-8">
+        <h1 className={`text-2xl font-semibold mb-4 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        }`}>Outbox</h1>
+        
+        <div className="flex justify-end items-center gap-3 mb-3">
+          <Button
+            onClick={handleDeleteSelected}
+            disabled={selectedItems.length === 0}
+            variant="danger"
+          >
+            Delete {selectedItems.length > 0 && `(${selectedItems.length})`}
+          </Button>
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            variant="primary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Add
+          </Button>
+          <Input
+            type="text"
+            placeholder="Search..."
+            className="w-48"
+            icon={
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            }
+            iconPosition="left"
           />
-        }
-      >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        </div>
+        
+        <hr 
+          className={`mb-4 ${theme === 'dark' ? '' : 'border-gray-300'}`}
+          style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+        />
+        
+        <Table
+            pagination={
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={documents.length}
+                itemsPerPage={10}
+              />
+            }
+          >
+            <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   <input
                     type="checkbox"
                     checked={documents.length > 0 && selectedItems.length === documents.length}
                     onChange={handleSelectAll}
-                    className={`rounded text-green-600 focus:ring-green-500 ${
-                      theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
+                    className={`rounded text-[#3BA55C] focus:ring-2 focus:ring-[#3BA55C] focus:ring-offset-0 ${
+                      theme === 'dark' ? 'bg-dark-panel border-[#4a4b4c]' : 'border-gray-300 bg-white'
                     }`}
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Document Control No. <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Route No. <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Office Control No. <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Subject <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Document Type
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Source Type
                 </th>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className={`divide-y ${
-              theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
+              theme === 'dark' ? 'bg-dark-panel divide-[#4a4b4c]' : 'bg-white divide-gray-200'
             }`}>
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className={`px-6 py-8 text-center text-sm ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-500'
+                  <td colSpan={8} className={`px-6 py-16 text-center ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                   }`}>
-                    No documents found
+                    <div className="flex flex-col items-center justify-center">
+                      <svg 
+                        className={`w-16 h-16 mb-4 ${
+                          theme === 'dark' ? 'text-gray-600' : 'text-gray-300'
+                        }`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="text-base font-medium mb-1">No documents found</p>
+                      <p className="text-sm">Get started by adding your first document</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 documents.map((doc) => (
                   <tr 
                     key={doc.id} 
-                    className={`transition-colors cursor-pointer ${
-                      theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
+                    className={`transition-all duration-150 cursor-pointer ${
+                      theme === 'dark' 
+                        ? 'hover:bg-dark-hover/50 active:bg-dark-hover' 
+                        : 'hover:bg-gray-50 active:bg-gray-100'
                     }`}
                     onClick={() => handleRowClick(doc)}
                   >
@@ -293,42 +308,44 @@ const Outbox: React.FC = () => {
                         type="checkbox"
                         checked={selectedItems.includes(doc.id)}
                         onChange={() => handleSelectItem(doc.id)}
-                        className={`rounded text-green-600 focus:ring-green-500 ${
-                          theme === 'dark' ? 'border-dark-hover bg-dark-panel' : 'border-gray-300'
+                        className={`rounded text-[#3BA55C] focus:ring-2 focus:ring-[#3BA55C] focus:ring-offset-0 transition-all ${
+                          theme === 'dark' ? 'border-[#4a4b4c] bg-dark-panel' : 'border-gray-300 bg-white'
                         }`}
                       />
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${
                       theme === 'dark' ? 'text-white' : 'text-gray-900'
                     }`}>
-                      {doc.documentControlNo}
+                      {doc.documentControlNo || <span className="text-gray-500 italic">—</span>}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
-                      {doc.routeNo}
+                      {doc.routeNo || <span className="text-gray-500 italic">—</span>}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
-                      {doc.officeControlNo}
+                      {doc.officeControlNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 text-sm ${
+                    <td className={`px-6 py-4 text-sm max-w-xs ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
-                      {doc.subject}
+                      <div className="truncate" title={doc.subject}>
+                        {doc.subject || <span className="text-gray-500 italic">—</span>}
+                      </div>
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
-                      {doc.documentType || '-'}
+                      {doc.documentType || <span className="text-gray-500 italic">—</span>}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
-                      {doc.sourceType || '-'}
+                      {doc.sourceType || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <ActionButtons
                         document={doc}
                         onView={handleView}
@@ -341,7 +358,7 @@ const Outbox: React.FC = () => {
                 ))
               )}
             </tbody>
-      </Table>
+          </Table>
 
       {/* Add Document Modal */}
       <AddDocumentModal

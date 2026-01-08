@@ -69,12 +69,15 @@ function AppContent() {
               <Header />
               <Navbar />
               <div 
-                className="pt-6 px-4 md:px-6 transition-all duration-300"
+                className="pt-6 transition-all duration-300"
                 style={{ 
                   marginTop: '80px',
                   marginLeft: isMobile 
                     ? '0' 
-                    : (isMinimized ? '64px' : '256px'),
+                    : (isMinimized ? '48px' : '208px'),
+                  marginRight: '0',
+                  paddingLeft: '24px',
+                  paddingRight: '24px',
                   minHeight: 'calc(100vh - 80px)'
                 }}
               >

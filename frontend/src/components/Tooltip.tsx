@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 
 interface TooltipProps {
   text: string
@@ -7,29 +7,46 @@ interface TooltipProps {
   verticalOffset?: number // Adjust vertical position (positive = down, negative = up)
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ text, isMinimized, children, verticalOffset = -10 }) => {
+const Tooltip: React.FC<TooltipProps> = ({ text, isMinimized, children, verticalOffset = 0 }) => {
   const [isHovered, setIsHovered] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
-  const updatePosition = () => {
-    if (containerRef.current && isMinimized) {
-      const rect = containerRef.current.getBoundingClientRect()
-      // Center the tooltip vertically with the icon, with optional offset adjustment
-      setPosition({
-        top: rect.top + rect.height / 2 + verticalOffset,
-        left: rect.right + 8
-      })
+  const updatePosition = useCallback(() => {
+    if (wrapperRef.current && isMinimized) {
+      // Get the actual child element (Link or button) inside the wrapper
+      const childElement = wrapperRef.current.firstElementChild as HTMLElement
+      if (childElement) {
+        const rect = childElement.getBoundingClientRect()
+        // Center the tooltip vertically with the button/Link element
+        // The getBoundingClientRect gives us the exact position including padding
+        const centerY = rect.top + (rect.height / 2)
+        const rightX = rect.right + 8
+        setPosition({
+          top: centerY,
+          left: rightX
+        })
+      }
     }
-  }
+  }, [isMinimized])
 
   useEffect(() => {
-    if (isHovered) {
-      updatePosition()
+    if (isHovered && isMinimized) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        updatePosition()
+      })
+      // Update on scroll
+      const handleScroll = () => updatePosition()
+      window.addEventListener('scroll', handleScroll, true)
+      // Also update periodically in case of other layout changes
       const interval = setInterval(updatePosition, 100)
-      return () => clearInterval(interval)
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true)
+        clearInterval(interval)
+      }
     }
-  }, [isHovered, isMinimized])
+  }, [isHovered, isMinimized, updatePosition])
 
   if (!isMinimized) {
     return <>{children}</>
@@ -38,23 +55,29 @@ const Tooltip: React.FC<TooltipProps> = ({ text, isMinimized, children, vertical
   return (
     <>
       <div 
-        ref={containerRef}
-        className="relative"
+        ref={wrapperRef}
+        className="relative w-full"
+        style={{ display: 'block' }}
         onMouseEnter={() => {
           setIsHovered(true)
-          updatePosition()
+          // Use double requestAnimationFrame to ensure DOM is fully rendered and measured
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              updatePosition()
+            })
+          })
         }}
         onMouseLeave={() => setIsHovered(false)}
       >
         {children}
       </div>
-      {isHovered && (
+      {isHovered && position.top > 0 && (
         <div 
           className="fixed px-2 py-1 bg-gray-800 text-white text-sm rounded whitespace-nowrap z-[9999] shadow-lg pointer-events-none"
           style={{
             top: `${position.top}px`,
             left: `${position.left}px`,
-            transform: 'translateY(-50%)'
+            transform: `translateY(calc(-50% + ${verticalOffset}px))`
           }}
         >
           {text}
