@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import action_required, action_officer, action_taken
+from .views import action_required, action_officer, action_taken, document_type
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
@@ -27,5 +27,12 @@ urlpatterns = [
     path('action-taken/<int:item_id>/', action_taken.action_taken_update, name='action-taken-update'),
     path('action-taken/<int:item_id>/delete/', action_taken.action_taken_delete, name='action-taken-delete'),
     path('action-taken/bulk-delete/', action_taken.action_taken_bulk_delete, name='action-taken-bulk-delete'),
+    
+    # Document Type endpoints
+    path('document-type/', document_type.document_type_list, name='document-type-list'),
+    path('document-type/create/', document_type.document_type_create, name='document-type-create'),
+    path('document-type/<int:item_id>/', document_type.document_type_update, name='document-type-update'),
+    path('document-type/<int:item_id>/delete/', document_type.document_type_delete, name='document-type-delete'),
+    path('document-type/bulk-delete/', document_type.document_type_bulk_delete, name='document-type-bulk-delete'),
 ]
 

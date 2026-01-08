@@ -121,16 +121,6 @@ const DocumentActionRequiredDays: React.FC = () => {
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              SELECT
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
-              ACTIONS
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
               Document Type <RequiredAsterisk />
             </th>
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -142,6 +132,11 @@ const DocumentActionRequiredDays: React.FC = () => {
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Required Days <RequiredAsterisk />
+            </th>
+            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            }`}>
+              ACTIONS
             </th>
           </tr>
         </thead>

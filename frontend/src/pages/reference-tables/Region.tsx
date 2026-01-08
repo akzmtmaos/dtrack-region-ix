@@ -121,16 +121,6 @@ const Region: React.FC = () => {
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              SELECT
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
-              ACTIONS
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
               Region Code <RequiredAsterisk />
             </th>
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -172,6 +162,11 @@ const Region: React.FC = () => {
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Status <RequiredAsterisk />
+            </th>
+            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            }`}>
+              ACTIONS
             </th>
           </tr>
         </thead>

@@ -171,6 +171,47 @@ class ApiService {
       body: JSON.stringify({ ids }),
     })
   }
+
+  // Document Type endpoints
+  async getDocumentType(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/document-type/')
+  }
+
+  async createDocumentType(data: {
+    documentTypeCode: string
+    documentType: string
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>('/document-type/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateDocumentType(
+    id: number,
+    data: {
+      documentTypeCode?: string
+      documentType?: string
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/document-type/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteDocumentType(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/document-type/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteDocumentType(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/document-type/bulk-delete/', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
 }
 
 export const apiService = new ApiService()

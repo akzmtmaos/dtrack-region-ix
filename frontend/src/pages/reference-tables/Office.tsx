@@ -121,16 +121,6 @@ const Office: React.FC = () => {
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              SELECT
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
-              ACTIONS
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
               Office Code <RequiredAsterisk />
             </th>
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -152,6 +142,11 @@ const Office: React.FC = () => {
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Head Office <RequiredAsterisk />
+            </th>
+            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            }`}>
+              ACTIONS
             </th>
           </tr>
         </thead>

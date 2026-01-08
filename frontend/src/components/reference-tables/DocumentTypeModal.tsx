@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 
-interface ActionTakenModalProps {
+interface DocumentTypeModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: { actionTakenCode: string; actionTaken: string }) => void
-  initialData?: { id: number; action_taken_code?: string; action_taken?: string } | null
+  onSave: (data: { documentTypeCode: string; documentType: string }) => void
+  initialData?: { id: number; document_type_code?: string; document_type?: string } | null
 }
 
-const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
+const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
   isOpen,
   onClose,
   onSave,
@@ -16,21 +16,21 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
 }) => {
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
-    actionTakenCode: '',
-    actionTaken: ''
+    documentTypeCode: '',
+    documentType: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (initialData) {
       setFormData({
-        actionTakenCode: initialData.action_taken_code || '',
-        actionTaken: initialData.action_taken || ''
+        documentTypeCode: initialData.document_type_code || '',
+        documentType: initialData.document_type || ''
       })
     } else {
       setFormData({
-        actionTakenCode: '',
-        actionTaken: ''
+        documentTypeCode: '',
+        documentType: ''
       })
     }
     setErrors({})
@@ -55,11 +55,11 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
   const validate = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.actionTakenCode.trim()) {
-      newErrors.actionTakenCode = 'Action Taken Code is required'
+    if (!formData.documentTypeCode.trim()) {
+      newErrors.documentTypeCode = 'Document Type Code is required'
     }
-    if (!formData.actionTaken.trim()) {
-      newErrors.actionTaken = 'Action Taken is required'
+    if (!formData.documentType.trim()) {
+      newErrors.documentType = 'Document Type is required'
     }
 
     setErrors(newErrors)
@@ -71,12 +71,12 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
 
     if (validate()) {
       onSave({
-        actionTakenCode: formData.actionTakenCode,
-        actionTaken: formData.actionTaken
+        documentTypeCode: formData.documentTypeCode,
+        documentType: formData.documentType
       })
       setFormData({
-        actionTakenCode: '',
-        actionTaken: ''
+        documentTypeCode: '',
+        documentType: ''
       })
       setErrors({})
       onClose()
@@ -85,8 +85,8 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
 
   const handleClose = () => {
     setFormData({
-      actionTakenCode: '',
-      actionTaken: ''
+      documentTypeCode: '',
+      documentType: ''
     })
     setErrors({})
     onClose()
@@ -115,12 +115,12 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
         {/* Header */}
         <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderColor}` }}>
           <h2 className="text-lg font-semibold mb-1" style={{ color: textPrimary }}>
-            {initialData ? 'Edit Action Taken' : 'Add New Action Taken'}
+            {initialData ? 'Edit Document Type' : 'Add New Document Type'}
           </h2>
           <p className="text-xs" style={{ color: textSecondary }}>
             {initialData
-              ? 'Update the action taken information below.'
-              : 'Fill in the action taken details below. All required fields are marked with an asterisk.'
+              ? 'Update the document type information below.'
+              : 'Fill in the document type details below. All required fields are marked with an asterisk.'
             }
           </p>
         </div>
@@ -129,29 +129,29 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-4">
 
-              {/* Action Taken */}
+              {/* Document Type */}
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
-                  Action Taken <RequiredAsterisk />
+                  Document Type <RequiredAsterisk />
                 </label>
                 <div className="flex-1">
                   <input
                     type="text"
-                    name="actionTaken"
-                    value={formData.actionTaken}
+                    name="documentType"
+                    value={formData.documentType}
                     onChange={handleChange}
-                    placeholder="Enter action taken"
+                    placeholder="Enter document type"
                     className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{
                       backgroundColor: inputBg,
-                      border: `1px solid ${errors.actionTaken ? '#ef4444' : inputBorder}`,
+                      border: `1px solid ${errors.documentType ? '#ef4444' : inputBorder}`,
                       color: textPrimary
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.actionTaken ? '#ef4444' : inputBorder}
+                    onBlur={(e) => e.target.style.borderColor = errors.documentType ? '#ef4444' : inputBorder}
                   />
-                  {errors.actionTaken && (
-                    <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.actionTaken}</p>
+                  {errors.documentType && (
+                    <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.documentType}</p>
                   )}
                 </div>
               </div>
@@ -195,4 +195,4 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
   )
 }
 
-export default ActionTakenModal
+export default DocumentTypeModal
