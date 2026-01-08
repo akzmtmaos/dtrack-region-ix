@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
 import ActionOfficerModal from '../../components/reference-tables/ActionOfficerModal'
+import { apiService } from '../../services/api'
 
 interface ActionOfficerItem {
   id: number
@@ -28,6 +29,40 @@ const ActionOfficer: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ActionOfficerItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Fetch items from API on component mount
+  useEffect(() => {
+    fetchItems()
+  }, [])
+
+  const fetchItems = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await apiService.getActionOfficer()
+      if (response.success && response.data) {
+        // Map database snake_case to frontend camelCase
+        const mappedItems = response.data.map((item: any) => ({
+          id: item.id,
+          employeeCode: item.employee_code || '',
+          lastName: item.last_name || '',
+          firstName: item.first_name || '',
+          middleName: item.middle_name || '',
+          office: item.office || '',
+          userPassword: item.user_password || '',
+          userLevel: item.user_level || '',
+          officeRepresentative: item.office_representative || ''
+        }))
+        setItems(mappedItems)
+      } else {
+        setError(response.error || 'Failed to fetch items')
+      }
+    } catch (err) {
+      setError('An error occurred while fetching items')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -58,9 +93,13 @@ const ActionOfficer: React.FC = () => {
       setLoading(true)
       setError(null)
       try {
-        // TODO: Implement API call for bulk delete
-        setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
-        setSelectedItems([])
+        const response = await apiService.bulkDeleteActionOfficer(selectedItems)
+        if (response.success) {
+          setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
+          setSelectedItems([])
+        } else {
+          setError(response.error || 'Failed to delete items')
+        }
       } catch (err) {
         setError('An error occurred while deleting items')
       } finally {
@@ -94,24 +133,50 @@ const ActionOfficer: React.FC = () => {
     try {
       if (editingItem) {
         // Update existing item
-        // TODO: Implement API call for update
-        setItems(prev => prev.map(item => 
-          item.id === editingItem.id
-            ? { ...item, ...data }
-            : item
-        ))
-        setIsModalOpen(false)
-        setEditingItem(null)
+        const response = await apiService.updateActionOfficer(editingItem.id, data)
+        if (response.success && response.data) {
+          // Map database response to frontend format
+          const updatedItem = {
+            id: response.data.id,
+            employeeCode: response.data.employee_code || data.employeeCode,
+            lastName: response.data.last_name || data.lastName,
+            firstName: response.data.first_name || data.firstName,
+            middleName: response.data.middle_name || data.middleName,
+            office: response.data.office || data.office,
+            userPassword: response.data.user_password || data.userPassword,
+            userLevel: response.data.user_level || data.userLevel,
+            officeRepresentative: response.data.office_representative || data.officeRepresentative
+          }
+          setItems(prev => prev.map(item => 
+            item.id === editingItem.id ? updatedItem : item
+          ))
+          setIsModalOpen(false)
+          setEditingItem(null)
+        } else {
+          setError(response.error || 'Failed to update item')
+        }
       } else {
         // Add new item
-        // TODO: Implement API call for create
-        const newItem: ActionOfficerItem = {
-          id: Date.now(),
-          ...data
+        const response = await apiService.createActionOfficer(data)
+        if (response.success && response.data) {
+          // Map database response to frontend format
+          const newItem = {
+            id: response.data.id,
+            employeeCode: response.data.employee_code || data.employeeCode,
+            lastName: response.data.last_name || data.lastName,
+            firstName: response.data.first_name || data.firstName,
+            middleName: response.data.middle_name || data.middleName,
+            office: response.data.office || data.office,
+            userPassword: response.data.user_password || data.userPassword,
+            userLevel: response.data.user_level || data.userLevel,
+            officeRepresentative: response.data.office_representative || data.officeRepresentative
+          }
+          setItems(prev => [...prev, newItem])
+          setIsModalOpen(false)
+          setEditingItem(null)
+        } else {
+          setError(response.error || 'Failed to create item')
         }
-        setItems(prev => [...prev, newItem])
-        setIsModalOpen(false)
-        setEditingItem(null)
       }
     } catch (err) {
       setError('An error occurred while saving')
@@ -125,8 +190,12 @@ const ActionOfficer: React.FC = () => {
       setLoading(true)
       setError(null)
       try {
-        // TODO: Implement API call for delete
-        setItems(prev => prev.filter(item => item.id !== id))
+        const response = await apiService.deleteActionOfficer(id)
+        if (response.success) {
+          setItems(prev => prev.filter(item => item.id !== id))
+        } else {
+          setError(response.error || 'Failed to delete item')
+        }
       } catch (err) {
         setError('An error occurred while deleting item')
       } finally {
