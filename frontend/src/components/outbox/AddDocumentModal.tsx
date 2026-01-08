@@ -56,10 +56,15 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   }
 
   const addReferenceDocument = () => {
-    setFormData(prev => ({
-      ...prev,
-      referenceDocuments: [...prev.referenceDocuments, '']
-    }))
+    setFormData(prev => {
+      if (prev.referenceDocuments.length >= 5) {
+        return prev
+      }
+      return {
+        ...prev,
+        referenceDocuments: [...prev.referenceDocuments, '']
+      }
+    })
   }
 
   const removeReferenceDocument = (index: number) => {
@@ -270,19 +275,24 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     <button
                       type="button"
                       onClick={addReferenceDocument}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-md border border-dashed transition-colors flex items-center justify-center gap-1.5"
+                      disabled={formData.referenceDocuments.length >= 5}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-md border border-dashed transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
-                        borderColor: inputBorder,
-                        color: textSecondary,
+                        borderColor: formData.referenceDocuments.length >= 5 ? inputBorder : inputBorder,
+                        color: formData.referenceDocuments.length >= 5 ? textSecondary : textSecondary,
                         backgroundColor: 'transparent'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = '#3ecf8e'
-                        e.currentTarget.style.color = '#3ecf8e'
+                        if (formData.referenceDocuments.length < 5) {
+                          e.currentTarget.style.borderColor = '#3ecf8e'
+                          e.currentTarget.style.color = '#3ecf8e'
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = inputBorder
-                        e.currentTarget.style.color = textSecondary
+                        if (formData.referenceDocuments.length < 5) {
+                          e.currentTarget.style.borderColor = inputBorder
+                          e.currentTarget.style.color = textSecondary
+                        }
                       }}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

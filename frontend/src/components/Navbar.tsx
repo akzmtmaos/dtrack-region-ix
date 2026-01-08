@@ -83,41 +83,41 @@ const Navbar: React.FC = () => {
           borderRight: `1px solid ${colors.border}`,
         }}
       >
-        <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full">
           {/* Toggle/Close Button */}
-          <div 
+        <div 
             className="flex items-center h-10 px-2"
             style={{ borderBottom: `1px solid ${colors.border}` }}
-          >
+        >
             {/* Mobile Close */}
-            <button
-              onClick={closeMobileNavbar}
+          <button
+            onClick={closeMobileNavbar}
               className="md:hidden p-1 rounded hover:bg-neutral-800 text-neutral-400"
-            >
+          >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
             {/* Desktop Toggle */}
-            <button
-              onClick={toggleNavbar}
+          <button
+            onClick={toggleNavbar}
               className={`hidden md:flex p-1 rounded transition-colors ${
                 theme === 'dark' ? 'hover:bg-neutral-800 text-neutral-500' : 'hover:bg-neutral-100 text-neutral-400'
-              }`}
+            }`}
               title={isMinimized ? 'Expand' : 'Collapse'}
-            >
-              <svg 
+          >
+            <svg 
                 className={`w-4 h-4 transition-transform ${isMinimized ? 'rotate-180' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
-          
+            </svg>
+          </button>
+        </div>
+        
           {/* Navigation Items */}
           <div className="flex-1 overflow-y-auto py-2 px-1.5">
             <div className="flex flex-col gap-0.5">
@@ -160,7 +160,7 @@ const Navbar: React.FC = () => {
 
               {/* Separator */}
               <div className="my-2" style={{ borderTop: `1px solid ${colors.border}` }} />
-
+            
               {/* Reference Tables */}
               <div>
                 <button 
@@ -170,24 +170,24 @@ const Navbar: React.FC = () => {
                 >
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  {!isMinimized && (
-                    <>
+                </svg>
+                {!isMinimized && (
+                  <>
                       <span className="flex-1 text-left">Reference Tables</span>
-                      <svg 
+                    <svg 
                         className={`w-3 h-3 transition-transform ${isReferenceTablesOpen ? 'rotate-180' : ''}`}
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
                         strokeWidth={2}
-                      >
+                    >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </>
-                  )}
-                </button>
-                
-                {isReferenceTablesOpen && (
+                    </svg>
+                  </>
+                )}
+              </button>
+              
+              {isReferenceTablesOpen && (
                   <div className="mt-0.5 flex flex-col gap-0.5">
                     {[
                       { path: '/reference-tables/action-required', label: 'Action Required' },
@@ -199,22 +199,22 @@ const Navbar: React.FC = () => {
                       { path: '/reference-tables/region', label: 'Region' },
                       { path: '/reference-tables/user-levels', label: 'User Levels' },
                     ].map(item => (
-                      <Link 
+                    <Link 
                         key={item.path}
                         to={item.path} 
                         className={subItemClass(isActive(item.path))}
                         style={isActive(item.path) ? { color: colors.accent } : {}}
-                      >
-                        {isMinimized ? (
+                    >
+                    {isMinimized ? (
                           <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isActive(item.path) ? colors.accent : colors.text }} />
-                        ) : (
+                    ) : (
                           item.label
-                        )}
-                      </Link>
+                    )}
+                    </Link>
                     ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
               {/* Reports */}
               <div>
@@ -242,7 +242,7 @@ const Navbar: React.FC = () => {
                   )}
                 </button>
                 
-                {isReportsOpen && (
+              {isReportsOpen && (
                   <div className="mt-0.5 flex flex-col gap-0.5">
                     {[
                       { path: '/reports/document-by-releasing-officer', label: 'By Releasing Officer' },
@@ -255,23 +255,23 @@ const Navbar: React.FC = () => {
                       { path: '/reports/overdue-report', label: 'Overdue Report' },
                       { path: '/reports/audit-trail', label: 'Audit Trail' },
                     ].map(item => (
-                      <Link 
+                    <Link 
                         key={item.path}
                         to={item.path} 
                         className={subItemClass(isActive(item.path))}
                         style={isActive(item.path) ? { color: colors.accent } : {}}
-                      >
-                        {isMinimized ? (
+                    >
+                    {isMinimized ? (
                           <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isActive(item.path) ? colors.accent : colors.text }} />
-                        ) : (
+                    ) : (
                           item.label
-                        )}
-                      </Link>
+                    )}
+                  </Link>
                     ))}
-                  </div>
-                )}
-              </div>
-
+                </div>
+              )}
+            </div>
+            
               {/* Separator */}
               <div className="my-2" style={{ borderTop: `1px solid ${colors.border}` }} />
 
@@ -280,37 +280,37 @@ const Navbar: React.FC = () => {
                 to="/office-with-overdue" 
                 className={navItemClass(isActive('/office-with-overdue'))}
                 style={isActive('/office-with-overdue') ? { backgroundColor: colors.bgActive, color: colors.textActive } : {}}
-              >
+            >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              </svg>
                 {!isMinimized && <span>Office with Overdue</span>}
-              </Link>
+            </Link>
 
               {/* Logout */}
               <button
-                onClick={() => setShowLogoutConfirmation(true)}
-                disabled={showLogoutConfirmation}
+              onClick={() => setShowLogoutConfirmation(true)}
+              disabled={showLogoutConfirmation}
                 className={`w-full ${navItemClass(false)} ${showLogoutConfirmation ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
+            >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
+              </svg>
                 {!isMinimized && <span>Logout</span>}
-              </button>
+            </button>
             </div>
           </div>
         </div>
-        
-        <LogoutConfirmation
-          isOpen={showLogoutConfirmation}
-          onClose={() => setShowLogoutConfirmation(false)}
-          onConfirm={() => {
-            setShowLogoutConfirmation(false)
-            navigate('/logout')
-          }}
-        />
-      </nav>
+            
+            <LogoutConfirmation
+              isOpen={showLogoutConfirmation}
+              onClose={() => setShowLogoutConfirmation(false)}
+              onConfirm={() => {
+                setShowLogoutConfirmation(false)
+                navigate('/logout')
+              }}
+            />
+    </nav>
     </>
   )
 }

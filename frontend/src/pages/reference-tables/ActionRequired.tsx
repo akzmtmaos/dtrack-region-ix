@@ -160,58 +160,6 @@ const ActionRequired: React.FC = () => {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    if (theme === 'dark') {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-500/20 text-green-400'
-        case 'Pending':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Failed':
-          return 'bg-red-500/20 text-red-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
-      }
-    } else {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-100 text-green-800'
-        case 'Pending':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Failed':
-          return 'bg-red-100 text-red-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
-      }
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    if (theme === 'dark') {
-      switch (priority) {
-        case 'High':
-          return 'bg-red-500/20 text-red-400'
-        case 'Medium':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Low':
-          return 'bg-blue-500/20 text-blue-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
-      }
-    } else {
-      switch (priority) {
-        case 'High':
-          return 'bg-red-100 text-red-800'
-        case 'Medium':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Low':
-          return 'bg-blue-100 text-blue-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
-      }
-    }
-  }
-  
   const RequiredAsterisk = () => <span className="text-red-500">*</span>;
 
   return (
@@ -280,7 +228,7 @@ const ActionRequired: React.FC = () => {
       >
         <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
           <tr>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               {items.length > 0 && (
@@ -295,17 +243,17 @@ const ActionRequired: React.FC = () => {
                 />
               )}
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               ID
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               Action Required <RequiredAsterisk />
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               ACTIONS
@@ -317,7 +265,7 @@ const ActionRequired: React.FC = () => {
         }`}>
           {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={4} className={`px-6 py-8 text-center text-sm ${
+              <td colSpan={4} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
@@ -325,7 +273,7 @@ const ActionRequired: React.FC = () => {
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td colSpan={4} className={`px-6 py-8 text-center text-sm ${
+              <td colSpan={4} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
@@ -339,7 +287,7 @@ const ActionRequired: React.FC = () => {
                   theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -352,41 +300,41 @@ const ActionRequired: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.id}
                 </td>
-                <td className={`px-6 py-4 text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.action_required}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(item)}
-                      className={`transition-colors ${
+                      className={`p-1.5 rounded transition-colors ${
                         theme === 'dark'
-                          ? 'text-blue-400 hover:text-blue-300'
-                          : 'text-blue-600 hover:text-blue-900'
+                          ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                       }`}
                       title="Edit"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className={`transition-colors ${
+                      className={`p-1.5 rounded transition-colors ${
                         theme === 'dark'
-                          ? 'text-red-400 hover:text-red-300'
-                          : 'text-red-600 hover:text-red-900'
+                          ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                       }`}
                       title="Delete"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>

@@ -19,8 +19,8 @@ const Table: React.FC<TableProps> = ({ children, className = '', pagination }) =
       } ${className}`}
       style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
     >
-      <div className="overflow-x-auto">
-        <table className={`min-w-full divide-y ${
+      <div className="overflow-x-auto -mx-1">
+        <table className={`w-full divide-y ${
           theme === 'dark' ? 'divide-dark-hover' : 'divide-gray-200'
         }`}>
           {children}
