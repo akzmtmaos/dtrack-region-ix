@@ -9,7 +9,6 @@ import { apiService } from '../../services/api'
 
 interface DocumentTypeItem {
   id: number
-  documentTypeCode: string
   documentType: string
 }
 
@@ -38,7 +37,6 @@ const DocumentType: React.FC = () => {
         // Map database snake_case to frontend camelCase
         const mappedItems = response.data.map((item: any) => ({
           id: item.id,
-          documentTypeCode: item.document_type_code || '',
           documentType: item.document_type || ''
         }))
         setItems(mappedItems)
@@ -106,7 +104,7 @@ const DocumentType: React.FC = () => {
     setIsModalOpen(true)
   }
 
-  const handleSave = async (data: { documentTypeCode: string; documentType: string }) => {
+  const handleSave = async (data: { documentType: string }) => {
     setLoading(true)
     setError(null)
     try {
@@ -117,7 +115,6 @@ const DocumentType: React.FC = () => {
           // Map database response to frontend format
           const updatedItem = {
             id: response.data.id,
-            documentTypeCode: response.data.document_type_code || data.documentTypeCode,
             documentType: response.data.document_type || data.documentType
           }
           setItems(prev => prev.map(item => 
@@ -135,7 +132,6 @@ const DocumentType: React.FC = () => {
           // Map database response to frontend format
           const newItem = {
             id: response.data.id,
-            documentTypeCode: response.data.document_type_code || data.documentTypeCode,
             documentType: response.data.document_type || data.documentType
           }
           setItems(prev => [...prev, newItem])
@@ -257,12 +253,7 @@ const DocumentType: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              ID
-            </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
-              Document Type Code <RequiredAsterisk />
+              Document Type ID <RequiredAsterisk />
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -281,7 +272,7 @@ const DocumentType: React.FC = () => {
         }`}>
           {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={5} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={4} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
@@ -289,7 +280,7 @@ const DocumentType: React.FC = () => {
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td colSpan={5} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={4} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
@@ -319,12 +310,7 @@ const DocumentType: React.FC = () => {
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {item.id}
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {item.documentTypeCode}
+                  {String(item.id).padStart(5, '0')}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -374,7 +360,7 @@ const DocumentType: React.FC = () => {
           setEditingItem(null)
         }}
         onSave={handleSave}
-        initialData={editingItem ? { id: editingItem.id, document_type_code: editingItem.documentTypeCode, document_type: editingItem.documentType } : null}
+        initialData={editingItem ? { id: editingItem.id, document_type: editingItem.documentType } : null}
       />
     </div>
   )

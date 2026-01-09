@@ -246,7 +246,7 @@ const ActionRequired: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              ID
+              Action Required ID <RequiredAsterisk />
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -303,7 +303,7 @@ const ActionRequired: React.FC = () => {
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {item.id}
+                  {String(item.id).padStart(5, '0')}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'

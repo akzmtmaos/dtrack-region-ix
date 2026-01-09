@@ -178,7 +178,6 @@ class ApiService {
   }
 
   async createDocumentType(data: {
-    documentTypeCode: string
     documentType: string
   }): Promise<ApiResponse<any>> {
     return this.request<any>('/document-type/create/', {
@@ -190,7 +189,6 @@ class ApiService {
   async updateDocumentType(
     id: number,
     data: {
-      documentTypeCode?: string
       documentType?: string
     }
   ): Promise<ApiResponse<any>> {

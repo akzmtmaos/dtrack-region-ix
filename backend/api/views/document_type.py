@@ -41,14 +41,7 @@ def document_type_create(request):
         supabase = get_supabase_admin_client()
         
         # Extract data from request
-        document_type_code = request.data.get('documentTypeCode')
         document_type = request.data.get('documentType')
-        
-        if not document_type_code:
-            return Response({
-                'success': False,
-                'error': 'Document Type Code is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
         
         if not document_type:
             return Response({
@@ -56,9 +49,8 @@ def document_type_create(request):
                 'error': 'Document Type is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Insert into Supabase
+        # Insert into Supabase (ID will be auto-generated as the code)
         response = supabase.table('document_type').insert({
-            'document_type_code': document_type_code,
             'document_type': document_type
         }).execute()
         
@@ -92,8 +84,6 @@ def document_type_update(request, item_id):
         # Extract data from request
         update_data = {}
         
-        if 'documentTypeCode' in request.data:
-            update_data['document_type_code'] = request.data.get('documentTypeCode')
         if 'documentType' in request.data:
             update_data['document_type'] = request.data.get('documentType')
         

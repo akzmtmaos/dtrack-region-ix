@@ -257,12 +257,7 @@ const ActionTaken: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              ID
-            </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
-              Action Taken Code <RequiredAsterisk />
+              Action Taken ID <RequiredAsterisk />
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -281,7 +276,7 @@ const ActionTaken: React.FC = () => {
         }`}>
           {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={5} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={4} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
@@ -289,7 +284,7 @@ const ActionTaken: React.FC = () => {
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td colSpan={5} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={4} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
@@ -319,12 +314,7 @@ const ActionTaken: React.FC = () => {
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {item.id}
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {item.actionTakenCode}
+                  {String(item.id).padStart(5, '0')}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'

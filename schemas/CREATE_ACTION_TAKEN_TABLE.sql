@@ -4,13 +4,9 @@
 -- Create the action_taken table
 CREATE TABLE IF NOT EXISTS action_taken (
   id BIGSERIAL PRIMARY KEY,
-  action_taken_code TEXT NOT NULL,
   action_taken TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Add unique constraint on action_taken_code to prevent duplicates
-  CONSTRAINT unique_action_taken_code UNIQUE (action_taken_code)
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create a function to automatically update the updated_at timestamp
@@ -31,11 +27,10 @@ EXECUTE FUNCTION update_updated_at_column();
 
 -- Add comments to the table and columns
 COMMENT ON TABLE action_taken IS 'Reference table for action taken types in the document tracking system';
-COMMENT ON COLUMN action_taken.action_taken_code IS 'Unique code identifier for the action taken';
+COMMENT ON COLUMN action_taken.id IS 'Action Taken ID - Unique identifier used as the action taken code';
 COMMENT ON COLUMN action_taken.action_taken IS 'Description of the action taken';
 
 -- Create indexes for faster searches
-CREATE INDEX IF NOT EXISTS idx_action_taken_code ON action_taken(action_taken_code);
 CREATE INDEX IF NOT EXISTS idx_action_taken_text ON action_taken(action_taken);
 
 -- Enable Row Level Security

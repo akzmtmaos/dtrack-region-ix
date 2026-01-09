@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { apiService } from '../../services/api'
 
 interface DocumentActionRequiredDaysModalProps {
   isOpen: boolean
@@ -21,6 +22,45 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
     requiredDays: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
+  const [actionRequiredList, setActionRequiredList] = useState<Array<{ id: number; action_required: string }>>([])
+  const [loadingOptions, setLoadingOptions] = useState(false)
+
+  // Fetch document types and action required options
+  useEffect(() => {
+    if (isOpen) {
+      fetchOptions()
+    }
+  }, [isOpen])
+
+  const fetchOptions = async () => {
+    setLoadingOptions(true)
+    try {
+      // Fetch document types
+      const documentTypeResponse = await apiService.getDocumentType()
+      if (documentTypeResponse.success && documentTypeResponse.data) {
+        const mappedTypes = documentTypeResponse.data.map((item: any) => ({
+          id: item.id,
+          document_type: item.document_type || ''
+        }))
+        setDocumentTypes(mappedTypes)
+      }
+
+      // Fetch action required
+      const actionRequiredResponse = await apiService.getActionRequired()
+      if (actionRequiredResponse.success && actionRequiredResponse.data) {
+        const mappedActions = actionRequiredResponse.data.map((item: any) => ({
+          id: item.id,
+          action_required: item.action_required || ''
+        }))
+        setActionRequiredList(mappedActions)
+      }
+    } catch (err) {
+      console.error('Error fetching options:', err)
+    } finally {
+      setLoadingOptions(false)
+    }
+  }
 
   useEffect(() => {
     if (initialData) {
@@ -149,19 +189,23 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
                     name="documentType"
                     value={formData.documentType}
                     onChange={handleChange}
+                    disabled={loadingOptions}
                     className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{
                       backgroundColor: inputBg,
                       border: `1px solid ${errors.documentType ? '#ef4444' : inputBorder}`,
-                      color: textPrimary
+                      color: textPrimary,
+                      opacity: loadingOptions ? 0.6 : 1
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
                     onBlur={(e) => e.target.style.borderColor = errors.documentType ? '#ef4444' : inputBorder}
                   >
                     <option value="">Select document type</option>
-                    <option value="Type 1">Type 1</option>
-                    <option value="Type 2">Type 2</option>
-                    <option value="Type 3">Type 3</option>
+                    {documentTypes.map((type) => (
+                      <option key={type.id} value={type.document_type}>
+                        {type.document_type}
+                      </option>
+                    ))}
                   </select>
                   {errors.documentType && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.documentType}</p>
@@ -179,19 +223,23 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
                     name="actionRequired"
                     value={formData.actionRequired}
                     onChange={handleChange}
+                    disabled={loadingOptions}
                     className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{
                       backgroundColor: inputBg,
                       border: `1px solid ${errors.actionRequired ? '#ef4444' : inputBorder}`,
-                      color: textPrimary
+                      color: textPrimary,
+                      opacity: loadingOptions ? 0.6 : 1
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
                     onBlur={(e) => e.target.style.borderColor = errors.actionRequired ? '#ef4444' : inputBorder}
                   >
                     <option value="">Select action required</option>
-                    <option value="Action 1">Action 1</option>
-                    <option value="Action 2">Action 2</option>
-                    <option value="Action 3">Action 3</option>
+                    {actionRequiredList.map((action) => (
+                      <option key={action.id} value={action.action_required}>
+                        {action.action_required}
+                      </option>
+                    ))}
                   </select>
                   {errors.actionRequired && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.actionRequired}</p>

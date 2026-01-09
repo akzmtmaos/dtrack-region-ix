@@ -16,7 +16,6 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
 }) => {
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
-    actionTakenCode: '',
     actionTaken: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -24,12 +23,10 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        actionTakenCode: initialData.action_taken_code || '',
         actionTaken: initialData.action_taken || ''
       })
     } else {
       setFormData({
-        actionTakenCode: '',
         actionTaken: ''
       })
     }
@@ -55,9 +52,6 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
   const validate = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.actionTakenCode.trim()) {
-      newErrors.actionTakenCode = 'Action Taken Code is required'
-    }
     if (!formData.actionTaken.trim()) {
       newErrors.actionTaken = 'Action Taken is required'
     }
@@ -70,12 +64,13 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
     e.preventDefault()
 
     if (validate()) {
+      // Generate actionTakenCode automatically from actionTaken (convert to uppercase, replace spaces with underscores)
+      const actionTakenCode = formData.actionTaken.trim().toUpperCase().replace(/\s+/g, '_')
       onSave({
-        actionTakenCode: formData.actionTakenCode,
+        actionTakenCode: actionTakenCode,
         actionTaken: formData.actionTaken
       })
       setFormData({
-        actionTakenCode: '',
         actionTaken: ''
       })
       setErrors({})
@@ -85,7 +80,6 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
 
   const handleClose = () => {
     setFormData({
-      actionTakenCode: '',
       actionTaken: ''
     })
     setErrors({})

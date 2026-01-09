@@ -4,8 +4,8 @@ import { useTheme } from '../../context/ThemeContext'
 interface DocumentTypeModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: { documentTypeCode: string; documentType: string }) => void
-  initialData?: { id: number; document_type_code?: string; document_type?: string } | null
+  onSave: (data: { documentType: string }) => void
+  initialData?: { id: number; document_type?: string } | null
 }
 
 const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
@@ -16,7 +16,6 @@ const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
 }) => {
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
-    documentTypeCode: '',
     documentType: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -24,12 +23,10 @@ const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        documentTypeCode: initialData.document_type_code || '',
         documentType: initialData.document_type || ''
       })
     } else {
       setFormData({
-        documentTypeCode: '',
         documentType: ''
       })
     }
@@ -55,9 +52,6 @@ const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
   const validate = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.documentTypeCode.trim()) {
-      newErrors.documentTypeCode = 'Document Type Code is required'
-    }
     if (!formData.documentType.trim()) {
       newErrors.documentType = 'Document Type is required'
     }
@@ -71,11 +65,9 @@ const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
 
     if (validate()) {
       onSave({
-        documentTypeCode: formData.documentTypeCode,
         documentType: formData.documentType
       })
       setFormData({
-        documentTypeCode: '',
         documentType: ''
       })
       setErrors({})
@@ -85,7 +77,6 @@ const DocumentTypeModal: React.FC<DocumentTypeModalProps> = ({
 
   const handleClose = () => {
     setFormData({
-      documentTypeCode: '',
       documentType: ''
     })
     setErrors({})
