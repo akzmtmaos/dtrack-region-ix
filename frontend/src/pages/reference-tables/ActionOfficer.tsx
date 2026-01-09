@@ -29,6 +29,7 @@ const ActionOfficer: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ActionOfficerItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch items from API on component mount
   useEffect(() => {
@@ -70,9 +71,31 @@ const ActionOfficer: React.FC = () => {
     }
   }
 
+  // Filter items based on search query
+  const filteredItems = items.filter(item => {
+    const searchLower = searchQuery.toLowerCase()
+    const idString = String(item.id).padStart(5, '0')
+    const employeeCode = item.employeeCode?.toLowerCase() || ''
+    const lastName = item.lastName?.toLowerCase() || ''
+    const firstName = item.firstName?.toLowerCase() || ''
+    const middleName = item.middleName?.toLowerCase() || ''
+    const office = item.office?.toLowerCase() || ''
+    const userLevel = item.userLevel?.toLowerCase() || ''
+    const officeRepresentative = item.officeRepresentative?.toLowerCase() || ''
+    
+    return idString.includes(searchLower) ||
+           employeeCode.includes(searchLower) ||
+           lastName.includes(searchLower) ||
+           firstName.includes(searchLower) ||
+           middleName.includes(searchLower) ||
+           office.includes(searchLower) ||
+           userLevel.includes(searchLower) ||
+           officeRepresentative.includes(searchLower)
+  })
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedItems(items.map(item => item.id))
+      setSelectedItems(filteredItems.map(item => item.id))
     } else {
       setSelectedItems([])
     }
@@ -245,6 +268,8 @@ const ActionOfficer: React.FC = () => {
           type="text"
           placeholder="Search..."
           className="w-48"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           icon={
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -265,7 +290,7 @@ const ActionOfficer: React.FC = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
-            totalItems={items.length}
+            totalItems={filteredItems.length}
             itemsPerPage={10}
           />
         }
@@ -275,10 +300,10 @@ const ActionOfficer: React.FC = () => {
             <th className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              {items.length > 0 && (
+              {filteredItems.length > 0 && (
                 <input
                   type="checkbox"
-                  checked={items.length > 0 && selectedItems.length === items.length}
+                  checked={filteredItems.length > 0 && selectedItems.length === filteredItems.length}
                   onChange={handleSelectAll}
                   className={`rounded text-green-600 focus:ring-green-500 ${
                     theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
@@ -359,7 +384,7 @@ const ActionOfficer: React.FC = () => {
               </td>
             </tr>
           ) : (
-            items.map((item) => (
+            filteredItems.map((item) => (
               <tr 
                 key={item.id} 
                 className={`transition-colors ${

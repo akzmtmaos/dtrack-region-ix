@@ -253,6 +253,102 @@ class ApiService {
       body: JSON.stringify({ ids }),
     })
   }
+
+  // Office endpoints
+  async getOffice(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/office/')
+  }
+
+  async createOffice(data: {
+    office: string
+    region: string
+    shortName: string
+    headOffice: string
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>('/office/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateOffice(
+    id: number,
+    data: {
+      office?: string
+      region?: string
+      shortName?: string
+      headOffice?: string
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/office/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteOffice(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/office/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteOffice(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/office/bulk-delete/', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
+
+  // Region endpoints
+  async getRegion(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/region/')
+  }
+
+  async createRegion(data: {
+    regionName: string
+    abbreviation: string
+    nscbCode: string
+    nscbName: string
+    userLevelId?: number
+    addedBy: string
+    status: string
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>('/region/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateRegion(
+    id: number,
+    data: {
+      regionName?: string
+      abbreviation?: string
+      nscbCode?: string
+      nscbName?: string
+      userLevelId?: number
+      addedBy?: string
+      status?: string
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/region/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteRegion(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/region/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteRegion(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/region/bulk-delete/', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
 }
 
 export const apiService = new ApiService()

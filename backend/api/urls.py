@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import action_required, action_officer, action_taken, document_type, document_action_required_days
+from .views import action_required, action_officer, action_taken, document_type, document_action_required_days, office, region
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
@@ -41,5 +41,19 @@ urlpatterns = [
     path('document-action-required-days/<int:item_id>/', document_action_required_days.document_action_required_days_update, name='document-action-required-days-update'),
     path('document-action-required-days/<int:item_id>/delete/', document_action_required_days.document_action_required_days_delete, name='document-action-required-days-delete'),
     path('document-action-required-days/bulk-delete/', document_action_required_days.document_action_required_days_bulk_delete, name='document-action-required-days-bulk-delete'),
+    
+    # Office endpoints
+    path('office/', office.office_list, name='office-list'),
+    path('office/create/', office.office_create, name='office-create'),
+    path('office/<int:item_id>/', office.office_update, name='office-update'),
+    path('office/<int:item_id>/delete/', office.office_delete, name='office-delete'),
+    path('office/bulk-delete/', office.office_bulk_delete, name='office-bulk-delete'),
+    
+    # Region endpoints
+    path('region/', region.region_list, name='region-list'),
+    path('region/create/', region.region_create, name='region-create'),
+    path('region/<int:item_id>/', region.region_update, name='region-update'),
+    path('region/<int:item_id>/delete/', region.region_delete, name='region-delete'),
+    path('region/bulk-delete/', region.region_bulk_delete, name='region-bulk-delete'),
 ]
 
