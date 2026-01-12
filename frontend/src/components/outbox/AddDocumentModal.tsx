@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { apiService } from '../../services/api'
 
 interface AddDocumentModalProps {
   isOpen: boolean
@@ -27,8 +28,26 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
 
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
+
+  // Fetch document types when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const fetchDocumentTypes = async () => {
+        try {
+          const response = await apiService.getDocumentType()
+          if (response.success && response.data) {
+            setDocumentTypes(response.data)
+          }
+        } catch (error) {
+          console.error('Failed to fetch document types:', error)
+        }
+      }
+      fetchDocumentTypes()
+    }
+  }, [isOpen])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -323,10 +342,11 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                   onBlur={(e) => e.target.style.borderColor = inputBorder}
                 >
                   <option value="">Select document type</option>
-                  <option value="Memo">Memo</option>
-                  <option value="Letter">Letter</option>
-                  <option value="Report">Report</option>
-                  <option value="Order">Order</option>
+                  {documentTypes.map((type) => (
+                    <option key={type.id} value={type.document_type}>
+                      {type.document_type}
+                    </option>
+                  ))}
                 </select>
               </div>
 

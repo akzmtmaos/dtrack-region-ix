@@ -42,10 +42,8 @@ def region_create(request):
         
         # Extract data from request
         region_name = request.data.get('regionName')
-        abbreviation = request.data.get('abbreviation')
         nscb_code = request.data.get('nscbCode')
         nscb_name = request.data.get('nscbName')
-        user_level_id = request.data.get('userLevelId')
         added_by = request.data.get('addedBy')
         status_value = request.data.get('status')
         
@@ -53,11 +51,6 @@ def region_create(request):
             return Response({
                 'success': False,
                 'error': 'Region Name is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        if not abbreviation:
-            return Response({
-                'success': False,
-                'error': 'Abbreviation is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         if not nscb_code:
             return Response({
@@ -83,15 +76,11 @@ def region_create(request):
         # Insert into Supabase
         insert_data = {
             'region_name': region_name,
-            'abbreviation': abbreviation,
             'nscb_code': nscb_code,
             'nscb_name': nscb_name,
             'added_by': added_by,
             'status': status_value
         }
-        
-        if user_level_id is not None:
-            insert_data['user_level_id'] = user_level_id
         
         response = supabase.table('region').insert(insert_data).execute()
         
@@ -127,18 +116,10 @@ def region_update(request, item_id):
         
         if 'regionName' in request.data:
             update_data['region_name'] = request.data.get('regionName')
-        if 'abbreviation' in request.data:
-            update_data['abbreviation'] = request.data.get('abbreviation')
         if 'nscbCode' in request.data:
             update_data['nscb_code'] = request.data.get('nscbCode')
         if 'nscbName' in request.data:
             update_data['nscb_name'] = request.data.get('nscbName')
-        if 'userLevelId' in request.data:
-            user_level_id = request.data.get('userLevelId')
-            if user_level_id is not None:
-                update_data['user_level_id'] = user_level_id
-            else:
-                update_data['user_level_id'] = None
         if 'addedBy' in request.data:
             update_data['added_by'] = request.data.get('addedBy')
         if 'status' in request.data:

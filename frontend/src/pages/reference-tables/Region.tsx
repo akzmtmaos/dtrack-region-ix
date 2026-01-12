@@ -6,14 +6,13 @@ import Table from '../../components/Table'
 import Button from '../../components/Button'
 import RegionModal from '../../components/reference-tables/RegionModal'
 import { apiService } from '../../services/api'
+import { usePagination } from '../../hooks/usePagination'
 
 interface RegionItem {
   id: number
   region_name: string
-  abbreviation: string
   nscb_code: string
   nscb_name: string
-  user_level_id?: number
   added_by: string
   status: string
   date_updated?: string
@@ -22,8 +21,6 @@ interface RegionItem {
 const Region: React.FC = () => {
   const { theme } = useTheme()
   const [items, setItems] = useState<RegionItem[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(1)
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<RegionItem | null>(null)
@@ -36,13 +33,52 @@ const Region: React.FC = () => {
     fetchItems()
   }, [])
 
+  // Use pagination hook
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    filteredItems,
+    paginatedItems
+  } = usePagination({
+    items,
+    itemsPerPage: 20,
+    searchQuery,
+    searchFilter: (item, query) => {
+      const searchLower = query.toLowerCase()
+      const idString = String(item.id).padStart(5, '0')
+      const regionName = item.region_name?.toLowerCase() || ''
+      const nscbCode = item.nscb_code?.toLowerCase() || ''
+      const nscbName = item.nscb_name?.toLowerCase() || ''
+      const addedBy = item.added_by?.toLowerCase() || ''
+      const status = item.status?.toLowerCase() || ''
+      
+      return idString.includes(searchLower) ||
+             regionName.includes(searchLower) ||
+             nscbCode.includes(searchLower) ||
+             nscbName.includes(searchLower) ||
+             addedBy.includes(searchLower) ||
+             status.includes(searchLower)
+    }
+  })
+
   const fetchItems = async () => {
     setLoading(true)
     setError(null)
     try {
       const response = await apiService.getRegion()
       if (response.success && response.data) {
-        setItems(response.data)
+        // Map database snake_case to frontend format
+        const mappedItems = response.data.map((item: any) => ({
+          id: item.id,
+          region_name: item.region_name || '',
+          nscb_code: item.nscb_code || '',
+          nscb_name: item.nscb_name || '',
+          added_by: item.added_by || '',
+          status: item.status || '',
+          date_updated: item.updated_at || item.date_updated || ''
+        }))
+        setItems(mappedItems)
       } else {
         setError(response.error || 'Failed to fetch items')
       }
@@ -54,34 +90,12 @@ const Region: React.FC = () => {
   }
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    setCurrentPage(page)
   }
-
-  // Filter items based on search query
-  const filteredItems = items.filter(item => {
-    const searchLower = searchQuery.toLowerCase()
-    const idString = String(item.id).padStart(5, '0')
-    const regionName = item.region_name?.toLowerCase() || ''
-    const abbreviation = item.abbreviation?.toLowerCase() || ''
-    const nscbCode = item.nscb_code?.toLowerCase() || ''
-    const nscbName = item.nscb_name?.toLowerCase() || ''
-    const addedBy = item.added_by?.toLowerCase() || ''
-    const status = item.status?.toLowerCase() || ''
-    
-    return idString.includes(searchLower) ||
-           regionName.includes(searchLower) ||
-           abbreviation.includes(searchLower) ||
-           nscbCode.includes(searchLower) ||
-           nscbName.includes(searchLower) ||
-           addedBy.includes(searchLower) ||
-           status.includes(searchLower)
-  })
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedItems(filteredItems.map(item => item.id))
+      setSelectedItems(paginatedItems.map(item => item.id))
     } else {
       setSelectedItems([])
     }
@@ -129,10 +143,8 @@ const Region: React.FC = () => {
 
   const handleSave = async (data: {
     regionName: string
-    abbreviation: string
     nscbCode: string
     nscbName: string
-    userLevelId: string
     addedBy: string
     status: string
   }) => {
@@ -143,10 +155,8 @@ const Region: React.FC = () => {
         // Update existing item
         const response = await apiService.updateRegion(editingItem.id, {
           regionName: data.regionName,
-          abbreviation: data.abbreviation,
           nscbCode: data.nscbCode,
           nscbName: data.nscbName,
-          userLevelId: data.userLevelId ? parseInt(data.userLevelId) : undefined,
           addedBy: data.addedBy,
           status: data.status
         })
@@ -165,10 +175,8 @@ const Region: React.FC = () => {
         // Add new item
         const response = await apiService.createRegion({
           regionName: data.regionName,
-          abbreviation: data.abbreviation,
           nscbCode: data.nscbCode,
           nscbName: data.nscbName,
-          userLevelId: data.userLevelId ? parseInt(data.userLevelId) : undefined,
           addedBy: data.addedBy,
           status: data.status
         })
@@ -270,7 +278,7 @@ const Region: React.FC = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={10}
+            itemsPerPage={20}
           />
         }
       >
@@ -279,10 +287,10 @@ const Region: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              {filteredItems.length > 0 && (
+              {paginatedItems.length > 0 && (
                 <input
                   type="checkbox"
-                  checked={filteredItems.length > 0 && selectedItems.length === filteredItems.length}
+                  checked={paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id))}
                   onChange={handleSelectAll}
                   className={`rounded text-green-600 focus:ring-green-500 ${
                     theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
@@ -304,22 +312,12 @@ const Region: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              Abbreviation <RequiredAsterisk />
-            </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
               NSCB Code <RequiredAsterisk />
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
               NSCB Name <RequiredAsterisk />
-            </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
-              User Level ID
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
@@ -346,28 +344,36 @@ const Region: React.FC = () => {
         <tbody className={`divide-y ${
           theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
         }`}>
-          {loading && filteredItems.length === 0 ? (
+          {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={11} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={9} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
               </td>
             </tr>
-          ) : filteredItems.length === 0 ? (
+          ) : items.length === 0 ? (
             <tr>
-              <td colSpan={11} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={9} className={`px-4 py-4 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
               </td>
             </tr>
           ) : (
-            filteredItems.map((item) => (
+            paginatedItems.map((item) => {
+              const isSelected = selectedItems.includes(item.id)
+              return (
               <tr 
                 key={item.id} 
                 className={`transition-colors ${
-                  theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
+                  isSelected
+                    ? theme === 'dark' 
+                      ? 'bg-blue-900/30 hover:bg-blue-900/40' 
+                      : 'bg-blue-100 hover:bg-blue-200'
+                    : theme === 'dark' 
+                      ? 'hover:bg-dark-hover' 
+                      : 'hover:bg-gray-50'
                 }`}
               >
                 <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
@@ -396,22 +402,12 @@ const Region: React.FC = () => {
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {item.abbreviation}
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
                   {item.nscb_code}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.nscb_name}
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {item.user_level_id || '-'}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -459,7 +455,8 @@ const Region: React.FC = () => {
                   </div>
                 </td>
               </tr>
-            ))
+              )
+            })
           )}
         </tbody>
       </Table>
@@ -474,10 +471,8 @@ const Region: React.FC = () => {
         initialData={editingItem ? {
           id: editingItem.id,
           region_name: editingItem.region_name,
-          abbreviation: editingItem.abbreviation,
           nscb_code: editingItem.nscb_code,
           nscb_name: editingItem.nscb_name,
-          user_level_id: editingItem.user_level_id,
           added_by: editingItem.added_by,
           status: editingItem.status
         } : null}

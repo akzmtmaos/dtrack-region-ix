@@ -6,6 +6,7 @@ import Table from '../../components/Table'
 import Button from '../../components/Button'
 import DocumentTypeModal from '../../components/reference-tables/DocumentTypeModal'
 import { apiService } from '../../services/api'
+import { usePagination } from '../../hooks/usePagination'
 
 interface DocumentTypeItem {
   id: number
@@ -15,8 +16,6 @@ interface DocumentTypeItem {
 const DocumentType: React.FC = () => {
   const { theme } = useTheme()
   const [items, setItems] = useState<DocumentTypeItem[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(1)
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<DocumentTypeItem | null>(null)
@@ -28,6 +27,25 @@ const DocumentType: React.FC = () => {
   useEffect(() => {
     fetchItems()
   }, [])
+
+  // Use pagination hook
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    filteredItems,
+    paginatedItems
+  } = usePagination({
+    items,
+    itemsPerPage: 20,
+    searchQuery,
+    searchFilter: (item, query) => {
+      const searchLower = query.toLowerCase()
+      const idString = String(item.id).padStart(5, '0')
+      const documentType = item.documentType?.toLowerCase() || ''
+      return idString.includes(searchLower) || documentType.includes(searchLower)
+    }
+  })
 
   const fetchItems = async () => {
     setLoading(true)
@@ -52,22 +70,12 @@ const DocumentType: React.FC = () => {
   }
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    setCurrentPage(page)
   }
-
-  // Filter items based on search query
-  const filteredItems = items.filter(item => {
-    const searchLower = searchQuery.toLowerCase()
-    const idString = String(item.id).padStart(5, '0')
-    const documentType = item.documentType?.toLowerCase() || ''
-    return idString.includes(searchLower) || documentType.includes(searchLower)
-  })
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedItems(filteredItems.map(item => item.id))
+      setSelectedItems(paginatedItems.map(item => item.id))
     } else {
       setSelectedItems([])
     }
@@ -240,7 +248,7 @@ const DocumentType: React.FC = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={10}
+            itemsPerPage={20}
           />
         }
       >
@@ -249,10 +257,10 @@ const DocumentType: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              {filteredItems.length > 0 && (
+              {paginatedItems.length > 0 && (
                 <input
                   type="checkbox"
-                  checked={filteredItems.length > 0 && selectedItems.length === filteredItems.length}
+                  checked={paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id))}
                   onChange={handleSelectAll}
                   className={`rounded text-green-600 focus:ring-green-500 ${
                     theme === 'dark' ? 'bg-dark-panel' : 'border-gray-300'
@@ -298,11 +306,19 @@ const DocumentType: React.FC = () => {
               </td>
             </tr>
           ) : (
-            filteredItems.map((item) => (
+            paginatedItems.map((item) => {
+              const isSelected = selectedItems.includes(item.id)
+              return (
               <tr 
                 key={item.id} 
                 className={`transition-colors ${
-                  theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
+                  isSelected
+                    ? theme === 'dark' 
+                      ? 'bg-blue-900/30 hover:bg-blue-900/40' 
+                      : 'bg-blue-100 hover:bg-blue-200'
+                    : theme === 'dark' 
+                      ? 'hover:bg-dark-hover' 
+                      : 'hover:bg-gray-50'
                 }`}
               >
                 <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
@@ -359,7 +375,8 @@ const DocumentType: React.FC = () => {
                   </div>
                 </td>
               </tr>
-            ))
+              )
+            })
           )}
         </tbody>
       </Table>

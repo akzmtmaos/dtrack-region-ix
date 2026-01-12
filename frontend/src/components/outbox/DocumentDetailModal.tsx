@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Button from '../Button'
+import { apiService } from '../../services/api'
 
 interface Document {
   id: number
@@ -47,6 +48,7 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState('basic')
   const [formData, setFormData] = useState<Document | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
 
   useEffect(() => {
     if (document) {
@@ -54,6 +56,23 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     }
     setIsEditMode(mode === 'edit')
   }, [document, mode])
+
+  // Fetch document types when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const fetchDocumentTypes = async () => {
+        try {
+          const response = await apiService.getDocumentType()
+          if (response.success && response.data) {
+            setDocumentTypes(response.data)
+          }
+        } catch (error) {
+          console.error('Failed to fetch document types:', error)
+        }
+      }
+      fetchDocumentTypes()
+    }
+  }, [isOpen])
 
   const RequiredAsterisk = () => <span className="text-red-500">*</span>
 
@@ -308,10 +327,11 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     }`}
                   >
                     <option value="">Select document type</option>
-                    <option value="Memo">Memo</option>
-                    <option value="Letter">Letter</option>
-                    <option value="Report">Report</option>
-                    <option value="Order">Order</option>
+                    {documentTypes.map((type) => (
+                      <option key={type.id} value={type.document_type}>
+                        {type.document_type}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.documentType || '-'}</p>

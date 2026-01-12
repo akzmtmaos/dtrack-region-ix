@@ -6,20 +6,16 @@ interface RegionModalProps {
   onClose: () => void
   onSave: (data: {
     regionName: string
-    abbreviation: string
     nscbCode: string
     nscbName: string
-    userLevelId: string
     addedBy: string
     status: string
   }) => void
   initialData?: {
     id: number
     region_name?: string
-    abbreviation?: string
     nscb_code?: string
     nscb_name?: string
-    user_level_id?: number
     added_by?: string
     status?: string
   } | null
@@ -34,10 +30,8 @@ const RegionModal: React.FC<RegionModalProps> = ({
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
     regionName: '',
-    abbreviation: '',
     nscbCode: '',
     nscbName: '',
-    userLevelId: '',
     addedBy: '',
     status: ''
   })
@@ -47,20 +41,16 @@ const RegionModal: React.FC<RegionModalProps> = ({
     if (initialData) {
       setFormData({
         regionName: initialData.region_name || '',
-        abbreviation: initialData.abbreviation || '',
         nscbCode: initialData.nscb_code || '',
         nscbName: initialData.nscb_name || '',
-        userLevelId: initialData.user_level_id?.toString() || '',
         addedBy: initialData.added_by || '',
         status: initialData.status || ''
       })
     } else {
       setFormData({
         regionName: '',
-        abbreviation: '',
         nscbCode: '',
         nscbName: '',
-        userLevelId: '',
         addedBy: '',
         status: ''
       })
@@ -90,9 +80,6 @@ const RegionModal: React.FC<RegionModalProps> = ({
     if (!formData.regionName.trim()) {
       newErrors.regionName = 'Region Name is required'
     }
-    if (!formData.abbreviation.trim()) {
-      newErrors.abbreviation = 'Abbreviation is required'
-    }
     if (!formData.nscbCode.trim()) {
       newErrors.nscbCode = 'NSCB Code is required'
     }
@@ -116,19 +103,15 @@ const RegionModal: React.FC<RegionModalProps> = ({
     if (validate()) {
       onSave({
         regionName: formData.regionName,
-        abbreviation: formData.abbreviation,
         nscbCode: formData.nscbCode,
         nscbName: formData.nscbName,
-        userLevelId: formData.userLevelId,
         addedBy: formData.addedBy,
         status: formData.status
       })
       setFormData({
         regionName: '',
-        abbreviation: '',
         nscbCode: '',
         nscbName: '',
-        userLevelId: '',
         addedBy: '',
         status: ''
       })
@@ -140,10 +123,8 @@ const RegionModal: React.FC<RegionModalProps> = ({
   const handleClose = () => {
     setFormData({
       regionName: '',
-      abbreviation: '',
       nscbCode: '',
       nscbName: '',
-      userLevelId: '',
       addedBy: '',
       status: ''
     })
@@ -215,33 +196,6 @@ const RegionModal: React.FC<RegionModalProps> = ({
                 </div>
               </div>
 
-              {/* Abbreviation */}
-              <div className="flex items-center gap-3">
-                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
-                  Abbreviation <RequiredAsterisk />
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    name="abbreviation"
-                    value={formData.abbreviation}
-                    onChange={handleChange}
-                    placeholder="Enter abbreviation"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                    style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${errors.abbreviation ? '#ef4444' : inputBorder}`,
-                      color: textPrimary
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.abbreviation ? '#ef4444' : inputBorder}
-                  />
-                  {errors.abbreviation && (
-                    <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.abbreviation}</p>
-                  )}
-                </div>
-              </div>
-
               {/* NSCB Code */}
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
@@ -292,33 +246,6 @@ const RegionModal: React.FC<RegionModalProps> = ({
                   />
                   {errors.nscbName && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.nscbName}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* User Level ID */}
-              <div className="flex items-center gap-3">
-                <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
-                  User Level ID
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    name="userLevelId"
-                    value={formData.userLevelId}
-                    onChange={handleChange}
-                    placeholder="Enter user level ID"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                    style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${errors.userLevelId ? '#ef4444' : inputBorder}`,
-                      color: textPrimary
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.userLevelId ? '#ef4444' : inputBorder}
-                  />
-                  {errors.userLevelId && (
-                    <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.userLevelId}</p>
                   )}
                 </div>
               </div>

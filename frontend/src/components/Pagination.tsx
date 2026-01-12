@@ -14,7 +14,7 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
   totalItems = 0,
-  itemsPerPage = 10
+  itemsPerPage = 20
 }) => {
   const { theme } = useTheme()
   const [pageInput, setPageInput] = useState(currentPage.toString())

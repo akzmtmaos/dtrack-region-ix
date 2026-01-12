@@ -306,10 +306,8 @@ class ApiService {
 
   async createRegion(data: {
     regionName: string
-    abbreviation: string
     nscbCode: string
     nscbName: string
-    userLevelId?: number
     addedBy: string
     status: string
   }): Promise<ApiResponse<any>> {
@@ -323,10 +321,8 @@ class ApiService {
     id: number,
     data: {
       regionName?: string
-      abbreviation?: string
       nscbCode?: string
       nscbName?: string
-      userLevelId?: number
       addedBy?: string
       status?: string
     }
