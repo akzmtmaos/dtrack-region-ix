@@ -272,10 +272,10 @@ const DocumentActionRequiredDays: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {paginatedItems.length > 0 && (
                 <input
@@ -289,28 +289,28 @@ const DocumentActionRequiredDays: React.FC = () => {
                 />
               )}
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               ID
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Document Type <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Required <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Required Days <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               ACTIONS
             </th>
@@ -351,7 +351,7 @@ const DocumentActionRequiredDays: React.FC = () => {
                       : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -364,27 +364,27 @@ const DocumentActionRequiredDays: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.id}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.documentType}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.actionRequired}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.requiredDays}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-left">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(item)}

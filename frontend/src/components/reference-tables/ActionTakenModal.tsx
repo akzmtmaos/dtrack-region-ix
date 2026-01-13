@@ -4,8 +4,8 @@ import { useTheme } from '../../context/ThemeContext'
 interface ActionTakenModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: { actionTakenCode: string; actionTaken: string }) => void
-  initialData?: { id: number; action_taken_code?: string; action_taken?: string } | null
+  onSave: (data: { actionTaken: string }) => void
+  initialData?: { id: number; action_taken?: string } | null
 }
 
 const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
@@ -64,11 +64,8 @@ const ActionTakenModal: React.FC<ActionTakenModalProps> = ({
     e.preventDefault()
 
     if (validate()) {
-      // Generate actionTakenCode automatically from actionTaken (convert to uppercase, replace spaces with underscores)
-      const actionTakenCode = formData.actionTaken.trim().toUpperCase().replace(/\s+/g, '_')
       onSave({
-        actionTakenCode: actionTakenCode,
-        actionTaken: formData.actionTaken
+        actionTaken: formData.actionTaken.trim()
       })
       setFormData({
         actionTaken: ''

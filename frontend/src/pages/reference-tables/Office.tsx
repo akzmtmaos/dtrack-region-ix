@@ -272,10 +272,10 @@ const Office: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {paginatedItems.length > 0 && (
                 <input
@@ -289,33 +289,33 @@ const Office: React.FC = () => {
                 />
               )}
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Office Code <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Office <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Region
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Short Name
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Head Office
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               ACTIONS
             </th>
@@ -356,7 +356,7 @@ const Office: React.FC = () => {
                       : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -369,32 +369,32 @@ const Office: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {String(item.id).padStart(5, '0')}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.office}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.region}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.shortName}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.headOffice}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-left">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(item)}

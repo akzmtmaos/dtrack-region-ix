@@ -245,10 +245,10 @@ const ActionRequired: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {paginatedItems.length > 0 && (
                 <input
@@ -314,7 +314,7 @@ const ActionRequired: React.FC = () => {
                       : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -327,17 +327,17 @@ const ActionRequired: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {String(item.id).padStart(5, '0')}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.action_required}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-left">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(item)}

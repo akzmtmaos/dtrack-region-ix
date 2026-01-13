@@ -43,7 +43,11 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
           id: item.id,
           document_type: item.document_type || ''
         }))
-        setDocumentTypes(mappedTypes)
+        // Sort document types alphabetically by document_type
+        const sortedTypes = mappedTypes.sort((a, b) => 
+          a.document_type.localeCompare(b.document_type, undefined, { sensitivity: 'base' })
+        )
+        setDocumentTypes(sortedTypes)
       }
 
       // Fetch action required
@@ -53,7 +57,11 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
           id: item.id,
           action_required: item.action_required || ''
         }))
-        setActionRequiredList(mappedActions)
+        // Sort action required alphabetically by action_required
+        const sortedActions = mappedActions.sort((a, b) => 
+          a.action_required.localeCompare(b.action_required, undefined, { sensitivity: 'base' })
+        )
+        setActionRequiredList(sortedActions)
       }
     } catch (err) {
       console.error('Error fetching options:', err)

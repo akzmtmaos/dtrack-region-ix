@@ -10,7 +10,6 @@ import { usePagination } from '../../hooks/usePagination'
 
 interface ActionTakenItem {
   id: number
-  actionTakenCode: string
   actionTaken: string
 }
 
@@ -57,7 +56,6 @@ const ActionTaken: React.FC = () => {
         // Map database snake_case to frontend camelCase
         const mappedItems = response.data.map((item: any) => ({
           id: item.id,
-          actionTakenCode: item.action_taken_code || '',
           actionTaken: item.action_taken || ''
         }))
         setItems(mappedItems)
@@ -123,7 +121,7 @@ const ActionTaken: React.FC = () => {
     setIsModalOpen(true)
   }
 
-  const handleSave = async (data: { actionTakenCode: string; actionTaken: string }) => {
+  const handleSave = async (data: { actionTaken: string }) => {
     setLoading(true)
     setError(null)
     try {
@@ -134,7 +132,6 @@ const ActionTaken: React.FC = () => {
           // Map database response to frontend format
           const updatedItem = {
             id: response.data.id,
-            actionTakenCode: response.data.action_taken_code || data.actionTakenCode,
             actionTaken: response.data.action_taken || data.actionTaken
           }
           setItems(prev => prev.map(item => 
@@ -152,7 +149,6 @@ const ActionTaken: React.FC = () => {
           // Map database response to frontend format
           const newItem = {
             id: response.data.id,
-            actionTakenCode: response.data.action_taken_code || data.actionTakenCode,
             actionTaken: response.data.action_taken || data.actionTaken
           }
           setItems(prev => [...prev, newItem])
@@ -256,10 +252,10 @@ const ActionTaken: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {paginatedItems.length > 0 && (
                 <input
@@ -273,18 +269,18 @@ const ActionTaken: React.FC = () => {
                 />
               )}
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Taken ID <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Taken <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               ACTIONS
             </th>
@@ -325,7 +321,7 @@ const ActionTaken: React.FC = () => {
                       : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -338,17 +334,17 @@ const ActionTaken: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {String(item.id).padStart(5, '0')}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.actionTaken}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-left">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(item)}
@@ -392,7 +388,7 @@ const ActionTaken: React.FC = () => {
           setEditingItem(null)
         }}
         onSave={handleSave}
-        initialData={editingItem ? { id: editingItem.id, action_taken_code: editingItem.actionTakenCode, action_taken: editingItem.actionTaken } : null}
+        initialData={editingItem ? { id: editingItem.id, action_taken: editingItem.actionTaken } : null}
       />
     </div>
   )

@@ -41,14 +41,7 @@ def action_taken_create(request):
         supabase = get_supabase_admin_client()
         
         # Extract data from request
-        action_taken_code = request.data.get('actionTakenCode')
         action_taken = request.data.get('actionTaken')
-        
-        if not action_taken_code:
-            return Response({
-                'success': False,
-                'error': 'Action Taken Code is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
         
         if not action_taken:
             return Response({
@@ -56,9 +49,8 @@ def action_taken_create(request):
                 'error': 'Action Taken is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Insert into Supabase
+        # Insert into Supabase (ID is auto-generated and used as the code)
         response = supabase.table('action_taken').insert({
-            'action_taken_code': action_taken_code,
             'action_taken': action_taken
         }).execute()
         
@@ -92,8 +84,6 @@ def action_taken_update(request, item_id):
         # Extract data from request
         update_data = {}
         
-        if 'actionTakenCode' in request.data:
-            update_data['action_taken_code'] = request.data.get('actionTakenCode')
         if 'actionTaken' in request.data:
             update_data['action_taken'] = request.data.get('actionTaken')
         

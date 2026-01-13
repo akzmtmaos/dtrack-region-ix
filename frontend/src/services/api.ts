@@ -25,12 +25,34 @@ class ApiService {
         ...options,
       })
 
-      const data = await response.json()
+      // Check if response has content before parsing JSON
+      const contentType = response.headers.get('content-type')
+      const hasJsonContent = contentType && contentType.includes('application/json')
+      const text = await response.text()
+      
+      let data: any = {}
+      if (text && hasJsonContent) {
+        try {
+          data = JSON.parse(text)
+        } catch (parseError) {
+          // If JSON parsing fails, return error
+          return {
+            success: false,
+            error: 'Invalid JSON response from server',
+          }
+        }
+      } else if (text && !hasJsonContent) {
+        // If response is not JSON but has content, treat as error message
+        return {
+          success: false,
+          error: text || `HTTP error! status: ${response.status}`,
+        }
+      }
 
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || `HTTP error! status: ${response.status}`,
+          error: data.error || data.message || `HTTP error! status: ${response.status}`,
         }
       }
 
@@ -137,7 +159,6 @@ class ApiService {
   }
 
   async createActionTaken(data: {
-    actionTakenCode: string
     actionTaken: string
   }): Promise<ApiResponse<any>> {
     return this.request<any>('/action-taken/create/', {
@@ -149,7 +170,6 @@ class ApiService {
   async updateActionTaken(
     id: number,
     data: {
-      actionTakenCode?: string
       actionTaken?: string
     }
   ): Promise<ApiResponse<any>> {

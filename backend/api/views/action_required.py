@@ -54,15 +54,17 @@ def action_required_create(request):
             'action_required': action_required
         }).execute()
         
-        if response.data:
+        if response.data and len(response.data) > 0:
             return Response({
                 'success': True,
                 'data': response.data[0] if isinstance(response.data, list) else response.data
             }, status=status.HTTP_201_CREATED)
         else:
+            # If data is empty but no error, try to fetch the created item
+            # This can happen if RLS policies prevent returning inserted data
             return Response({
                 'success': False,
-                'error': 'Failed to create action required item'
+                'error': 'Failed to create action required item - no data returned'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     except Exception as e:
@@ -95,7 +97,7 @@ def action_required_update(request, item_id):
             'action_required': action_required
         }).eq('id', item_id).execute()
         
-        if response.data:
+        if response.data and len(response.data) > 0:
             return Response({
                 'success': True,
                 'data': response.data[0] if isinstance(response.data, list) else response.data

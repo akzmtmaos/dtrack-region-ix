@@ -114,10 +114,10 @@ const Inbox: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Document Control No. 
                 </th>

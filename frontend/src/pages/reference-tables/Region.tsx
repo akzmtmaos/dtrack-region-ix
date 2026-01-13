@@ -161,9 +161,19 @@ const Region: React.FC = () => {
           status: data.status
         })
         if (response.success && response.data) {
+          // Map database snake_case to frontend format (same as fetchItems)
+          const mappedItem = {
+            id: response.data.id,
+            region_name: response.data.region_name || '',
+            nscb_code: response.data.nscb_code || '',
+            nscb_name: response.data.nscb_name || '',
+            added_by: response.data.added_by || '',
+            status: response.data.status || '',
+            date_updated: response.data.updated_at || response.data.date_updated || ''
+          }
           setItems(prev => prev.map(item => 
             item.id === editingItem.id
-              ? response.data!
+              ? mappedItem
               : item
           ))
           setIsModalOpen(false)
@@ -181,7 +191,17 @@ const Region: React.FC = () => {
           status: data.status
         })
         if (response.success && response.data) {
-          setItems(prev => [...prev, response.data!])
+          // Map database snake_case to frontend format (same as fetchItems)
+          const mappedItem = {
+            id: response.data.id,
+            region_name: response.data.region_name || '',
+            nscb_code: response.data.nscb_code || '',
+            nscb_name: response.data.nscb_name || '',
+            added_by: response.data.added_by || '',
+            status: response.data.status || '',
+            date_updated: response.data.updated_at || response.data.date_updated || ''
+          }
+          setItems(prev => [...prev, mappedItem])
           setIsModalOpen(false)
           setEditingItem(null)
         } else {
@@ -282,10 +302,10 @@ const Region: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {paginatedItems.length > 0 && (
                 <input
@@ -299,43 +319,43 @@ const Region: React.FC = () => {
                 />
               )}
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Region ID <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Region Name <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               NSCB Code <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               NSCB Name <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Added By <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Date Updated
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Status <RequiredAsterisk />
             </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               ACTIONS
             </th>
@@ -376,7 +396,7 @@ const Region: React.FC = () => {
                       : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-4 py-2 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -389,42 +409,52 @@ const Region: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {String(item.id).padStart(5, '0')}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.region_name}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.nscb_code}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.nscb_name}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.added_by}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
+                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.date_updated ? new Date(item.date_updated).toLocaleDateString() : '-'}
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {item.status}
+                <td className="px-6 py-2 whitespace-nowrap text-sm text-left">
+                  <span className={`
+                    inline-block px-3 py-1.5 rounded-full text-xs font-medium uppercase tracking-wide border
+                    ${item.status?.toUpperCase() === 'ACTIVE' 
+                      ? theme === 'dark'
+                        ? 'bg-green-900/40 text-green-300 border-green-500/60'
+                        : 'bg-green-100 text-green-700 border-green-500'
+                      : theme === 'dark'
+                        ? 'bg-gray-800/40 text-gray-400 border-gray-600/60'
+                        : 'bg-gray-100 text-gray-600 border-gray-400'
+                    }
+                  `}>
+                    {item.status}
+                  </span>
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-left">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(item)}
