@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { apiService } from '../../services/api'
+import SearchableSelect from '../SearchableSelect'
 
 interface DocumentActionRequiredDaysModalProps {
   isOpen: boolean
@@ -193,28 +194,36 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
                   Document Type <RequiredAsterisk />
                 </label>
                 <div className="flex-1">
-                  <select
-                    name="documentType"
+                  <SearchableSelect
+                    options={documentTypes.map(type => ({
+                      id: type.id,
+                      value: type.document_type,
+                      label: type.document_type
+                    }))}
                     value={formData.documentType}
-                    onChange={handleChange}
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        documentType: value
+                      }))
+                      if (errors.documentType) {
+                        setErrors(prev => ({
+                          ...prev,
+                          documentType: ''
+                        }))
+                      }
+                    }}
+                    placeholder="Select document type"
+                    searchPlaceholder="Find document type..."
+                    showSearch={true}
                     disabled={loadingOptions}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${errors.documentType ? '#ef4444' : inputBorder}`,
-                      color: textPrimary,
+                      borderColor: errors.documentType ? '#ef4444' : inputBorder,
                       opacity: loadingOptions ? 0.6 : 1
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.documentType ? '#ef4444' : inputBorder}
-                  >
-                    <option value="">Select document type</option>
-                    {documentTypes.map((type) => (
-                      <option key={type.id} value={type.document_type}>
-                        {type.document_type}
-                      </option>
-                    ))}
-                  </select>
+                    onFocus={() => {}}
+                    onBlur={() => {}}
+                  />
                   {errors.documentType && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.documentType}</p>
                   )}
@@ -227,28 +236,36 @@ const DocumentActionRequiredDaysModal: React.FC<DocumentActionRequiredDaysModalP
                   Action Required <RequiredAsterisk />
                 </label>
                 <div className="flex-1">
-                  <select
-                    name="actionRequired"
+                  <SearchableSelect
+                    options={actionRequiredList.map(action => ({
+                      id: action.id,
+                      value: action.action_required,
+                      label: action.action_required
+                    }))}
                     value={formData.actionRequired}
-                    onChange={handleChange}
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        actionRequired: value
+                      }))
+                      if (errors.actionRequired) {
+                        setErrors(prev => ({
+                          ...prev,
+                          actionRequired: ''
+                        }))
+                      }
+                    }}
+                    placeholder="Select action required"
+                    searchPlaceholder="Find action required..."
+                    showSearch={true}
                     disabled={loadingOptions}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${errors.actionRequired ? '#ef4444' : inputBorder}`,
-                      color: textPrimary,
+                      borderColor: errors.actionRequired ? '#ef4444' : inputBorder,
                       opacity: loadingOptions ? 0.6 : 1
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.actionRequired ? '#ef4444' : inputBorder}
-                  >
-                    <option value="">Select action required</option>
-                    {actionRequiredList.map((action) => (
-                      <option key={action.id} value={action.action_required}>
-                        {action.action_required}
-                      </option>
-                    ))}
-                  </select>
+                    onFocus={() => {}}
+                    onBlur={() => {}}
+                  />
                   {errors.actionRequired && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.actionRequired}</p>
                   )}

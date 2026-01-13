@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import SearchableSelect from '../SearchableSelect'
+import { apiService } from '../../services/api'
 
 interface ActionOfficerModalProps {
   isOpen: boolean
@@ -45,6 +47,24 @@ const ActionOfficerModal: React.FC<ActionOfficerModalProps> = ({
     officeRepresentative: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
+
+  // Fetch offices when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const fetchOffices = async () => {
+        try {
+          const response = await apiService.getOffice()
+          if (response.success && response.data) {
+            setOffices(response.data)
+          }
+        } catch (error) {
+          console.error('Failed to fetch offices:', error)
+        }
+      }
+      fetchOffices()
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (initialData) {
@@ -309,24 +329,36 @@ const ActionOfficerModal: React.FC<ActionOfficerModalProps> = ({
                   Office
                 </label>
                 <div className="flex-1">
-                  <select
-                    name="office"
+                  <SearchableSelect
+                    options={[...offices].sort((a, b) => 
+                      (a.office || '').localeCompare(b.office || '')
+                    ).map(office => ({
+                      id: office.id,
+                      value: office.office || '',
+                      label: office.office || ''
+                    }))}
                     value={formData.office}
-                    onChange={handleChange}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                    style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${inputBorder}`,
-                      color: textPrimary
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        office: value
+                      }))
+                      if (errors.office) {
+                        setErrors(prev => ({
+                          ...prev,
+                          office: ''
+                        }))
+                      }
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = inputBorder}
-                  >
-                    <option value="">Select office</option>
-                    <option value="Office 1">Office 1</option>
-                    <option value="Office 2">Office 2</option>
-                    <option value="Office 3">Office 3</option>
-                  </select>
+                    placeholder="Select office"
+                    searchPlaceholder="Find office..."
+                    showSearch={true}
+                    style={{
+                      borderColor: inputBorder
+                    }}
+                    onFocus={() => {}}
+                    onBlur={() => {}}
+                  />
                 </div>
               </div>
 
