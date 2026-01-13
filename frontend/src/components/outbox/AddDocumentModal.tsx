@@ -328,26 +328,30 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
                   Document Type
                 </label>
-                <select
-                  name="documentType"
-                  value={formData.documentType}
-                  onChange={handleChange}
-                  className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                  style={{
-                    backgroundColor: inputBg,
-                    border: `1px solid ${inputBorder}`,
-                    color: textPrimary
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                  onBlur={(e) => e.target.style.borderColor = inputBorder}
-                >
-                  <option value="">Select document type</option>
-                  {documentTypes.map((type) => (
-                    <option key={type.id} value={type.document_type}>
-                      {type.document_type}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <select
+                    name="documentType"
+                    value={formData.documentType}
+                    onChange={handleChange}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+                    style={{
+                      backgroundColor: inputBg,
+                      border: `1px solid ${inputBorder}`,
+                      color: textPrimary
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
+                    onBlur={(e) => e.target.style.borderColor = inputBorder}
+                  >
+                    <option value="">Select document type</option>
+                    {[...documentTypes].sort((a, b) => 
+                      a.document_type.localeCompare(b.document_type)
+                    ).map((type) => (
+                      <option key={type.id} value={type.document_type}>
+                        {type.document_type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Source Type */}

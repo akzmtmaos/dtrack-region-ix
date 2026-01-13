@@ -247,7 +247,9 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
                 }`}
               >
                 <option value="">Select document type</option>
-                {documentTypes.map((type) => (
+                {[...documentTypes].sort((a, b) => 
+                  a.document_type.localeCompare(b.document_type)
+                ).map((type) => (
                   <option key={type.id} value={type.document_type}>
                     {type.document_type}
                   </option>

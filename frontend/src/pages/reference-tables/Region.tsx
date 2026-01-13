@@ -441,13 +441,13 @@ const Region: React.FC = () => {
                 </td>
                 <td className="px-6 py-2 whitespace-nowrap text-sm text-left">
                   <span className={`
-                    inline-block px-3 py-1.5 rounded-full text-xs font-medium uppercase tracking-wide border
+                    inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide border
                     ${item.status?.toUpperCase() === 'ACTIVE' 
                       ? theme === 'dark'
-                        ? 'bg-green-900/40 text-green-300 border-green-500/60'
+                        ? 'bg-green-900/60 text-green-300 border-green-600/50'
                         : 'bg-green-100 text-green-700 border-green-500'
                       : theme === 'dark'
-                        ? 'bg-gray-800/40 text-gray-400 border-gray-600/60'
+                        ? 'bg-gray-800/60 text-gray-400 border-gray-600/50'
                         : 'bg-gray-100 text-gray-600 border-gray-400'
                     }
                   `}>

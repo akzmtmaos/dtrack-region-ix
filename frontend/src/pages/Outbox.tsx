@@ -335,7 +335,7 @@ const Outbox: React.FC = () => {
                         {doc.subject || <span className="text-gray-500 italic">—</span>}
                       </div>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm text-left ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.documentType || <span className="text-gray-500 italic">—</span>}
