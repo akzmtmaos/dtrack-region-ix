@@ -5,6 +5,7 @@ import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
 import DocumentActionRequiredDaysModal from '../../components/reference-tables/DocumentActionRequiredDaysModal'
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal'
 import { apiService } from '../../services/api'
 import { usePagination } from '../../hooks/usePagination'
 
@@ -20,6 +21,10 @@ const DocumentActionRequiredDays: React.FC = () => {
   const [items, setItems] = useState<DocumentActionRequiredDaysItem[]>([])
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteType, setDeleteType] = useState<'single' | 'bulk'>('single')
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteItemName, setDeleteItemName] = useState<string>('')
   const [editingItem, setEditingItem] = useState<DocumentActionRequiredDaysItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -99,25 +104,27 @@ const DocumentActionRequiredDays: React.FC = () => {
     )
   }
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = () => {
     if (selectedItems.length === 0) return
-    
-    if (window.confirm(`Are you sure you want to delete ${selectedItems.length} selected item(s)?`)) {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await apiService.bulkDeleteDocumentActionRequiredDays(selectedItems)
-        if (response.success) {
-          setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
-          setSelectedItems([])
-        } else {
-          setError(response.error || 'Failed to delete items')
-        }
-      } catch (err) {
-        setError('An error occurred while deleting items')
-      } finally {
-        setLoading(false)
+    setDeleteType('bulk')
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmBulkDelete = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await apiService.bulkDeleteDocumentActionRequiredDays(selectedItems)
+      if (response.success) {
+        setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
+        setSelectedItems([])
+      } else {
+        setError(response.error || 'Failed to delete items')
       }
+    } catch (err) {
+      setError('An error occurred while deleting items')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -185,22 +192,30 @@ const DocumentActionRequiredDays: React.FC = () => {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await apiService.deleteDocumentActionRequiredDays(id)
-        if (response.success) {
-          setItems(prev => prev.filter(item => item.id !== id))
-        } else {
-          setError(response.error || 'Failed to delete item')
-        }
-      } catch (err) {
-        setError('An error occurred while deleting item')
-      } finally {
-        setLoading(false)
+  const handleDelete = (item: DocumentActionRequiredDaysItem) => {
+    setDeleteType('single')
+    setDeleteId(item.id)
+    setDeleteItemName(`${item.documentType} - ${item.actionRequired}`)
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmSingleDelete = async () => {
+    if (!deleteId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await apiService.deleteDocumentActionRequiredDays(deleteId)
+      if (response.success) {
+        setItems(prev => prev.filter(item => item.id !== deleteId))
+      } else {
+        setError(response.error || 'Failed to delete item')
       }
+    } catch (err) {
+      setError('An error occurred while deleting item')
+    } finally {
+      setLoading(false)
+      setDeleteId(null)
+      setDeleteItemName('')
     }
   }
   
@@ -400,7 +415,7 @@ const DocumentActionRequiredDays: React.FC = () => {
                       </svg>
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item)}
                       className={`p-1.5 rounded transition-colors ${
                         theme === 'dark'
                           ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
@@ -429,6 +444,20 @@ const DocumentActionRequiredDays: React.FC = () => {
         }}
         onSave={handleSave}
         initialData={editingItem ? { id: editingItem.id, document_type: editingItem.documentType, action_required: editingItem.actionRequired, required_days: editingItem.requiredDays } : null}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setDeleteId(null)
+          setDeleteItemName('')
+        }}
+        onConfirm={deleteType === 'bulk' ? confirmBulkDelete : confirmSingleDelete}
+        message={deleteType === 'bulk' ? 'This will permanently delete all selected items.' : 'This will permanently delete this item.'}
+        itemName={deleteItemName}
+        isBulk={deleteType === 'bulk'}
+        count={selectedItems.length}
       />
     </div>
   )

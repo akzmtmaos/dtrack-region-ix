@@ -6,6 +6,7 @@ import Pagination from '../../components/Pagination'
 import Button from '../../components/Button'
 import UserLevelsModal from '../../components/reference-tables/UserLevelsModal'
 import UserLevelPermissionsModal from '../../components/reference-tables/UserLevelPermissionsModal'
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal'
 import { usePagination } from '../../hooks/usePagination'
 import { apiService } from '../../services/api'
 
@@ -20,6 +21,10 @@ const UserLevels: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteType, setDeleteType] = useState<'single' | 'bulk'>('single')
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteItemName, setDeleteItemName] = useState<string>('')
   const [editingItem, setEditingItem] = useState<UserLevelItem | null>(null)
   const [selectedUserLevel, setSelectedUserLevel] = useState<UserLevelItem | null>(null)
   const [loading, setLoading] = useState(false)
@@ -92,25 +97,27 @@ const UserLevels: React.FC = () => {
     )
   }
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = () => {
     if (selectedItems.length === 0) return
-    
-    if (window.confirm(`Are you sure you want to delete ${selectedItems.length} selected item(s)?`)) {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await apiService.bulkDeleteUserLevels(selectedItems)
-        if (response.success) {
-          setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
-          setSelectedItems([])
-        } else {
-          setError(response.error || 'Failed to delete items')
-        }
-      } catch (err) {
-        setError('An error occurred while deleting items')
-      } finally {
-        setLoading(false)
+    setDeleteType('bulk')
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmBulkDelete = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await apiService.bulkDeleteUserLevels(selectedItems)
+      if (response.success) {
+        setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
+        setSelectedItems([])
+      } else {
+        setError(response.error || 'Failed to delete items')
       }
+    } catch (err) {
+      setError('An error occurred while deleting items')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -168,22 +175,30 @@ const UserLevels: React.FC = () => {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await apiService.deleteUserLevel(id)
-        if (response.success) {
-          setItems(prev => prev.filter(item => item.id !== id))
-        } else {
-          setError(response.error || 'Failed to delete item')
-        }
-      } catch (err) {
-        setError('An error occurred while deleting item')
-      } finally {
-        setLoading(false)
+  const handleDelete = (item: UserLevelItem) => {
+    setDeleteType('single')
+    setDeleteId(item.id)
+    setDeleteItemName(item.userLevelName)
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmSingleDelete = async () => {
+    if (!deleteId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await apiService.deleteUserLevel(deleteId)
+      if (response.success) {
+        setItems(prev => prev.filter(item => item.id !== deleteId))
+      } else {
+        setError(response.error || 'Failed to delete item')
       }
+    } catch (err) {
+      setError('An error occurred while deleting item')
+    } finally {
+      setLoading(false)
+      setDeleteId(null)
+      setDeleteItemName('')
     }
   }
 
@@ -390,7 +405,7 @@ const UserLevels: React.FC = () => {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDelete(item)}
                         className={`p-1.5 rounded transition-colors ${
                           theme === 'dark'
                             ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
@@ -432,6 +447,20 @@ const UserLevels: React.FC = () => {
           userLevel={selectedUserLevel}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setDeleteId(null)
+          setDeleteItemName('')
+        }}
+        onConfirm={deleteType === 'bulk' ? confirmBulkDelete : confirmSingleDelete}
+        message={deleteType === 'bulk' ? 'This will permanently delete all selected items.' : 'This will permanently delete this item.'}
+        itemName={deleteItemName}
+        isBulk={deleteType === 'bulk'}
+        count={selectedItems.length}
+      />
     </div>
   )
 }

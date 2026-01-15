@@ -5,6 +5,7 @@ import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
 import ActionButtons from '../components/outbox/ActionButtons'
 import RoutingSlipModal from '../components/outbox/RoutingSlipModal'
 import InlineEditModal from '../components/outbox/InlineEditModal'
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import Pagination from '../components/Pagination'
 import Button from '../components/Button'
 import Input from '../components/Input'
@@ -47,6 +48,10 @@ const Outbox: React.FC = () => {
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages] = useState(1)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteType, setDeleteType] = useState<'single' | 'bulk'>('single')
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteItemName, setDeleteItemName] = useState<string>('')
 
   // Helper for red asterisk
   const RequiredAsterisk = () => <span className="text-red-500">*</span>;
@@ -75,11 +80,13 @@ const Outbox: React.FC = () => {
 
   const handleDeleteSelected = () => {
     if (selectedItems.length === 0) return
-    
-    if (window.confirm(`Are you sure you want to delete ${selectedItems.length} selected item(s)?`)) {
-      setDocuments(prev => prev.filter(doc => !selectedItems.includes(doc.id)))
-      setSelectedItems([])
-    }
+    setDeleteType('bulk')
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmBulkDelete = () => {
+    setDocuments(prev => prev.filter(doc => !selectedItems.includes(doc.id)))
+    setSelectedItems([])
   }
 
   const handleAddDocument = (document: Partial<Document>) => {
@@ -122,14 +129,22 @@ const Outbox: React.FC = () => {
     setSelectedDocument(updatedDocument)
   }
 
-  const handleDeleteDocument = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this document?')) {
-      setDocuments(prev => prev.filter(doc => doc.id !== id))
-      if (selectedDocument?.id === id) {
-        setIsDetailModalOpen(false)
-        setSelectedDocument(null)
-      }
+  const handleDeleteDocument = (document: Document) => {
+    setDeleteType('single')
+    setDeleteId(document.id)
+    setDeleteItemName(document.documentControlNo || document.subject || 'this document')
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmSingleDelete = () => {
+    if (!deleteId) return
+    setDocuments(prev => prev.filter(doc => doc.id !== deleteId))
+    if (selectedDocument?.id === deleteId) {
+      setIsDetailModalOpen(false)
+      setSelectedDocument(null)
     }
+    setDeleteId(null)
+    setDeleteItemName('')
   }
 
   const handleView = (document: Document) => {
@@ -399,6 +414,21 @@ const Outbox: React.FC = () => {
         }}
         document={selectedDocument}
         onSave={handleInlineEditSave}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setDeleteId(null)
+          setDeleteItemName('')
+        }}
+        onConfirm={deleteType === 'bulk' ? confirmBulkDelete : confirmSingleDelete}
+        message={deleteType === 'bulk' ? 'This will permanently delete all selected documents.' : 'This will permanently delete this document.'}
+        itemName={deleteItemName}
+        isBulk={deleteType === 'bulk'}
+        count={selectedItems.length}
       />
     </div>
   )
