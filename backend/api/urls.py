@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import action_required, action_officer, action_taken, document_type, document_action_required_days, office, region
+from .views import action_required, action_officer, action_taken, document_type, document_action_required_days, office, region, user_levels
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
@@ -55,5 +55,12 @@ urlpatterns = [
     path('region/<int:item_id>/', region.region_update, name='region-update'),
     path('region/<int:item_id>/delete/', region.region_delete, name='region-delete'),
     path('region/bulk-delete/', region.region_bulk_delete, name='region-bulk-delete'),
+    
+    # User Levels endpoints
+    path('user-levels/', user_levels.user_levels_list, name='user-levels-list'),
+    path('user-levels/create/', user_levels.user_levels_create, name='user-levels-create'),
+    path('user-levels/<int:item_id>/', user_levels.user_levels_update, name='user-levels-update'),
+    path('user-levels/<int:item_id>/delete/', user_levels.user_levels_delete, name='user-levels-delete'),
+    path('user-levels/bulk-delete/', user_levels.user_levels_bulk_delete, name='user-levels-bulk-delete'),
 ]
 

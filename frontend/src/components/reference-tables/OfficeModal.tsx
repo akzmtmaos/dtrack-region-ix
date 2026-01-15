@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { apiService } from '../../services/api'
+import SearchableSelect from '../SearchableSelect'
 
 interface OfficeModalProps {
   isOpen: boolean
@@ -42,7 +43,11 @@ const OfficeModal: React.FC<OfficeModalProps> = ({
           id: item.id,
           region_name: item.region_name || ''
         }))
-        setRegions(mappedRegions)
+        // Sort regions alphabetically by region_name
+        const sortedRegions = mappedRegions.sort((a, b) => 
+          a.region_name.localeCompare(b.region_name)
+        )
+        setRegions(sortedRegions)
       }
     } catch (err) {
       console.error('Error fetching regions:', err)
@@ -199,28 +204,35 @@ const OfficeModal: React.FC<OfficeModalProps> = ({
                   Region
                 </label>
                 <div className="flex-1">
-                  <select
-                    name="region"
+                  <SearchableSelect
+                    options={regions.map(region => ({
+                      id: region.id,
+                      value: region.region_name,
+                      label: region.region_name
+                    }))}
                     value={formData.region}
-                    onChange={handleChange}
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        region: value
+                      }))
+                      if (errors.region) {
+                        setErrors(prev => ({
+                          ...prev,
+                          region: ''
+                        }))
+                      }
+                    }}
+                    placeholder="Select region"
+                    showSearch={false}
                     disabled={loadingOptions}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${errors.region ? '#ef4444' : inputBorder}`,
-                      color: textPrimary,
+                      borderColor: errors.region ? '#ef4444' : inputBorder,
                       opacity: loadingOptions ? 0.6 : 1
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.region ? '#ef4444' : inputBorder}
-                  >
-                    <option value="">Select region</option>
-                    {regions.map((region) => (
-                      <option key={region.id} value={region.region_name}>
-                        {region.region_name}
-                      </option>
-                    ))}
-                  </select>
+                    onFocus={() => {}}
+                    onBlur={() => {}}
+                  />
                   {errors.region && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.region}</p>
                   )}

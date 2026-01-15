@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import SearchableSelect from '../SearchableSelect'
 
 interface RegionModalProps {
   isOpen: boolean
@@ -283,23 +284,32 @@ const RegionModal: React.FC<RegionModalProps> = ({
                   Status <RequiredAsterisk />
                 </label>
                 <div className="flex-1">
-                  <select
-                    name="status"
+                  <SearchableSelect
+                    options={[
+                      { id: 1, value: 'Active', label: 'Active' },
+                      { id: 2, value: 'Inactive', label: 'Inactive' }
+                    ]}
                     value={formData.status}
-                    onChange={handleChange}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                    style={{
-                      backgroundColor: inputBg,
-                      border: `1px solid ${errors.status ? '#ef4444' : inputBorder}`,
-                      color: textPrimary
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        status: value
+                      }))
+                      if (errors.status) {
+                        setErrors(prev => ({
+                          ...prev,
+                          status: ''
+                        }))
+                      }
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                    onBlur={(e) => e.target.style.borderColor = errors.status ? '#ef4444' : inputBorder}
-                  >
-                    <option value="">Select status</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
+                    placeholder="Select status"
+                    showSearch={false}
+                    style={{
+                      borderColor: errors.status ? '#ef4444' : inputBorder
+                    }}
+                    onFocus={() => {}}
+                    onBlur={() => {}}
+                  />
                   {errors.status && (
                     <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.status}</p>
                   )}

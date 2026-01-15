@@ -365,6 +365,38 @@ class ApiService {
       body: JSON.stringify({ ids }),
     })
   }
+
+  // User Levels endpoints
+  async getUserLevels(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/user-levels/')
+  }
+
+  async createUserLevel(data: { userLevelName: string }): Promise<ApiResponse<any>> {
+    return this.request<any>('/user-levels/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateUserLevel(id: number, data: { userLevelName: string }): Promise<ApiResponse<any>> {
+    return this.request<any>(`/user-levels/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteUserLevel(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/user-levels/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteUserLevels(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/user-levels/bulk-delete/', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
 }
 
 export const apiService = new ApiService()
