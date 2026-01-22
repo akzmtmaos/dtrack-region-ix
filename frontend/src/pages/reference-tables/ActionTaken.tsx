@@ -215,44 +215,57 @@ const ActionTaken: React.FC = () => {
         </div>
       )}
       
-      <div className="flex justify-end items-center gap-3 mb-3">
-        <Button
-          onClick={handleDeleteSelected}
-          disabled={selectedItems.length === 0 || loading}
-          variant="danger"
-        >
-          Delete {selectedItems.length > 0 && `(${selectedItems.length})`}
-        </Button>
-        <Button
-          onClick={handleAdd}
-          disabled={loading}
-          variant="primary"
-          icon={
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          }
-          iconPosition="left"
-        >
-          Add
-        </Button>
-        <Input
-          type="text"
-          placeholder="Search..."
-          className="w-48"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          icon={
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex justify-between items-center gap-3">
+        <div className="flex items-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredItems.length}
+            itemsPerPage={20}
+            showResultsText={false}
+            compact={true}
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleDeleteSelected}
+            disabled={selectedItems.length === 0 || loading}
+            variant="danger"
+          >
+            Delete {selectedItems.length > 0 && `(${selectedItems.length})`}
+          </Button>
+          <Button
+            onClick={handleAdd}
+            disabled={loading}
+            variant="primary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Add
+          </Button>
+          <Input
+            type="text"
+            placeholder="Search..."
+            className="w-48"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            icon={
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           }
           iconPosition="left"
         />
       </div>
+      </div>
       
       <hr 
-        className={`mb-4 ${theme === 'dark' ? '' : 'border-gray-300'}`}
+        className={`mb-4 mt-3 ${theme === 'dark' ? '' : 'border-gray-300'}`}
         style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
       />
       

@@ -7,6 +7,8 @@ interface PaginationProps {
   onPageChange: (page: number) => void
   totalItems?: number
   itemsPerPage?: number
+  showResultsText?: boolean
+  compact?: boolean
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -14,7 +16,9 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
   totalItems = 0,
-  itemsPerPage = 20
+  itemsPerPage = 20,
+  showResultsText = true,
+  compact = false
 }) => {
   const { theme } = useTheme()
   const [pageInput, setPageInput] = useState(currentPage.toString())
@@ -61,19 +65,19 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div 
-      className={`px-4 py-3 flex items-center justify-between sm:px-6 ${
-        theme === 'dark'
+      className={`${compact ? '' : 'px-4 py-3 sm:px-6'} flex items-center justify-between ${
+        compact ? '' : (theme === 'dark'
           ? 'bg-dark-hover/50 border-t'
-          : 'bg-gray-50 border-t border-gray-200'
+          : 'bg-gray-50 border-t border-gray-200')
       }`}
-      style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+      style={compact ? {} : (theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined)}
     >
       {/* Mobile pagination */}
       <div className="flex-1 flex justify-between sm:hidden">
         <button
           onClick={handlePrevious}
           disabled={currentPage === 1}
-          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`relative inline-flex items-center px-4 py-1.5 border text-xs font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
             theme === 'dark'
               ? 'text-gray-300 bg-dark-panel hover:bg-dark-hover hover:text-white'
               : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
@@ -85,7 +89,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={handleNext}
           disabled={currentPage === totalPages}
-          className={`ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`ml-3 relative inline-flex items-center px-4 py-1.5 border text-xs font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${
             theme === 'dark'
               ? 'text-dark-text bg-dark-panel hover:bg-dark-hover'
               : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
@@ -97,21 +101,23 @@ const Pagination: React.FC<PaginationProps> = ({
       </div>
 
       {/* Desktop pagination */}
-      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p className={`text-sm ${
-            theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-          }`}>
-            Showing <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{startItem}</span> to <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{endItem}</span> of{' '}
-            <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{totalItems}</span> results
-          </p>
-        </div>
+      <div className={`hidden sm:flex-1 sm:flex sm:items-center ${showResultsText ? 'sm:justify-between' : 'sm:justify-end'}`}>
+        {showResultsText && (
+          <div>
+            <p className={`text-sm ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Showing <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{startItem}</span> to <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{endItem}</span> of{' '}
+              <span className={`font-medium ${theme === 'dark' ? 'text-white' : ''}`}>{totalItems}</span> results
+            </p>
+          </div>
+        )}
         <div>
           <nav className="relative z-0 inline-flex items-center rounded-md shadow-sm -space-x-px" aria-label="Pagination">
             <button
               onClick={handlePrevious}
               disabled={currentPage === 1}
-              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`relative inline-flex items-center justify-center px-2 h-[28px] rounded-l-md border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
                 theme === 'dark'
                   ? 'bg-dark-panel text-gray-300 hover:bg-dark-hover hover:text-white'
                   : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
@@ -119,22 +125,22 @@ const Pagination: React.FC<PaginationProps> = ({
               style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
             >
               <span className="sr-only">Previous</span>
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </button>
             <div 
-              className={`flex items-center border-t border-b px-2 ${
+              className={`flex items-center border-t border-b px-2 h-[28px] ${
                 theme === 'dark'
                   ? 'bg-dark-panel'
                   : 'border-gray-300 bg-white'
               }`}
               style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
             >
-              <span className={`text-sm mr-2 ${
+              <span className={`text-xs mr-2 leading-none ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>Page</span>
-              <form onSubmit={handlePageInputSubmit} className="flex items-center">
+              <form onSubmit={handlePageInputSubmit} className="flex items-center h-full">
                 <input
                   type="number"
                   min="1"
@@ -142,7 +148,7 @@ const Pagination: React.FC<PaginationProps> = ({
                   value={pageInput}
                   onChange={handlePageInputChange}
                   onBlur={handlePageInputBlur}
-                  className={`w-12 px-1 py-1 text-center text-sm border rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                  className={`w-12 px-1 h-[20px] text-center text-xs border rounded focus:ring-1 focus:ring-green-500 focus:border-green-500 outline-none leading-none ${
                     theme === 'dark'
                       ? 'text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -153,14 +159,14 @@ const Pagination: React.FC<PaginationProps> = ({
                   } : undefined}
                 />
               </form>
-              <span className={`text-sm ml-2 ${
+              <span className={`text-xs ml-2 leading-none ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>of {totalPages}</span>
             </div>
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`relative inline-flex items-center justify-center px-2 h-[28px] rounded-r-md border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
                 theme === 'dark'
                   ? 'bg-dark-panel text-gray-300 hover:bg-dark-hover hover:text-white'
                   : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
@@ -168,7 +174,7 @@ const Pagination: React.FC<PaginationProps> = ({
               style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
             >
               <span className="sr-only">Next</span>
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>

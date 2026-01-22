@@ -40,14 +40,6 @@ const OfficeWithOverdue: React.FC = () => {
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>Office With Overdue</h1>
       
-      <div className="mb-4">
-        <p className={`text-sm mb-2 ${
-          theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-        }`}>
-          Please click on specific office with overdue.
-        </p>
-      </div>
-      
       <div className="flex justify-end items-center gap-3 mb-3">
         <Input
           type="text"
