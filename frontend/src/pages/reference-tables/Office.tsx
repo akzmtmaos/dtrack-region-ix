@@ -218,6 +218,129 @@ const Office: React.FC = () => {
       setDeleteItemName('')
     }
   }
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Office - Reference Table</title>
+          <style>
+            @media print {
+              @page { margin: 1cm; }
+              body { font-family: Arial, sans-serif; }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 30px;
+              color: #333;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .no-data {
+              text-align: center;
+              padding: 20px;
+              color: #666;
+            }
+            .print-date {
+              text-align: right;
+              margin-bottom: 20px;
+              color: #666;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
+          <h1>Office - Reference Table</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>Office Code</th>
+                <th>Office</th>
+                <th>Region</th>
+                <th>Short Name</th>
+                <th>Head Office</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredItems.length === 0
+                ? '<tr><td colspan="5" class="no-data">No items found</td></tr>'
+                : filteredItems.map(item => `
+                  <tr>
+                    <td>${String(item.id).padStart(5, '0')}</td>
+                    <td>${item.office || '—'}</td>
+                    <td>${item.region || '—'}</td>
+                    <td>${item.shortName || '—'}</td>
+                    <td>${item.headOffice || '—'}</td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 250)
+  }
+
+  const handleExportToExcel = () => {
+    // Create CSV content
+    const headers = ['Office Code', 'Office', 'Region', 'Short Name', 'Head Office']
+    const csvRows = [headers.join(',')]
+
+    filteredItems.forEach(item => {
+      const row = [
+        `\"${String(item.id).padStart(5, '0').replace(/\"/g, '\"\"')}\"`,
+        `\"${(item.office || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(item.region || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(item.shortName || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(item.headOffice || '').replace(/\"/g, '\"\"')}\"`
+      ]
+      csvRows.push(row.join(','))
+    })
+
+    const csvContent = csvRows.join('\n')
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+
+    link.setAttribute('href', url)
+    link.setAttribute('download', `office_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
   
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
@@ -248,6 +371,30 @@ const Office: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            onClick={handlePrint}
+            variant="secondary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Print
+          </Button>
+          <Button
+            onClick={handleExportToExcel}
+            variant="secondary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Excel
+          </Button>
           <Button
             onClick={handleDeleteSelected}
             disabled={selectedItems.length === 0 || loading}

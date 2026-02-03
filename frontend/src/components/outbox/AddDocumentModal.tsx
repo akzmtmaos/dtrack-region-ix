@@ -1,15 +1,41 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { apiService } from '../../services/api'
 import SearchableSelect from '../SearchableSelect'
+
+interface EditingDocument {
+  id: number
+  documentControlNo?: string
+  routeNo?: string
+  subject: string
+  documentType: string
+  sourceType: string
+  internalOriginatingOffice: string
+  internalOriginatingEmployee: string
+  externalOriginatingOffice: string
+  externalOriginatingEmployee: string
+  noOfPages: string
+  attachedDocumentFilename: string
+  attachmentList?: string
+  userid?: string
+  inSequence?: string
+  remarks: string
+  referenceDocumentControlNo1?: string
+  referenceDocumentControlNo2?: string
+  referenceDocumentControlNo3?: string
+  referenceDocumentControlNo4?: string
+  referenceDocumentControlNo5?: string
+}
 
 interface AddDocumentModalProps {
   isOpen: boolean
   onClose: () => void
   onAdd: (document: any) => void
+  editingDocument?: EditingDocument | null
+  onUpdate?: (document: any) => void
 }
 
-const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd, editingDocument, onUpdate }) => {
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
     subject: '',
@@ -30,6 +56,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
@@ -49,6 +76,52 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       fetchDocumentTypes()
     }
   }, [isOpen])
+
+  // Prefill form when editing
+  useEffect(() => {
+    if (isOpen && editingDocument) {
+      const refs = [
+        editingDocument.referenceDocumentControlNo1 || '',
+        editingDocument.referenceDocumentControlNo2 || '',
+        editingDocument.referenceDocumentControlNo3 || '',
+        editingDocument.referenceDocumentControlNo4 || '',
+        editingDocument.referenceDocumentControlNo5 || ''
+      ].filter(Boolean)
+      setFormData({
+        subject: editingDocument.subject || '',
+        documentType: editingDocument.documentType || '',
+        sourceType: editingDocument.sourceType || '',
+        internalOriginatingOffice: editingDocument.internalOriginatingOffice || '',
+        internalOriginatingEmployee: editingDocument.internalOriginatingEmployee || '',
+        externalOriginatingOffice: editingDocument.externalOriginatingOffice || '',
+        externalOriginatingEmployee: editingDocument.externalOriginatingEmployee || '',
+        noOfPages: editingDocument.noOfPages || '',
+        attachedDocumentFilename: editingDocument.attachedDocumentFilename || '',
+        attachmentList: editingDocument.attachmentList || '',
+        userid: editingDocument.userid || '',
+        inSequence: editingDocument.inSequence || '',
+        remarks: editingDocument.remarks || '',
+        referenceDocuments: refs.length > 0 ? refs : ['']
+      })
+    } else if (isOpen && !editingDocument) {
+      setFormData({
+        subject: '',
+        documentType: '',
+        sourceType: '',
+        internalOriginatingOffice: '',
+        internalOriginatingEmployee: '',
+        externalOriginatingOffice: '',
+        externalOriginatingEmployee: '',
+        noOfPages: '',
+        attachedDocumentFilename: '',
+        attachmentList: '',
+        userid: '',
+        inSequence: '',
+        remarks: '',
+        referenceDocuments: ['']
+      })
+    }
+  }, [isOpen, editingDocument])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -123,7 +196,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     if (validate()) {
       const referenceDocs = formData.referenceDocuments.filter(ref => ref.trim() !== '')
       const documentData: any = {
-        id: Date.now(),
         subject: formData.subject,
         documentType: formData.documentType,
         sourceType: formData.sourceType,
@@ -143,8 +215,20 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         referenceDocumentControlNo4: referenceDocs[3] || '',
         referenceDocumentControlNo5: referenceDocs[4] || ''
       }
-      
-      onAdd(documentData)
+
+      if (editingDocument && onUpdate) {
+        onUpdate({
+          ...editingDocument,
+          ...documentData
+        })
+      } else {
+        onAdd({
+          id: Date.now(),
+          documentControlNo: '',
+          routeNo: '',
+          ...documentData
+        })
+      }
       
       const emptyForm = {
         subject: '',
@@ -164,6 +248,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       }
       setFormData(emptyForm)
       setErrors({})
+      if (fileInputRef.current) fileInputRef.current.value = ''
       onClose()
     }
   }
@@ -187,6 +272,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     }
     setFormData(emptyForm)
     setErrors({})
+    if (fileInputRef.current) fileInputRef.current.value = ''
     onClose()
   }
 
@@ -213,10 +299,10 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         {/* Header */}
         <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderColor}` }}>
           <h2 className="text-lg font-semibold mb-1" style={{ color: textPrimary }}>
-            Add New Document
+            {editingDocument ? 'Edit Document' : 'Add New Document'}
           </h2>
           <p className="text-xs" style={{ color: textSecondary }}>
-            Fill in the document details below. All required fields are marked with an asterisk.
+            {editingDocument ? 'Update the document details below.' : 'Fill in the document details below. All required fields are marked with an asterisk.'}
           </p>
         </div>
 
@@ -535,6 +621,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 </label>
                 <div className="flex-1">
                   <input
+                    ref={fileInputRef}
                     type="file"
                     onChange={(e) => {
                       const file = e.target.files?.[0]
@@ -543,15 +630,42 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                         attachedDocumentFilename: file ? file.name : ''
                       }))
                     }}
-                    className="w-full text-xs file:mr-3 file:px-2.5 file:py-1.5 file:rounded-md file:border-0 file:text-xs file:font-medium cursor-pointer"
+                    className="w-full text-xs file:mr-3 file:px-2.5 file:py-1.5 file:rounded-md file:border-0 file:text-xs file:font-medium file:cursor-pointer file:transition-colors cursor-pointer hover:file:bg-[#3ecf8e]/20 hover:file:text-[#3ecf8e]"
                     style={{
                       color: textSecondary
                     }}
                   />
                   {formData.attachedDocumentFilename && (
-                    <p className="mt-1.5 text-xs" style={{ color: textSecondary }}>
-                      Selected: {formData.attachedDocumentFilename}
-                    </p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <p className="text-xs flex-1 min-w-0 truncate" style={{ color: textSecondary }}>
+                        Selected: {formData.attachedDocumentFilename}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = ''
+                          }
+                          setFormData(prev => ({
+                            ...prev,
+                            attachedDocumentFilename: ''
+                          }))
+                        }}
+                        className="flex-shrink-0 px-2 py-1 text-xs font-medium rounded-md transition-colors"
+                        style={{
+                          color: '#ef4444',
+                          backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.15)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)'
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -613,7 +727,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#35b87a'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3ecf8e'}
             >
-              Add Destination
+              {editingDocument ? 'Save' : 'Add Destination'}
             </button>
           </div>
         </form>

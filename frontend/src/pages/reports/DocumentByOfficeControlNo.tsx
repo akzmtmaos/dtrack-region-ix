@@ -3,6 +3,7 @@ import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
+import Button from '../../components/Button'
 
 interface Document {
   id: number
@@ -81,6 +82,245 @@ const DocumentByOfficeControlNo: React.FC = () => {
   // Helper for red asterisk
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>;
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Document By Office Control No. - Report</title>
+          <style>
+            @media print {
+              @page { margin: 1cm; }
+              body { font-family: Arial, sans-serif; }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 30px;
+              color: #333;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .no-data {
+              text-align: center;
+              padding: 20px;
+              color: #666;
+            }
+            .print-date {
+              text-align: right;
+              margin-bottom: 20px;
+              color: #666;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-date">Printed on: ${new Date().toLocaleString()}</div>
+          <h1>Document By Office Control No. - Report</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>Document Control No.</th>
+                <th>Subject</th>
+                <th>Details</th>
+                <th>Destination Officer</th>
+                <th>Destination Office</th>
+                <th>Date Accomplished</th>
+                <th>Time Accomplished</th>
+                <th>Action Taken</th>
+                <th>Remarks</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${documents.length === 0
+                ? '<tr><td colspan="10" class="no-data">No documents found</td></tr>'
+                : documents.map(doc => `
+                  <tr>
+                    <td>${doc.documentNumber || '—'}</td>
+                    <td>${doc.subject || '—'}</td>
+                    <td>${doc.recipient || '—'}</td>
+                    <td>${doc.dateSent || '—'}</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>${doc.status || '—'}</td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 250)
+  }
+
+  const handleExportToExcel = () => {
+    // Create CSV content
+    const headers = ['Document Control No.', 'Subject', 'Details', 'Destination Officer', 'Destination Office', 'Date Accomplished', 'Time Accomplished', 'Action Taken', 'Remarks', 'Status']
+    const csvRows = [headers.join(',')]
+
+    documents.forEach(doc => {
+      const row = [
+        `\"${(doc.documentNumber || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(doc.subject || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(doc.recipient || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(doc.dateSent || '').replace(/\"/g, '\"\"')}\"`,
+        '\"\"',
+        '\"\"',
+        '\"\"',
+        '\"\"',
+        '\"\"',
+        `\"${(doc.status || '').replace(/\"/g, '\"\"')}\"`
+      ]
+      csvRows.push(row.join(','))
+    })
+
+    const csvContent = csvRows.join('\n')
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+
+    link.setAttribute('href', url)
+    link.setAttribute('download', `document_by_office_control_no_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleExportToWord = () => {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Document By Office Control No. - Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 30px;
+              color: #333;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .no-data {
+              text-align: center;
+              padding: 20px;
+              color: #666;
+            }
+            .export-date {
+              text-align: right;
+              margin-bottom: 20px;
+              color: #666;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="export-date">Exported on: ${new Date().toLocaleString()}</div>
+          <h1>Document By Office Control No. - Report</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>Document Control No.</th>
+                <th>Subject</th>
+                <th>Details</th>
+                <th>Destination Officer</th>
+                <th>Destination Office</th>
+                <th>Date Accomplished</th>
+                <th>Time Accomplished</th>
+                <th>Action Taken</th>
+                <th>Remarks</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${documents.length === 0
+                ? '<tr><td colspan="10" class="no-data">No documents found</td></tr>'
+                : documents.map(doc => `
+                  <tr>
+                    <td>${doc.documentNumber || '—'}</td>
+                    <td>${doc.subject || '—'}</td>
+                    <td>${doc.recipient || '—'}</td>
+                    <td>${doc.dateSent || '—'}</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>${doc.status || '—'}</td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+
+    const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+
+    link.setAttribute('href', url)
+    link.setAttribute('download', `document_by_office_control_no_${new Date().toISOString().split('T')[0]}.doc`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="pt-4 pb-8">
       <h1 className={`text-2xl font-semibold mb-4 ${
@@ -100,6 +340,42 @@ const DocumentByOfficeControlNo: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            onClick={handlePrint}
+            variant="secondary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Print
+          </Button>
+          <Button
+            onClick={handleExportToExcel}
+            variant="secondary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Excel
+          </Button>
+          <Button
+            onClick={handleExportToWord}
+            variant="secondary"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            }
+            iconPosition="left"
+          >
+            Word
+          </Button>
           <Input
             type="text"
             placeholder="Search..."

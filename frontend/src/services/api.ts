@@ -397,6 +397,73 @@ class ApiService {
       body: JSON.stringify({ ids }),
     })
   }
+
+  // Document Source (Outbox) endpoints
+  async getDocumentSource(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/document-source/')
+  }
+
+  async createDocumentSource(data: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<any>('/document-source/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateDocumentSource(id: number, data: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<any>(`/document-source/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteDocumentSource(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/document-source/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteDocumentSource(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/document-source/bulk-delete/', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    })
+  }
+
+  // Document Destination endpoints
+  async getDocumentDestination(documentSourceId?: number): Promise<ApiResponse<any[]>> {
+    const url = documentSourceId != null
+      ? `/document-destination/?document_source_id=${documentSourceId}`
+      : '/document-destination/'
+    return this.request<any[]>(url)
+  }
+
+  async createDocumentDestination(data: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<any>('/document-destination/create/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateDocumentDestination(id: number, data: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<any>(`/document-destination/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteDocumentDestination(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>(`/document-destination/${id}/delete/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async bulkDeleteDocumentDestination(ids: number[]): Promise<ApiResponse<void>> {
+    return this.request<void>('/document-destination/bulk-delete/', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    })
+  }
 }
 
 export const apiService = new ApiService()

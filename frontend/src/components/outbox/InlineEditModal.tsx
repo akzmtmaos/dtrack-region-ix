@@ -7,7 +7,6 @@ interface Document {
   id: number
   documentControlNo: string
   routeNo: string
-  officeControlNo: string
   subject: string
   documentType: string
   sourceType: string
@@ -90,9 +89,6 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
     }
     if (!formData.routeNo.trim()) {
       newErrors.routeNo = 'Route No. is required'
-    }
-    if (!formData.officeControlNo.trim()) {
-      newErrors.officeControlNo = 'Office Control No. is required'
     }
     if (!formData.subject.trim()) {
       newErrors.subject = 'Subject is required'
@@ -184,27 +180,6 @@ const InlineEditModal: React.FC<InlineEditModalProps> = ({ isOpen, onClose, docu
               />
               {errors.routeNo && (
                 <p className="mt-1 text-sm text-red-600">{errors.routeNo}</p>
-              )}
-            </div>
-
-            {/* Office Control No. */}
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Office Control No. <RequiredAsterisk />
-              </label>
-              <input
-                type="text"
-                name="officeControlNo"
-                value={formData.officeControlNo}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                  errors.officeControlNo ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.officeControlNo && (
-                <p className="mt-1 text-sm text-red-600">{errors.officeControlNo}</p>
               )}
             </div>
 

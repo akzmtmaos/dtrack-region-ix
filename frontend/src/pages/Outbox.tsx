@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { apiService } from '../services/api'
 import AddDocumentModal from '../components/outbox/AddDocumentModal'
 import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
+import DocumentDestinationsModal, { type DocumentDestinationRow } from '../components/outbox/DocumentDestinationsModal'
+import AddDestinationRowModal from '../components/outbox/AddDestinationRowModal'
 import ActionButtons from '../components/outbox/ActionButtons'
 import RoutingSlipModal from '../components/outbox/RoutingSlipModal'
-import InlineEditModal from '../components/outbox/InlineEditModal'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import Pagination from '../components/Pagination'
 import Button from '../components/Button'
@@ -15,7 +17,6 @@ interface Document {
   id: number
   documentControlNo: string
   routeNo: string
-  officeControlNo: string
   subject: string
   documentType: string
   sourceType: string
@@ -43,7 +44,7 @@ const Outbox: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isRoutingSlipModalOpen, setIsRoutingSlipModalOpen] = useState(false)
-  const [isInlineEditModalOpen, setIsInlineEditModalOpen] = useState(false)
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view')
   const [currentPage, setCurrentPage] = useState(1)
@@ -52,6 +53,31 @@ const Outbox: React.FC = () => {
   const [deleteType, setDeleteType] = useState<'single' | 'bulk'>('single')
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [deleteItemName, setDeleteItemName] = useState<string>('')
+  const [documentForDestinations, setDocumentForDestinations] = useState<Document | null>(null)
+  const [isDestinationsModalOpen, setIsDestinationsModalOpen] = useState(false)
+  const [destinationsByDocumentId, setDestinationsByDocumentId] = useState<Record<number, DocumentDestinationRow[]>>({})
+  const [isAddDestinationRowModalOpen, setIsAddDestinationRowModalOpen] = useState(false)
+  const [hoveredRowId, setHoveredRowId] = useState<number | null>(null)
+
+  // Fetch documents from Supabase on mount and when refetch is needed
+  const fetchDocuments = () => {
+    apiService.getDocumentSource().then((res) => {
+      if (res.success && res.data) setDocuments(res.data)
+    })
+  }
+
+  useEffect(() => {
+    fetchDocuments()
+  }, [])
+
+  // When destinations modal opens, fetch destinations for the current document
+  useEffect(() => {
+    if (!isDestinationsModalOpen || !documentForDestinations) return
+    apiService.getDocumentDestination(documentForDestinations.id).then((res) => {
+      if (res.success && res.data)
+        setDestinationsByDocumentId((prev) => ({ ...prev, [documentForDestinations.id]: res.data! }))
+    })
+  }, [isDestinationsModalOpen, documentForDestinations?.id])
 
   // Helper for red asterisk
   const RequiredAsterisk = () => <span className="text-red-500">*</span>;
@@ -85,36 +111,60 @@ const Outbox: React.FC = () => {
   }
 
   const confirmBulkDelete = () => {
-    setDocuments(prev => prev.filter(doc => !selectedItems.includes(doc.id)))
-    setSelectedItems([])
+    apiService.bulkDeleteDocumentSource(selectedItems).then((res) => {
+      if (!res.success) return
+      setDocuments((prev) => prev.filter((doc) => !selectedItems.includes(doc.id)))
+      setSelectedItems([])
+      setIsDeleteModalOpen(false)
+    })
   }
 
   const handleAddDocument = (document: Partial<Document>) => {
-    const newDocument: Document = {
-      id: Date.now(),
-      documentControlNo: document.documentControlNo || '',
-      routeNo: document.routeNo || '',
-      officeControlNo: document.officeControlNo || '',
-      subject: document.subject || '',
-      documentType: document.documentType || '',
-      sourceType: document.sourceType || '',
-      internalOriginatingOffice: document.internalOriginatingOffice || '',
-      internalOriginatingEmployee: document.internalOriginatingEmployee || '',
-      externalOriginatingOffice: document.externalOriginatingOffice || '',
-      externalOriginatingEmployee: document.externalOriginatingEmployee || '',
-      noOfPages: document.noOfPages || '',
-      attachedDocumentFilename: document.attachedDocumentFilename || '',
-      attachmentList: document.attachmentList || '',
-      userid: document.userid || '',
-      inSequence: document.inSequence || '',
-      remarks: document.remarks || '',
-      referenceDocumentControlNo1: document.referenceDocumentControlNo1 || '',
-      referenceDocumentControlNo2: document.referenceDocumentControlNo2 || '',
-      referenceDocumentControlNo3: document.referenceDocumentControlNo3 || '',
-      referenceDocumentControlNo4: document.referenceDocumentControlNo4 || '',
-      referenceDocumentControlNo5: document.referenceDocumentControlNo5 || ''
-    }
-    setDocuments(prev => [...prev, newDocument])
+    apiService.createDocumentSource(document as Record<string, unknown>).then((res) => {
+      if (!res.success || !res.data) return
+      const newDocument = res.data as Document
+      setDocuments((prev) => [...prev, newDocument])
+      setDocumentForDestinations(newDocument)
+      setDestinationsByDocumentId((prev) => ({ ...prev, [newDocument.id]: [] }))
+      setIsAddModalOpen(false)
+      setEditingDocument(null)
+      setIsDestinationsModalOpen(true)
+    })
+  }
+
+  const handleAddDestinationClick = (doc: Document) => {
+    setDocumentForDestinations(doc)
+    setIsDestinationsModalOpen(true)
+  }
+
+  const handleAddDestinationRow = (doc: Document) => {
+    setDocumentForDestinations(doc)
+    setIsAddDestinationRowModalOpen(true)
+  }
+
+  const handleSaveDestinationRow = (row: Omit<DocumentDestinationRow, 'id'>) => {
+    if (!documentForDestinations) return
+    const payload = { documentSourceId: documentForDestinations.id, ...row }
+    apiService.createDocumentDestination(payload as Record<string, unknown>).then((res) => {
+      if (!res.success || !res.data) return
+      const newRow = res.data as DocumentDestinationRow
+      setDestinationsByDocumentId((prev) => ({
+        ...prev,
+        [documentForDestinations.id]: [...(prev[documentForDestinations.id] ?? []), newRow]
+      }))
+      setIsAddDestinationRowModalOpen(false)
+    })
+  }
+
+  const handleDeleteDestinationRows = (ids: number[]) => {
+    if (!documentForDestinations || ids.length === 0) return
+    apiService.bulkDeleteDocumentDestination(ids).then((res) => {
+      if (!res.success) return
+      apiService.getDocumentDestination(documentForDestinations.id).then((r) => {
+        if (r.success && r.data)
+          setDestinationsByDocumentId((prev) => ({ ...prev, [documentForDestinations.id]: r.data! }))
+      })
+    })
   }
 
   const handleRowClick = (document: Document) => {
@@ -123,10 +173,12 @@ const Outbox: React.FC = () => {
   }
 
   const handleUpdateDocument = (updatedDocument: Document) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.id === updatedDocument.id ? updatedDocument : doc
-    ))
-    setSelectedDocument(updatedDocument)
+    apiService.updateDocumentSource(updatedDocument.id, updatedDocument as unknown as Record<string, unknown>).then((res) => {
+      if (!res.success || !res.data) return
+      const doc = res.data as Document
+      setDocuments((prev) => prev.map((d) => (d.id === doc.id ? doc : d)))
+      setSelectedDocument(doc)
+    })
   }
 
   const handleDeleteDocument = (document: Document) => {
@@ -138,13 +190,17 @@ const Outbox: React.FC = () => {
 
   const confirmSingleDelete = () => {
     if (!deleteId) return
-    setDocuments(prev => prev.filter(doc => doc.id !== deleteId))
-    if (selectedDocument?.id === deleteId) {
-      setIsDetailModalOpen(false)
-      setSelectedDocument(null)
-    }
-    setDeleteId(null)
-    setDeleteItemName('')
+    apiService.deleteDocumentSource(deleteId).then((res) => {
+      if (!res.success) return
+      setDocuments((prev) => prev.filter((doc) => doc.id !== deleteId))
+      if (selectedDocument?.id === deleteId) {
+        setIsDetailModalOpen(false)
+        setSelectedDocument(null)
+      }
+      setDeleteId(null)
+      setDeleteItemName('')
+      setIsDeleteModalOpen(false)
+    })
   }
 
   const handleView = (document: Document) => {
@@ -159,21 +215,8 @@ const Outbox: React.FC = () => {
   }
 
   const handleEdit = (document: Document) => {
-    setSelectedDocument(document)
-    setDetailModalMode('edit')
-    setIsDetailModalOpen(true)
-  }
-
-  const handleInlineEdit = (document: Document) => {
-    setSelectedDocument(document)
-    setIsInlineEditModalOpen(true)
-  }
-
-  const handleInlineEditSave = (updatedDocument: Document) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.id === updatedDocument.id ? updatedDocument : doc
-    ))
-    setSelectedDocument(updatedDocument)
+    setEditingDocument(document)
+    setIsAddModalOpen(true)
   }
 
   const handlePrint = () => {
@@ -237,7 +280,6 @@ const Outbox: React.FC = () => {
               <tr>
                 <th>Document Control No.</th>
                 <th>Route No.</th>
-                <th>Office Control No.</th>
                 <th>Subject</th>
                 <th>Document Type</th>
                 <th>Source Type</th>
@@ -245,12 +287,11 @@ const Outbox: React.FC = () => {
             </thead>
             <tbody>
               ${documents.length === 0 
-                ? '<tr><td colspan="6" class="no-data">No documents found</td></tr>'
+                ? '<tr><td colspan="5" class="no-data">No documents found</td></tr>'
                 : documents.map(doc => `
                   <tr>
                     <td>${doc.documentControlNo || '—'}</td>
                     <td>${doc.routeNo || '—'}</td>
-                    <td>${doc.officeControlNo || '—'}</td>
                     <td>${doc.subject || '—'}</td>
                     <td>${doc.documentType || '—'}</td>
                     <td>${doc.sourceType || '—'}</td>
@@ -274,14 +315,13 @@ const Outbox: React.FC = () => {
 
   const handleExportToExcel = () => {
     // Create CSV content
-    const headers = ['Document Control No.', 'Route No.', 'Office Control No.', 'Subject', 'Document Type', 'Source Type']
+    const headers = ['Document Control No.', 'Route No.', 'Subject', 'Document Type', 'Source Type']
     const csvRows = [headers.join(',')]
 
     documents.forEach(doc => {
       const row = [
         `"${(doc.documentControlNo || '').replace(/"/g, '""')}"`,
         `"${(doc.routeNo || '').replace(/"/g, '""')}"`,
-        `"${(doc.officeControlNo || '').replace(/"/g, '""')}"`,
         `"${(doc.subject || '').replace(/"/g, '""')}"`,
         `"${(doc.documentType || '').replace(/"/g, '""')}"`,
         `"${(doc.sourceType || '').replace(/"/g, '""')}"`
@@ -357,7 +397,6 @@ const Outbox: React.FC = () => {
               <tr>
                 <th>Document Control No.</th>
                 <th>Route No.</th>
-                <th>Office Control No.</th>
                 <th>Subject</th>
                 <th>Document Type</th>
                 <th>Source Type</th>
@@ -365,12 +404,11 @@ const Outbox: React.FC = () => {
             </thead>
             <tbody>
               ${documents.length === 0 
-                ? '<tr><td colspan="6" class="no-data">No documents found</td></tr>'
+                ? '<tr><td colspan="5" class="no-data">No documents found</td></tr>'
                 : documents.map(doc => `
                   <tr>
                     <td>${doc.documentControlNo || '—'}</td>
                     <td>${doc.routeNo || '—'}</td>
-                    <td>${doc.officeControlNo || '—'}</td>
                     <td>${doc.subject || '—'}</td>
                     <td>${doc.documentType || '—'}</td>
                     <td>${doc.sourceType || '—'}</td>
@@ -399,7 +437,7 @@ const Outbox: React.FC = () => {
     <div className="pt-4 pb-8">
         <h1 className={`text-2xl font-semibold mb-4 ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
-        }`}>Outbox</h1>
+        }`}>Outbox - Document Source</h1>
         
         <div className="flex justify-between items-center gap-3">
           <div className="flex items-center">
@@ -458,7 +496,10 @@ const Outbox: React.FC = () => {
               Delete {selectedItems.length > 0 && `(${selectedItems.length})`}
             </Button>
             <Button
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setEditingDocument(null)
+                setIsAddModalOpen(true)
+              }}
               variant="primary"
               icon={
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -489,6 +530,7 @@ const Outbox: React.FC = () => {
         />
         
         <Table
+            contentElevated={hoveredRowId !== null}
             pagination={
               <Pagination
                 currentPage={currentPage}
@@ -527,11 +569,6 @@ const Outbox: React.FC = () => {
                 <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
-                  Office Control No. <RequiredAsterisk />
-                </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
                   Subject <RequiredAsterisk />
                 </th>
                 <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
@@ -556,7 +593,7 @@ const Outbox: React.FC = () => {
             }`}>
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className={`px-6 py-16 text-center ${
+                  <td colSpan={7} className={`px-6 py-16 text-center ${
                     theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                   }`}>
                     <div className="flex flex-col items-center justify-center">
@@ -584,6 +621,9 @@ const Outbox: React.FC = () => {
                         ? 'hover:bg-dark-hover/50 active:bg-dark-hover' 
                         : 'hover:bg-gray-50 active:bg-gray-100'
                     }`}
+                    style={{ position: 'relative', zIndex: hoveredRowId === doc.id ? 10 : 0 }}
+                    onMouseEnter={() => setHoveredRowId(doc.id)}
+                    onMouseLeave={() => setHoveredRowId(null)}
                     onClick={() => handleRowClick(doc)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -605,11 +645,6 @@ const Outbox: React.FC = () => {
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.routeNo || <span className="text-gray-500 italic">—</span>}
-                    </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {doc.officeControlNo || <span className="text-gray-500 italic">—</span>}
                     </td>
                     <td className={`px-6 py-4 text-sm max-w-xs ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -634,7 +669,8 @@ const Outbox: React.FC = () => {
                         onView={handleView}
                         onRoutingSlip={handleRoutingSlip}
                         onEdit={handleEdit}
-                        onInlineEdit={handleInlineEdit}
+                        onAddDestination={handleAddDestinationClick}
+                        onDelete={handleDeleteDocument}
                       />
                     </td>
                   </tr>
@@ -643,11 +679,16 @@ const Outbox: React.FC = () => {
             </tbody>
           </Table>
 
-      {/* Add Document Modal */}
+      {/* Add / Edit Document Modal */}
       <AddDocumentModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setEditingDocument(null)
+        }}
         onAdd={handleAddDocument}
+        editingDocument={editingDocument}
+        onUpdate={handleUpdateDocument}
       />
 
       {/* Document Detail Modal */}
@@ -660,6 +701,12 @@ const Outbox: React.FC = () => {
         }}
         document={selectedDocument}
         onUpdate={handleUpdateDocument}
+        onEditRequest={(doc) => {
+          setEditingDocument(doc)
+          setIsDetailModalOpen(false)
+          setSelectedDocument(null)
+          setIsAddModalOpen(true)
+        }}
         mode={detailModalMode}
       />
 
@@ -673,15 +720,26 @@ const Outbox: React.FC = () => {
         document={selectedDocument}
       />
 
-      {/* Inline Edit Modal */}
-      <InlineEditModal
-        isOpen={isInlineEditModalOpen}
+      {/* Document Destinations Modal (Master Record + TABLE: Document Destination) */}
+      <DocumentDestinationsModal
+        isOpen={isDestinationsModalOpen}
         onClose={() => {
-          setIsInlineEditModalOpen(false)
-          setSelectedDocument(null)
+          setIsDestinationsModalOpen(false)
+          setDocumentForDestinations(null)
         }}
-        document={selectedDocument}
-        onSave={handleInlineEditSave}
+        document={documentForDestinations}
+        destinations={documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []}
+        onAddDestination={handleAddDestinationRow}
+        onDeleteDestinations={handleDeleteDestinationRows}
+      />
+
+      {/* Add Destination Row Modal */}
+      <AddDestinationRowModal
+        isOpen={isAddDestinationRowModalOpen}
+        onClose={() => setIsAddDestinationRowModalOpen(false)}
+        onSave={handleSaveDestinationRow}
+        document={documentForDestinations}
+        nextSequenceNo={(documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []).length + 1}
       />
 
       {/* Delete Confirmation Modal */}

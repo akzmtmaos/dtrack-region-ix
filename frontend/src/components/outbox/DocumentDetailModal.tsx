@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Button from '../Button'
-import { apiService } from '../../services/api'
 
 interface Document {
   id: number
   documentControlNo: string
   routeNo: string
-  officeControlNo: string
   subject: string
   documentType: string
   sourceType: string
@@ -33,662 +31,213 @@ interface DocumentDetailModalProps {
   onClose: () => void
   document: Document | null
   onUpdate?: (document: Document) => void
+  onEditRequest?: (document: Document) => void
   mode?: 'view' | 'edit'
 }
 
-const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  document, 
-  onUpdate,
-  mode = 'view' 
+const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
+  isOpen,
+  onClose,
+  document,
+  onEditRequest
 }) => {
   const { theme } = useTheme()
-  const [isEditMode, setIsEditMode] = useState(mode === 'edit')
-  const [activeTab, setActiveTab] = useState('basic')
-  const [formData, setFormData] = useState<Document | null>(null)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
 
-  useEffect(() => {
-    if (document) {
-      setFormData(document)
-    }
-    setIsEditMode(mode === 'edit')
-  }, [document, mode])
+  if (!isOpen || !document) return null
 
-  // Fetch document types when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      const fetchDocumentTypes = async () => {
-        try {
-          const response = await apiService.getDocumentType()
-          if (response.success && response.data) {
-            setDocumentTypes(response.data)
-          }
-        } catch (error) {
-          console.error('Failed to fetch document types:', error)
-        }
-      }
-      fetchDocumentTypes()
-    }
-  }, [isOpen])
+  const modalBg = theme === 'dark' ? '#171717' : '#ffffff'
+  const borderColor = theme === 'dark' ? '#262626' : '#e5e5e5'
+  const textPrimary = theme === 'dark' ? '#fafafa' : '#171717'
+  const textSecondary = theme === 'dark' ? '#a3a3a3' : '#525252'
+  const valueBg = theme === 'dark' ? '#262626' : '#f5f5f5'
 
-  const RequiredAsterisk = () => <span className="text-red-500">*</span>
+  const refs = [
+    document.referenceDocumentControlNo1,
+    document.referenceDocumentControlNo2,
+    document.referenceDocumentControlNo3,
+    document.referenceDocumentControlNo4,
+    document.referenceDocumentControlNo5
+  ].filter(Boolean)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    if (!formData) return
-    const { name, value } = e.target
-    setFormData(prev => prev ? ({
-      ...prev,
-      [name]: value
-    }) : null)
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }))
-    }
-  }
-
-  const validate = () => {
-    if (!formData) return false
-    const newErrors: Record<string, string> = {}
-    
-    if (!formData.documentControlNo.trim()) {
-      newErrors.documentControlNo = 'Document Control No. is required'
-    }
-    if (!formData.routeNo.trim()) {
-      newErrors.routeNo = 'Route No. is required'
-    }
-    if (!formData.officeControlNo.trim()) {
-      newErrors.officeControlNo = 'Office Control No. is required'
-    }
-    if (!formData.subject.trim()) {
-      newErrors.subject = 'Subject is required'
-    }
-    if (!formData.internalOriginatingOffice.trim()) {
-      newErrors.internalOriginatingOffice = 'Internal Originating Office is required'
-    }
-    if (!formData.internalOriginatingEmployee.trim()) {
-      newErrors.internalOriginatingEmployee = 'Internal Originating Employee is required'
-    }
-    if (formData.sourceType === 'External' && !formData.externalOriginatingEmployee.trim()) {
-      newErrors.externalOriginatingEmployee = 'External Originating Employee is required'
-    }
-    if (!formData.remarks.trim()) {
-      newErrors.remarks = 'Remarks is required'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSave = () => {
-    if (!formData) return
-    if (validate() && onUpdate) {
-      onUpdate(formData)
-      setIsEditMode(false)
-    }
-  }
-
-  const handleCancel = () => {
-    if (document) {
-      setFormData(document)
-    }
-    setIsEditMode(false)
-    setErrors({})
-  }
-
-  if (!isOpen || !document || !formData) return null
-
-  const tabs = [
-    { id: 'basic', label: 'Basic Information' },
-    { id: 'originating', label: 'Originating Information' },
-    { id: 'attachments', label: 'Attachments' },
-    { id: 'references', label: 'References' },
-    { id: 'additional', label: 'Additional' }
-  ]
+  const Value = ({ children }: { children: React.ReactNode }) => (
+    <div
+      className="flex-1 px-2.5 py-1.5 text-xs rounded-md min-h-[28px] flex items-center"
+      style={{ backgroundColor: valueBg, color: textPrimary }}
+    >
+      {children != null && children !== '' ? children : <span style={{ color: textSecondary }}>—</span>}
+    </div>
+  )
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={onClose}>
-      <div className={`rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
-        theme === 'dark' ? 'bg-dark-panel' : 'bg-white'
-      }`} onClick={(e) => e.stopPropagation()}>
-        <div className={`px-6 py-4 border-b flex justify-between items-center ${
-          theme === 'dark' ? '' : 'border-gray-200'
-        }`}>
-          <h2 className={`text-xl font-semibold ${
-            theme === 'dark' ? 'text-white' : 'text-gray-800'
-          }`}>
-            {isEditMode ? 'Edit Document' : 'Document Details'}
+    <div
+      className="fixed inset-0 flex items-center justify-center z-[9999]"
+      onClick={onClose}
+      style={{ backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)' }}
+    >
+      <div
+        className="rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
+        style={{ backgroundColor: modalBg, border: `1px solid ${borderColor}` }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header - same as Add modal */}
+        <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <h2 className="text-lg font-semibold mb-1" style={{ color: textPrimary }}>
+            Document Details
           </h2>
-          {!isEditMode && (
-            <Button
-              onClick={() => setIsEditMode(true)}
-              variant="primary"
-            >
-              Edit
-            </Button>
-          )}
+          <p className="text-xs" style={{ color: textSecondary }}>
+            Full document information. Click Edit to update.
+          </p>
         </div>
-        
-        {/* Tabs */}
-        <div className={`border-b px-6 ${
-          theme === 'dark' ? '' : 'border-gray-200'
-        }`}>
-          <div className="flex space-x-1">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-green-500 border-b-2 border-green-500'
-                    : theme === 'dark'
-                      ? 'text-dark-text hover:text-white hover:bg-dark-hover'
-                      : 'text-gray-500 hover:text-gray-700'
-                }`}
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="space-y-4">
+            {/* Document Control No., Route No. - view only */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Document Control No.
+              </label>
+              <Value>{document.documentControlNo}</Value>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Route No.
+              </label>
+              <Value>{document.routeNo}</Value>
+            </div>
+
+            {/* Subject */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Subject
+              </label>
+              <Value>{document.subject}</Value>
+            </div>
+
+            {/* Reference Document Control No. */}
+            <div className="flex items-start gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px', paddingTop: '4px' }}>
+                Reference Document Control No.
+              </label>
+              <div className="flex-1 space-y-1.5">
+                {refs.length > 0 ? refs.map((ref, i) => (
+                  <div key={i} className="px-2.5 py-1.5 text-xs rounded-md" style={{ backgroundColor: valueBg, color: textPrimary }}>
+                    {ref}
+                  </div>
+                )) : (
+                  <Value>—</Value>
+                )}
+              </div>
+            </div>
+
+            {/* Document Type */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Document Type
+              </label>
+              <Value>{document.documentType}</Value>
+            </div>
+
+            {/* Source Type */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Source Type
+              </label>
+              <Value>{document.sourceType}</Value>
+            </div>
+
+            {/* Internal - same layout as Add modal */}
+            {document.sourceType === 'Internal' && (
+              <div className="space-y-4 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                    Internal Originating Office
+                  </label>
+                  <Value>{document.internalOriginatingOffice}</Value>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                    Internal Originating Employee
+                  </label>
+                  <Value>{document.internalOriginatingEmployee}</Value>
+                </div>
+              </div>
+            )}
+
+            {/* External - same layout as Add modal */}
+            {document.sourceType === 'External' && (
+              <div className="space-y-4 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                    External Originating Office
+                  </label>
+                  <Value>{document.externalOriginatingOffice}</Value>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
+                    External Originating Employee
+                  </label>
+                  <Value>{document.externalOriginatingEmployee}</Value>
+                </div>
+              </div>
+            )}
+
+            {/* No. of Pages */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                No. of Pages
+              </label>
+              <Value>{document.noOfPages}</Value>
+            </div>
+
+            {/* Attach Document Filename */}
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Attach Document Filename
+              </label>
+              <Value>{document.attachedDocumentFilename}</Value>
+            </div>
+
+            {/* Remarks */}
+            <div className="flex items-start gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px', paddingTop: '4px' }}>
+                Remarks
+              </label>
+              <div
+                className="flex-1 px-2.5 py-1.5 text-xs rounded-md min-h-[52px] whitespace-pre-wrap"
+                style={{ backgroundColor: valueBg, color: textPrimary }}
               >
-                {tab.label}
-              </button>
-            ))}
+                {document.remarks != null && document.remarks !== '' ? document.remarks : <span style={{ color: textSecondary }}>—</span>}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {/* Basic Information Tab */}
-          {activeTab === 'basic' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Document Control No. <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="documentControlNo"
-                      value={formData.documentControlNo}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.documentControlNo ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.documentControlNo && (
-                      <p className="mt-1 text-sm text-red-600">{errors.documentControlNo}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className={`px-3 py-2 rounded-lg ${
-                    theme === 'dark' 
-                      ? 'text-gray-300 bg-dark-hover/50' 
-                      : 'text-gray-900 bg-gray-50'
-                  }`}>{formData.documentControlNo || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Route No. <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="routeNo"
-                      value={formData.routeNo}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.routeNo ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.routeNo && (
-                      <p className="mt-1 text-sm text-red-600">{errors.routeNo}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.routeNo || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Office Control No. <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="officeControlNo"
-                      value={formData.officeControlNo}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.officeControlNo ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.officeControlNo && (
-                      <p className="mt-1 text-sm text-red-600">{errors.officeControlNo}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.officeControlNo || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Subject <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.subject ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.subject && (
-                      <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.subject || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Document Type
-                </label>
-                {isEditMode ? (
-                  <select
-                    name="documentType"
-                    value={formData.documentType}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Select document type</option>
-                    {[...documentTypes].sort((a, b) => 
-                      a.document_type.localeCompare(b.document_type)
-                    ).map((type) => (
-                      <option key={type.id} value={type.document_type}>
-                        {type.document_type}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.documentType || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Source Type
-                </label>
-                {isEditMode ? (
-                  <select
-                    name="sourceType"
-                    value={formData.sourceType}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Select source type</option>
-                    <option value="Internal">Internal</option>
-                    <option value="External">External</option>
-                  </select>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.sourceType || '-'}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Originating Information Tab */}
-          {activeTab === 'originating' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Internal Originating Office <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="internalOriginatingOffice"
-                      value={formData.internalOriginatingOffice}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.internalOriginatingOffice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.internalOriginatingOffice && (
-                      <p className="mt-1 text-sm text-red-600">{errors.internalOriginatingOffice}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.internalOriginatingOffice || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Internal Originating Employee <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="internalOriginatingEmployee"
-                      value={formData.internalOriginatingEmployee}
-                      onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.internalOriginatingEmployee ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.internalOriginatingEmployee && (
-                      <p className="mt-1 text-sm text-red-600">{errors.internalOriginatingEmployee}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.internalOriginatingEmployee || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  If External Source, Originating Office
-                </label>
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    name="externalOriginatingOffice"
-                    value={formData.externalOriginatingOffice}
-                    onChange={handleChange}
-                    disabled={formData.sourceType !== 'External'}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      formData.sourceType !== 'External' ? 'bg-gray-100 cursor-not-allowed' : ''
-                    }`}
-                  />
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.externalOriginatingOffice || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  If External Source, Originating Employee <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <input
-                      type="text"
-                      name="externalOriginatingEmployee"
-                      value={formData.externalOriginatingEmployee}
-                      onChange={handleChange}
-                      disabled={formData.sourceType !== 'External'}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        formData.sourceType !== 'External' ? 'bg-gray-100 cursor-not-allowed' : ''
-                      } ${
-                        errors.externalOriginatingEmployee ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.externalOriginatingEmployee && (
-                      <p className="mt-1 text-sm text-red-600">{errors.externalOriginatingEmployee}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.externalOriginatingEmployee || '-'}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Attachments Tab */}
-          {activeTab === 'attachments' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  No. of Pages
-                </label>
-                {isEditMode ? (
-                  <input
-                    type="number"
-                    name="noOfPages"
-                    value={formData.noOfPages}
-                    onChange={handleChange}
-                    min="0"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  />
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.noOfPages || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Attached Document Filename
-                </label>
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    name="attachedDocumentFilename"
-                    value={formData.attachedDocumentFilename}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  />
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.attachedDocumentFilename || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Attachment List
-                </label>
-                {isEditMode ? (
-                  <textarea
-                    name="attachmentList"
-                    value={formData.attachmentList}
-                    onChange={handleChange}
-                    rows={4}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  />
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg whitespace-pre-wrap">{formData.attachmentList || '-'}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* References Tab */}
-          {activeTab === 'references' && (
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map(num => {
-                const fieldName = `referenceDocumentControlNo${num}` as keyof Document
-                return (
-                  <div key={num}>
-                    <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                      Reference Document Control No. ({num})
-                    </label>
-                    {isEditMode ? (
-                      <input
-                        type="text"
-                        name={fieldName}
-                        value={formData[fieldName] || ''}
-                        onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                      />
-                    ) : (
-                      <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData[fieldName] || '-'}</p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Additional Tab */}
-          {activeTab === 'additional' && (
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  User ID
-                </label>
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    name="userid"
-                    value={formData.userid}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  />
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.userid || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  In Sequence (action)
-                </label>
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    name="inSequence"
-                    value={formData.inSequence}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                      theme === 'dark'
-                        ? 'bg-dark-panel text-white'
-                        : 'border-gray-300'
-                    }`}
-                  />
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg">{formData.inSequence || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Remarks <RequiredAsterisk />
-                </label>
-                {isEditMode ? (
-                  <>
-                    <textarea
-                      name="remarks"
-                      value={formData.remarks}
-                      onChange={handleChange}
-                      rows={4}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
-                        errors.remarks ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.remarks && (
-                      <p className="mt-1 text-sm text-red-600">{errors.remarks}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="px-3 py-2 text-gray-900 bg-gray-50 rounded-lg whitespace-pre-wrap">{formData.remarks || '-'}</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className={`px-6 py-4 border-t flex justify-end space-x-3 ${
-          theme === 'dark' 
-            ? 'border-dark-hover bg-dark-panel' 
-            : 'border-gray-200 bg-white'
-        }`}>
-          {isEditMode ? (
-            <>
-              <Button
-                onClick={handleCancel}
-                variant="secondary"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                variant="primary"
-              >
-                Save Changes
-              </Button>
-            </>
-          ) : (
-            <Button
-              onClick={onClose}
-              variant="secondary"
+        {/* Footer - same style as Add modal */}
+        <div
+          className="px-6 py-4 flex justify-end gap-2"
+          style={{ borderTop: `1px solid ${borderColor}`, backgroundColor: modalBg }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+            style={{ color: textSecondary, backgroundColor: 'transparent' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#f5f5f5')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            Close
+          </button>
+          {onEditRequest && (
+            <button
+              type="button"
+              onClick={() => onEditRequest(document)}
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+              style={{ color: '#ffffff', backgroundColor: '#3ecf8e' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#35b87a')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#3ecf8e')}
             >
-              Close
-            </Button>
+              Edit
+            </button>
           )}
         </div>
       </div>
@@ -697,4 +246,3 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 }
 
 export default DocumentDetailModal
-

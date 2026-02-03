@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import action_required, action_officer, action_taken, document_type, document_action_required_days, office, region, user_levels
+from .views import document_source, document_destination
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
@@ -62,5 +63,19 @@ urlpatterns = [
     path('user-levels/<int:item_id>/', user_levels.user_levels_update, name='user-levels-update'),
     path('user-levels/<int:item_id>/delete/', user_levels.user_levels_delete, name='user-levels-delete'),
     path('user-levels/bulk-delete/', user_levels.user_levels_bulk_delete, name='user-levels-bulk-delete'),
+
+    # Document Source (Outbox) endpoints
+    path('document-source/', document_source.document_source_list, name='document-source-list'),
+    path('document-source/create/', document_source.document_source_create, name='document-source-create'),
+    path('document-source/<int:item_id>/', document_source.document_source_update, name='document-source-update'),
+    path('document-source/<int:item_id>/delete/', document_source.document_source_delete, name='document-source-delete'),
+    path('document-source/bulk-delete/', document_source.document_source_bulk_delete, name='document-source-bulk-delete'),
+
+    # Document Destination endpoints
+    path('document-destination/', document_destination.document_destination_list, name='document-destination-list'),
+    path('document-destination/create/', document_destination.document_destination_create, name='document-destination-create'),
+    path('document-destination/<int:item_id>/', document_destination.document_destination_update, name='document-destination-update'),
+    path('document-destination/<int:item_id>/delete/', document_destination.document_destination_delete, name='document-destination-delete'),
+    path('document-destination/bulk-delete/', document_destination.document_destination_bulk_delete, name='document-destination-bulk-delete'),
 ]
 

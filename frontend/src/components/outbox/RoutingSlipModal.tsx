@@ -6,7 +6,6 @@ interface Document {
   id: number
   documentControlNo: string
   routeNo: string
-  officeControlNo: string
   subject: string
   [key: string]: any
 }

@@ -30,16 +30,16 @@ const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path
   const isParentActive = (prefix: string) => location.pathname.startsWith(prefix)
 
-  // Supabase-inspired colors
+  // DOH-inspired colors with green theme
   const colors = {
-    bg: theme === 'dark' ? '#171717' : '#ffffff',
-    bgHover: theme === 'dark' ? '#262626' : '#f5f5f5',
-    bgActive: theme === 'dark' ? '#262626' : '#f0f0f0',
-    border: theme === 'dark' ? '#262626' : '#e5e5e5',
-    text: theme === 'dark' ? '#a3a3a3' : '#525252',
-    textHover: theme === 'dark' ? '#fafafa' : '#171717',
-    textActive: theme === 'dark' ? '#fafafa' : '#171717',
-    accent: '#3ecf8e', // Supabase green
+    bg: theme === 'dark' ? '#1a2e1a' : '#f0f7f0', // Light green tint for light mode, dark green for dark mode
+    bgHover: theme === 'dark' ? '#2d4a2d' : '#e0efe0', // Darker green on hover
+    bgActive: theme === 'dark' ? '#3d5a3d' : '#d0e7d0', // Active state green
+    border: theme === 'dark' ? '#2d4a2d' : '#c0d7c0', // Green-tinted borders
+    text: theme === 'dark' ? '#b8d4b8' : '#2d4a2d', // Green-tinted text
+    textHover: theme === 'dark' ? '#ffffff' : '#1a2e1a', // White/dark green on hover
+    textActive: theme === 'dark' ? '#ffffff' : '#1a2e1a', // White/dark green when active
+    accent: '#649a46', // DOH green (matching header)
   }
 
   const navItemClass = (active: boolean) => `
