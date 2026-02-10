@@ -34,6 +34,7 @@ import DocumentByOfficeControlNo from './pages/reports/DocumentByOfficeControlNo
 import DocumentByActionOfficer from './pages/reports/DocumentByActionOfficer'
 import OverdueReport from './pages/reports/OverdueReport'
 import AuditTrail from './pages/reports/AuditTrail'
+import RoutingSlipPage from './pages/RoutingSlipPage'
 
 function AppContent() {
   const { isAuthenticated } = useAuth()
@@ -59,6 +60,7 @@ function AppContent() {
 
         {/* Protected Routes */}
         <Route path="/logout" element={<Logout />} />
+        <Route path="/routing-slip" element={<ProtectedRoute><RoutingSlipPage /></ProtectedRoute>} />
         <Route path="/*" element={
           <ProtectedRoute>
             <div className={`min-h-screen transition-colors duration-300 ${

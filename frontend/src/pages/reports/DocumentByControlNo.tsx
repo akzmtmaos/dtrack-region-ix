@@ -1,25 +1,55 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
+import { apiService } from '../../services/api'
 
 interface Document {
-  id: number
+  id: number | string
   documentNumber: string
   subject: string
   recipient: string
   dateSent: string
   status: string
-  priority: string
+  priority?: string
+  documentType?: string
+  remarks?: string
 }
 
 const DocumentByControlNo: React.FC = () => {
   const { theme } = useTheme()
-  const documents: Document[] = []
+  const [documents, setDocuments] = useState<Document[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      setLoading(true)
+      const res = await apiService.getDocumentSource()
+      if (res.success && Array.isArray(res.data)) {
+        const mapped: Document[] = (res.data as any[]).map((row: any) => ({
+          id: row.id ?? '',
+          documentNumber: row.documentControlNo ?? '',
+          subject: row.subject ?? '',
+          recipient: row.remarks ?? '',
+          dateSent: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '',
+          status: 'Active',
+          documentType: row.documentType ?? '',
+          remarks: row.remarks ?? '',
+        }))
+        setDocuments(mapped)
+        setTotalPages(Math.max(1, Math.ceil(mapped.length / 10)))
+      } else {
+        setDocuments([])
+        setTotalPages(1)
+      }
+      setLoading(false)
+    }
+    fetchDocuments()
+  }, [])
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -160,14 +190,14 @@ const DocumentByControlNo: React.FC = () => {
                     <td>${doc.documentNumber || '—'}</td>
                     <td>${doc.subject || '—'}</td>
                     <td>${doc.recipient || '—'}</td>
+                    <td>${doc.documentType || '—'}</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
                     <td>${doc.dateSent || '—'}</td>
                     <td>—</td>
                     <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
+                    <td>${doc.remarks || '—'}</td>
                     <td>${doc.status || '—'}</td>
                   </tr>
                 `).join('')
@@ -197,14 +227,14 @@ const DocumentByControlNo: React.FC = () => {
         `\"${(doc.documentNumber || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.subject || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.recipient || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(doc.documentType || '').replace(/\"/g, '\"\"')}\"`,
+        '\"\"',
+        '\"\"',
+        '\"\"',
         `\"${(doc.dateSent || '').replace(/\"/g, '\"\"')}\"`,
         '\"\"',
         '\"\"',
-        '\"\"',
-        '\"\"',
-        '\"\"',
-        '\"\"',
-        '\"\"',
+        `\"${(doc.remarks || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.status || '').replace(/\"/g, '\"\"')}\"`
       ]
       csvRows.push(row.join(','))
@@ -298,14 +328,14 @@ const DocumentByControlNo: React.FC = () => {
                     <td>${doc.documentNumber || '—'}</td>
                     <td>${doc.subject || '—'}</td>
                     <td>${doc.recipient || '—'}</td>
+                    <td>${doc.documentType || '—'}</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
                     <td>${doc.dateSent || '—'}</td>
                     <td>—</td>
                     <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
+                    <td>${doc.remarks || '—'}</td>
                     <td>${doc.status || '—'}</td>
                   </tr>
                 `).join('')
@@ -480,9 +510,17 @@ const DocumentByControlNo: React.FC = () => {
         <tbody className={`divide-y ${
           theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
         }`}>
-          {documents.length === 0 ? (
+          {loading ? (
             <tr>
-              <td colSpan={13} className={`px-6 py-8 text-center text-sm ${
+              <td colSpan={12} className={`px-6 py-8 text-center text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Loading...
+              </td>
+            </tr>
+          ) : documents.length === 0 ? (
+            <tr>
+              <td colSpan={12} className={`px-6 py-8 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No documents found
@@ -509,47 +547,37 @@ const DocumentByControlNo: React.FC = () => {
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {doc.recipient}
+                  {doc.recipient || '—'}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {doc.dateSent}
+                  {doc.documentType || '—'}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
-                </td>
+                }`}>—</td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>—</td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>—</td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.dateSent || '—'}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
-                </td>
+                }`}>—</td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>—</td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
+                  {doc.remarks || '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>

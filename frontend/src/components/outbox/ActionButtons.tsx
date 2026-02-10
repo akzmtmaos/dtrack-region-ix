@@ -110,6 +110,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation()
+            hideTooltip()
             onView(document)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
@@ -125,6 +126,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation()
+            hideTooltip()
             onRoutingSlip(document)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
@@ -139,6 +141,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation()
+            hideTooltip()
             onEdit(document)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
@@ -153,6 +156,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation()
+            hideTooltip()
             onAddDestination(document)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
@@ -167,6 +171,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation()
+            hideTooltip()
             onDelete(document)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}

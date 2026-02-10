@@ -34,6 +34,7 @@ def _row_to_camel(row):
         'referenceDocumentControlNo3': row.get('reference_document_control_no_3') or '',
         'referenceDocumentControlNo4': row.get('reference_document_control_no_4') or '',
         'referenceDocumentControlNo5': row.get('reference_document_control_no_5') or '',
+        'createdAt': (lambda v: v.isoformat() if v and hasattr(v, 'isoformat') else '')(row.get('created_at')),
     }
 
 

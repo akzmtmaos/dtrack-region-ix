@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import type { DocumentDestinationRow } from './DocumentDestinationsModal'
 import type { DocumentSource } from './DocumentDestinationsModal'
+import { apiService } from '../../services/api'
+import SearchableSelect from '../SearchableSelect'
 
 interface AddDestinationRowModalProps {
   isOpen: boolean
@@ -19,7 +21,6 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
   nextSequenceNo
 }) => {
   const { theme } = useTheme()
-  const [routeNo, setRouteNo] = useState('')
   const [destinationOffice, setDestinationOffice] = useState('')
   const [employeeActionOfficer, setEmployeeActionOfficer] = useState('')
   const [actionRequired, setActionRequired] = useState('')
@@ -28,6 +29,39 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
   const [dateRequired, setDateRequired] = useState('')
   const [timeRequired, setTimeRequired] = useState('')
   const [remarks, setRemarks] = useState('')
+  const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
+  const [actionRequiredOptions, setActionRequiredOptions] = useState<Array<{ id: number; action_required: string }>>([])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const fetchLookups = async () => {
+      try {
+        const [officeRes, actionReqRes] = await Promise.all([
+          apiService.getOffice(),
+          apiService.getActionRequired(),
+        ])
+
+        if (officeRes.success && officeRes.data) {
+          const mapped = (officeRes.data as any[]).map((item: any) => ({
+            id: item.id,
+            office: item.office || '',
+          }))
+          setOffices(mapped)
+        }
+
+        if (actionReqRes.success && actionReqRes.data) {
+          const mappedActions = (actionReqRes.data as any[]).map((item: any) => ({
+            id: item.id,
+            action_required: item.action_required || '',
+          }))
+          setActionRequiredOptions(mappedActions)
+        }
+      } catch (error) {
+        console.error('Failed to fetch lookups for destination modal:', error)
+      }
+    }
+    fetchLookups()
+  }, [isOpen])
 
   if (!isOpen || !document) return null
 
@@ -40,9 +74,12 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const autoRouteNo = document.routeNo && document.routeNo.trim()
+      ? document.routeNo
+      : `RN-${Date.now().toString().slice(-6)}`
     onSave({
       documentControlNo: document.documentControlNo,
-      routeNo: routeNo.trim() || `RN-${Date.now().toString().slice(-6)}`,
+      routeNo: autoRouteNo,
       sequenceNo: nextSequenceNo,
       destinationOffice,
       employeeActionOfficer,
@@ -59,7 +96,6 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
       dateActedUpon: '',
       timeActedUpon: ''
     })
-    setRouteNo('')
     setDestinationOffice('')
     setEmployeeActionOfficer('')
     setActionRequired('')
@@ -72,7 +108,6 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
   }
 
   const handleClose = () => {
-    setRouteNo('')
     setDestinationOffice('')
     setEmployeeActionOfficer('')
     setActionRequired('')
@@ -101,26 +136,22 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Route No. (*)</label>
-            <input
-              type="text"
-              value={routeNo}
-              onChange={(e) => setRouteNo(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none"
-              style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
-              placeholder="Per-destination route no. (e.g. R2026-000000049)"
-            />
-          </div>
-          <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Destination Office</label>
-            <input
-              type="text"
-              value={destinationOffice}
-              onChange={(e) => setDestinationOffice(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none"
-              style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
-              placeholder="e.g. ARD - Health Facility Development Unit"
-            />
+            <div className="flex-1">
+              <SearchableSelect
+                options={[...offices].sort((a, b) =>
+                  a.office.localeCompare(b.office)
+                ).map(o => ({
+                  id: o.id,
+                  value: o.office,
+                  label: o.office,
+                }))}
+                value={destinationOffice}
+                onChange={(value) => setDestinationOffice(value)}
+                placeholder="Select destination office"
+                style={{ borderColor: inputBorder }}
+              />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Employee (Action Officer)</label>
@@ -135,14 +166,21 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Action Required</label>
-            <input
-              type="text"
-              value={actionRequired}
-              onChange={(e) => setActionRequired(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none"
-              style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
-              placeholder="e.g. For Acceptance of Delivery, For Comment"
-            />
+            <div className="flex-1">
+              <SearchableSelect
+                options={[...actionRequiredOptions].sort((a, b) =>
+                  a.action_required.localeCompare(b.action_required)
+                ).map(a => ({
+                  id: a.id,
+                  value: a.action_required,
+                  label: a.action_required,
+                }))}
+                value={actionRequired}
+                onChange={(value) => setActionRequired(value)}
+                placeholder="Select action required"
+                style={{ borderColor: inputBorder }}
+              />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Date Released</label>
@@ -156,13 +194,24 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Time Released</label>
-            <input
-              type="time"
-              value={timeReleased}
-              onChange={(e) => setTimeReleased(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none"
-              style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
-            />
+            <div className="flex-1 relative">
+              <input
+                type="time"
+                value={timeReleased}
+                onChange={(e) => setTimeReleased(e.target.value)}
+                className="w-full px-2.5 py-1.5 pr-7 text-xs rounded-md outline-none appearance-none"
+                style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
+              />
+              <svg
+                className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ color: textSecondary }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l2 2m5-2a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Date Required</label>
@@ -176,13 +225,24 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Time Required</label>
-            <input
-              type="time"
-              value={timeRequired}
-              onChange={(e) => setTimeRequired(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none"
-              style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
-            />
+            <div className="flex-1 relative">
+              <input
+                type="time"
+                value={timeRequired}
+                onChange={(e) => setTimeRequired(e.target.value)}
+                className="w-full px-2.5 py-1.5 pr-7 text-xs rounded-md outline-none appearance-none"
+                style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
+              />
+              <svg
+                className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ color: textSecondary }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l2 2m5-2a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
           <div className="flex items-start gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px', paddingTop: '6px' }}>Remarks</label>

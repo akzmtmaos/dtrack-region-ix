@@ -56,24 +56,37 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
+  const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
-  // Fetch document types when modal opens
+  // Fetch document types and offices when modal opens
   useEffect(() => {
     if (isOpen) {
-      const fetchDocumentTypes = async () => {
+      const fetchLookups = async () => {
         try {
-          const response = await apiService.getDocumentType()
-          if (response.success && response.data) {
-            setDocumentTypes(response.data)
+          const [docTypeRes, officeRes] = await Promise.all([
+            apiService.getDocumentType(),
+            apiService.getOffice(),
+          ])
+
+          if (docTypeRes.success && docTypeRes.data) {
+            setDocumentTypes(docTypeRes.data)
+          }
+
+          if (officeRes.success && officeRes.data) {
+            const mappedOffices = (officeRes.data as any[]).map((item: any) => ({
+              id: item.id,
+              office: item.office || '',
+            }))
+            setOffices(mappedOffices)
           }
         } catch (error) {
-          console.error('Failed to fetch document types:', error)
+          console.error('Failed to fetch lookups:', error)
         }
       }
-      fetchDocumentTypes()
+      fetchLookups()
     }
   }, [isOpen])
 
@@ -336,80 +349,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 </div>
               </div>
 
-              {/* Reference Documents */}
-              <div>
-                <div className="flex items-start gap-3 mb-2">
-                  <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px', paddingTop: '4px' }}>
-                    Reference Document Control No.
-                  </label>
-                  <div className="flex-1 space-y-2">
-                    {formData.referenceDocuments.map((refDoc, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder={`Reference Document ${index + 1}`}
-                          value={refDoc}
-                          onChange={(e) => handleReferenceDocumentChange(index, e.target.value)}
-                          className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                          style={{
-                            backgroundColor: inputBg,
-                            border: `1px solid ${inputBorder}`,
-                            color: textPrimary
-                          }}
-                          onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                          onBlur={(e) => e.target.style.borderColor = inputBorder}
-                        />
-                        {formData.referenceDocuments.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeReferenceDocument(index)}
-                            className="p-1.5 rounded-md transition-colors"
-                            style={{
-                              color: '#ef4444',
-                              backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.15)'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)'}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addReferenceDocument}
-                      disabled={formData.referenceDocuments.length >= 5}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-md border border-dashed transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{
-                        borderColor: formData.referenceDocuments.length >= 5 ? inputBorder : inputBorder,
-                        color: formData.referenceDocuments.length >= 5 ? textSecondary : textSecondary,
-                        backgroundColor: 'transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (formData.referenceDocuments.length < 5) {
-                          e.currentTarget.style.borderColor = '#3ecf8e'
-                          e.currentTarget.style.color = '#3ecf8e'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (formData.referenceDocuments.length < 5) {
-                          e.currentTarget.style.borderColor = inputBorder
-                          e.currentTarget.style.color = textSecondary
-                        }
-                      }}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Reference Document
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               {/* Document Type */}
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
@@ -490,20 +429,31 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                       Internal Originating Office <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <input
-                        type="text"
-                        name="internalOriginatingOffice"
+                      <SearchableSelect
+                        options={[...offices].sort((a, b) =>
+                          a.office.localeCompare(b.office)
+                        ).map(o => ({
+                          id: o.id,
+                          value: o.office,
+                          label: o.office,
+                        }))}
                         value={formData.internalOriginatingOffice}
-                        onChange={handleChange}
-                        placeholder="Enter internal originating office"
-                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                        style={{
-                          backgroundColor: inputBg,
-                          border: `1px solid ${errors.internalOriginatingOffice ? '#ef4444' : inputBorder}`,
-                          color: textPrimary
+                        onChange={(value) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            internalOriginatingOffice: value,
+                          }))
+                          if (errors.internalOriginatingOffice) {
+                            setErrors(prev => ({
+                              ...prev,
+                              internalOriginatingOffice: '',
+                            }))
+                          }
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                        onBlur={(e) => e.target.style.borderColor = errors.internalOriginatingOffice ? '#ef4444' : inputBorder}
+                        placeholder="Select internal originating office"
+                        style={{
+                          borderColor: errors.internalOriginatingOffice ? '#ef4444' : inputBorder,
+                        }}
                       />
                       {errors.internalOriginatingOffice && (
                         <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.internalOriginatingOffice}</p>

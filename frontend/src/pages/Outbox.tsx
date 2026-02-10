@@ -6,7 +6,6 @@ import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
 import DocumentDestinationsModal, { type DocumentDestinationRow } from '../components/outbox/DocumentDestinationsModal'
 import AddDestinationRowModal from '../components/outbox/AddDestinationRowModal'
 import ActionButtons from '../components/outbox/ActionButtons'
-import RoutingSlipModal from '../components/outbox/RoutingSlipModal'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import Pagination from '../components/Pagination'
 import Button from '../components/Button'
@@ -43,7 +42,6 @@ const Outbox: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [isRoutingSlipModalOpen, setIsRoutingSlipModalOpen] = useState(false)
   const [editingDocument, setEditingDocument] = useState<Document | null>(null)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view')
@@ -209,9 +207,17 @@ const Outbox: React.FC = () => {
     setIsDetailModalOpen(true)
   }
 
-  const handleRoutingSlip = (document: Document) => {
-    setSelectedDocument(document)
-    setIsRoutingSlipModalOpen(true)
+  const handleRoutingSlip = (doc: Document) => {
+    apiService.getDocumentDestination(doc.id).then((res) => {
+      const destinations = res.success && res.data ? res.data : (destinationsByDocumentId[doc.id] ?? [])
+      try {
+        localStorage.setItem('routingSlipDocument', JSON.stringify(doc))
+        localStorage.setItem('routingSlipDestinations', JSON.stringify(destinations))
+        window.open('/routing-slip', '_blank', 'noopener,noreferrer')
+      } catch {
+        window.open('/routing-slip', '_blank', 'noopener,noreferrer')
+      }
+    })
   }
 
   const handleEdit = (document: Document) => {
@@ -543,7 +549,7 @@ const Outbox: React.FC = () => {
           >
             <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   <input
@@ -556,32 +562,32 @@ const Outbox: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Document Control No. <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Route No. <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Subject <RequiredAsterisk />
                 </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Document Type
                 </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Source Type
                 </th>
-                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Actions
@@ -593,7 +599,7 @@ const Outbox: React.FC = () => {
             }`}>
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className={`px-6 py-16 text-center ${
+                  <td colSpan={7} className={`px-4 py-12 text-center ${
                     theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                   }`}>
                     <div className="flex flex-col items-center justify-center">
@@ -626,7 +632,7 @@ const Outbox: React.FC = () => {
                     onMouseLeave={() => setHoveredRowId(null)}
                     onClick={() => handleRowClick(doc)}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedItems.includes(doc.id)}
@@ -636,34 +642,34 @@ const Outbox: React.FC = () => {
                         }`}
                       />
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs font-semibold ${
                       theme === 'dark' ? 'text-white' : 'text-gray-900'
                     }`}>
                       {doc.documentControlNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.routeNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 text-sm max-w-xs ${
+                    <td className={`px-4 py-2 text-xs max-w-xs ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       <div className="truncate" title={doc.subject}>
                         {doc.subject || <span className="text-gray-500 italic">—</span>}
                       </div>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm text-left ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.documentType || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.sourceType || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <ActionButtons
                         document={doc}
                         onView={handleView}
@@ -708,16 +714,6 @@ const Outbox: React.FC = () => {
           setIsAddModalOpen(true)
         }}
         mode={detailModalMode}
-      />
-
-      {/* Routing Slip Modal */}
-      <RoutingSlipModal
-        isOpen={isRoutingSlipModalOpen}
-        onClose={() => {
-          setIsRoutingSlipModalOpen(false)
-          setSelectedDocument(null)
-        }}
-        document={selectedDocument}
       />
 
       {/* Document Destinations Modal (Master Record + TABLE: Document Destination) */}

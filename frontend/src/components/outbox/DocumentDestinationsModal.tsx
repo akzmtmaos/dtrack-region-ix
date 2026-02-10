@@ -76,14 +76,6 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
   const textSecondary = theme === 'dark' ? '#a3a3a3' : '#525252'
   const valueBg = theme === 'dark' ? '#262626' : '#f5f5f5'
 
-  const refs = [
-    document.referenceDocumentControlNo1,
-    document.referenceDocumentControlNo2,
-    document.referenceDocumentControlNo3,
-    document.referenceDocumentControlNo4,
-    document.referenceDocumentControlNo5
-  ].filter(Boolean)
-
   const Value = ({ children }: { children: React.ReactNode }) => (
     <div
       className="flex-1 px-2.5 py-1.5 text-xs rounded-md min-h-[28px] flex items-center"
@@ -111,6 +103,12 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
     if (selectedDestinationIds.length === 0) return
     onDeleteDestinations(selectedDestinationIds)
     setSelectedDestinationIds([])
+  }
+
+  const handleEditDestination = (dest: DocumentDestinationRow) => {
+    // Placeholder for future inline-edit behavior
+    // (currently only visual icon as requested)
+    console.debug('Edit destination clicked:', dest)
   }
 
   const formatDate = (d: string) => (d ? new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '')
@@ -181,10 +179,10 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
             </div>
           </div>
 
-          {/* TABLE: Document Destination */}
+          {/* Document Destination */}
           <div className="mb-4">
             <h3 className="text-base font-semibold mb-3" style={{ color: textPrimary }}>
-              TABLE: Document Destination
+              Document Destination
             </h3>
             <div className="flex items-center gap-2 mb-3">
               <Button
@@ -230,13 +228,13 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
                     <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: textSecondary }}>Date Required</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: textSecondary }}>Time Required</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: textSecondary }}>Remarks</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: textSecondary }}>Action Taken</th>
+                    <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: textSecondary }}>Action</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#4a4b4c]' : 'divide-gray-200'}`}>
                   {destinations.length === 0 ? (
                     <tr>
-                    <td colSpan={12} className="px-3 py-6 text-center text-sm" style={{ color: textSecondary }}>
+                      <td colSpan={11} className="px-3 py-6 text-center text-sm" style={{ color: textSecondary }}>
                         No destinations. Click Add to add a destination.
                       </td>
                     </tr>
@@ -265,7 +263,38 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
                         <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{formatDate(dest.dateRequired)}</td>
                         <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{formatTime(dest.timeRequired)}</td>
                         <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{dest.remarks || '—'}</td>
-                        <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{dest.actionTaken || '—'}</td>
+                        <td className="px-3 py-2 text-sm whitespace-nowrap text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleEditDestination(dest)}
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-md border text-xs transition-colors"
+                            style={{
+                              borderColor: theme === 'dark' ? '#4a4b4c' : '#d1d5db',
+                              color: theme === 'dark' ? '#e5e7eb' : '#1f2933',
+                              backgroundColor: theme === 'dark' ? '#111827' : '#ffffff'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#1f2937' : '#f3f4f6'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#111827' : '#ffffff'
+                            }}
+                          >
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15.232 5.232l3.536 3.536M4 20h4.5L19 9.5l-4.5-4.5L4 15.5V20z"
+                              />
+                            </svg>
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}

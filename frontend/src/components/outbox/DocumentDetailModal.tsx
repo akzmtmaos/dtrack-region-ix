@@ -51,14 +51,6 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const textSecondary = theme === 'dark' ? '#a3a3a3' : '#525252'
   const valueBg = theme === 'dark' ? '#262626' : '#f5f5f5'
 
-  const refs = [
-    document.referenceDocumentControlNo1,
-    document.referenceDocumentControlNo2,
-    document.referenceDocumentControlNo3,
-    document.referenceDocumentControlNo4,
-    document.referenceDocumentControlNo5
-  ].filter(Boolean)
-
   const Value = ({ children }: { children: React.ReactNode }) => (
     <div
       className="flex-1 px-2.5 py-1.5 text-xs rounded-md min-h-[28px] flex items-center"
@@ -111,22 +103,6 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 Subject
               </label>
               <Value>{document.subject}</Value>
-            </div>
-
-            {/* Reference Document Control No. */}
-            <div className="flex items-start gap-3">
-              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px', paddingTop: '4px' }}>
-                Reference Document Control No.
-              </label>
-              <div className="flex-1 space-y-1.5">
-                {refs.length > 0 ? refs.map((ref, i) => (
-                  <div key={i} className="px-2.5 py-1.5 text-xs rounded-md" style={{ backgroundColor: valueBg, color: textPrimary }}>
-                    {ref}
-                  </div>
-                )) : (
-                  <Value>—</Value>
-                )}
-              </div>
             </div>
 
             {/* Document Type */}
