@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext'
 import { apiService } from '../services/api'
 import AddDocumentModal from '../components/outbox/AddDocumentModal'
 import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
-import DocumentDestinationsModal, { type DocumentDestinationRow } from '../components/outbox/DocumentDestinationsModal'
+import { type DocumentDestinationRow } from '../components/outbox/DocumentDestinationsModal'
 import AddDestinationRowModal from '../components/outbox/AddDestinationRowModal'
 import ActionButtons from '../components/outbox/ActionButtons'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
@@ -52,10 +52,12 @@ const Outbox: React.FC = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [deleteItemName, setDeleteItemName] = useState<string>('')
   const [documentForDestinations, setDocumentForDestinations] = useState<Document | null>(null)
-  const [isDestinationsModalOpen, setIsDestinationsModalOpen] = useState(false)
   const [destinationsByDocumentId, setDestinationsByDocumentId] = useState<Record<number, DocumentDestinationRow[]>>({})
   const [isAddDestinationRowModalOpen, setIsAddDestinationRowModalOpen] = useState(false)
   const [hoveredRowId, setHoveredRowId] = useState<number | null>(null)
+  const [selectedDestinationIds, setSelectedDestinationIds] = useState<number[]>([])
+  const [destinationPage, setDestinationPage] = useState(1)
+  const destinationPageSize = 10
 
   // Fetch documents from Supabase on mount and when refetch is needed
   const fetchDocuments = () => {
@@ -68,14 +70,17 @@ const Outbox: React.FC = () => {
     fetchDocuments()
   }, [])
 
-  // When destinations modal opens, fetch destinations for the current document
+  // When a document is selected for destinations (inline section), fetch its destinations
   useEffect(() => {
-    if (!isDestinationsModalOpen || !documentForDestinations) return
+    if (!documentForDestinations) return
+    setDestinationPage(1)
     apiService.getDocumentDestination(documentForDestinations.id).then((res) => {
-      if (res.success && res.data)
-        setDestinationsByDocumentId((prev) => ({ ...prev, [documentForDestinations.id]: res.data! }))
+      if (res.success) {
+        const list = Array.isArray(res.data) ? res.data : []
+        setDestinationsByDocumentId((prev) => ({ ...prev, [documentForDestinations.id]: list }))
+      }
     })
-  }, [isDestinationsModalOpen, documentForDestinations?.id])
+  }, [documentForDestinations?.id])
 
   // Helper for red asterisk
   const RequiredAsterisk = () => <span className="text-red-500">*</span>;
@@ -126,13 +131,12 @@ const Outbox: React.FC = () => {
       setDestinationsByDocumentId((prev) => ({ ...prev, [newDocument.id]: [] }))
       setIsAddModalOpen(false)
       setEditingDocument(null)
-      setIsDestinationsModalOpen(true)
     })
   }
 
   const handleAddDestinationClick = (doc: Document) => {
     setDocumentForDestinations(doc)
-    setIsDestinationsModalOpen(true)
+    setSelectedDestinationIds([])
   }
 
   const handleAddDestinationRow = (doc: Document) => {
@@ -158,6 +162,7 @@ const Outbox: React.FC = () => {
     if (!documentForDestinations || ids.length === 0) return
     apiService.bulkDeleteDocumentDestination(ids).then((res) => {
       if (!res.success) return
+      setSelectedDestinationIds([])
       apiService.getDocumentDestination(documentForDestinations.id).then((r) => {
         if (r.success && r.data)
           setDestinationsByDocumentId((prev) => ({ ...prev, [documentForDestinations.id]: r.data! }))
@@ -439,8 +444,14 @@ const Outbox: React.FC = () => {
     document.body.removeChild(link)
   }
 
+  const valueBg = theme === 'dark' ? '#262626' : '#f5f5f5'
+  const textPrimary = theme === 'dark' ? '#fafafa' : '#171717'
+  const textSecondary = theme === 'dark' ? '#a3a3a3' : '#525252'
+
   return (
     <div className="pt-4 pb-8">
+      {!documentForDestinations ? (
+        <>
         <h1 className={`text-2xl font-semibold mb-4 ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>Outbox - Document Source</h1>
@@ -684,6 +695,266 @@ const Outbox: React.FC = () => {
               )}
             </tbody>
           </Table>
+        </>
+      ) : documentForDestinations ? (
+        /* Inside document: document source summary + destinations table only */
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setDocumentForDestinations(null)
+                setSelectedDestinationIds([])
+              }}
+              className={`inline-flex items-center gap-1.5 text-sm font-medium rounded-md px-2.5 py-1.5 ${
+                theme === 'dark' ? 'text-gray-400 hover:bg-dark-hover hover:text-gray-200' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to Outbox
+            </button>
+            <h1 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+              Document: {documentForDestinations.documentControlNo || '—'} — {documentForDestinations.subject || '—'}
+            </h1>
+          </div>
+
+          {/* Document source (read-only summary) */}
+          <div
+            className={`rounded-lg border overflow-hidden ${
+              theme === 'dark' ? 'bg-dark-panel border-[#4a4b4c]' : 'bg-white border-gray-200'
+            }`}
+          >
+            <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-[#4a4b4c]' : 'border-gray-200'}`}>
+              <h2 className={`text-sm font-semibold ${theme === 'dark' ? 'text-[#3ecf8e]' : 'text-gray-800'}`}>
+                Document Source
+              </h2>
+            </div>
+            <div className="px-4 py-4 space-y-3 text-xs">
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Document Control No.</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.documentControlNo || '—'}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Route No.</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.routeNo || '—'}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Subject</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.subject || '—'}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Document Type</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.documentType || '—'}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Source Type</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.sourceType || '—'}</div>
+              </div>
+              {documentForDestinations.sourceType === 'Internal' && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Internal Originating Office</label>
+                    <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.internalOriginatingOffice || '—'}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Internal Originating Employee</label>
+                    <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.internalOriginatingEmployee || '—'}</div>
+                  </div>
+                </>
+              )}
+              {documentForDestinations.sourceType === 'External' && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>External Originating Office</label>
+                    <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.externalOriginatingOffice || '—'}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>External Originating Employee</label>
+                    <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.externalOriginatingEmployee || '—'}</div>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Remarks</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center whitespace-pre-wrap" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.remarks || '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Document Destinations table */}
+          <div
+            className={`rounded-lg border overflow-hidden ${
+              theme === 'dark' ? 'bg-dark-panel border-[#4a4b4c]' : 'bg-white border-gray-200'
+            }`}
+          >
+            <div
+              className={`px-4 py-3 flex items-center justify-between border-b ${
+                theme === 'dark' ? 'border-[#4a4b4c]' : 'border-gray-200'
+              }`}
+            >
+              <h2 className={`text-sm font-semibold ${theme === 'dark' ? 'text-[#3ecf8e]' : 'text-gray-800'}`}>
+                Document Destination
+              </h2>
+              <div className="flex items-center gap-2">
+                {documentForDestinations && (destinationsByDocumentId[documentForDestinations.id] ?? []).length > 0 && (
+                  <Pagination
+                    currentPage={destinationPage}
+                    totalPages={Math.max(1, Math.ceil((destinationsByDocumentId[documentForDestinations.id] ?? []).length / destinationPageSize))}
+                    onPageChange={(p) => setDestinationPage(p)}
+                    totalItems={(destinationsByDocumentId[documentForDestinations.id] ?? []).length}
+                    itemsPerPage={destinationPageSize}
+                    showResultsText={false}
+                    compact
+                  />
+                )}
+                <Button
+                  onClick={() => handleAddDestinationRow(documentForDestinations)}
+                  variant="primary"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  }
+                  iconPosition="left"
+                >
+                  Add
+                </Button>
+                <Button
+                  onClick={() => handleDeleteDestinationRows(selectedDestinationIds)}
+                  disabled={selectedDestinationIds.length === 0}
+                  variant="danger"
+                >
+                  Delete Selected {selectedDestinationIds.length > 0 && `(${selectedDestinationIds.length})`}
+                </Button>
+              </div>
+            </div>
+            <Table>
+              <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
+                <tr>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={(() => {
+                        const dests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                        const start = (destinationPage - 1) * destinationPageSize
+                        const pageDests = dests.slice(start, start + destinationPageSize)
+                        return pageDests.length > 0 && pageDests.every((d) => selectedDestinationIds.includes(d.id))
+                      })()}
+                      onChange={(e) => {
+                        const dests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                        const start = (destinationPage - 1) * destinationPageSize
+                        const pageDests = dests.slice(start, start + destinationPageSize)
+                        if (e.target.checked) {
+                          setSelectedDestinationIds((prev) => {
+                            const add = pageDests.map((d) => d.id)
+                            return [...new Set([...prev, ...add])]
+                          })
+                        } else {
+                          const pageIds = new Set(pageDests.map((d) => d.id))
+                          setSelectedDestinationIds((prev) => prev.filter((id) => !pageIds.has(id)))
+                        }
+                      }}
+                      className={`rounded ${theme === 'dark' ? 'bg-dark-panel border-[#4a4b4c]' : 'border-gray-300'}`}
+                    />
+                  </th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Route No.</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Seq.</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Destination Office</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Employee (Action Officer)</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Action Required</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Date Released</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Time Released</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Date Required</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Time Required</th>
+                  <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Remarks</th>
+                </tr>
+              </thead>
+              <tbody className={theme === 'dark' ? 'divide-[#4a4b4c]' : 'divide-gray-200'}>
+                {(() => {
+                  const dests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                  const startIdx = (destinationPage - 1) * destinationPageSize
+                  const paginatedDests = dests.slice(startIdx, startIdx + destinationPageSize)
+                  const formatDate = (d: string) => (d ? new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '')
+                  const formatTime = (t: string) => (t ? new Date(`1970-01-01T${t}`).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '')
+                  if (dests.length === 0) {
+                    return (
+                      <tr>
+                        <td
+                          colSpan={10}
+                          className={`px-4 py-10 text-center text-sm min-h-[120px] align-middle ${
+                            theme === 'dark' ? 'text-gray-400 bg-dark-panel' : 'text-gray-500 bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <svg className={`w-10 h-10 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                            <span>No destinations.</span>
+                            <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>Click Add to add a destination.</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
+                  return paginatedDests.map((dest) => (
+                    <tr
+                      key={dest.id}
+                      className={theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}
+                    >
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedDestinationIds.includes(dest.id)}
+                          onChange={() => {
+                            setSelectedDestinationIds((prev) =>
+                              prev.includes(dest.id) ? prev.filter((i) => i !== dest.id) : [...prev, dest.id]
+                            )
+                          }}
+                          className={`rounded ${theme === 'dark' ? 'bg-dark-panel border-[#4a4b4c]' : 'border-gray-300'}`}
+                        />
+                      </td>
+                        <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{dest.routeNo || '—'}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{dest.sequenceNo}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{dest.destinationOffice || '—'}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{dest.employeeActionOfficer || '—'}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{dest.actionRequired || '—'}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{formatDate(dest.dateReleased)}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{formatTime(dest.timeReleased)}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{formatDate(dest.dateRequired)}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{formatTime(dest.timeRequired)}</td>
+                      <td className={`px-3 py-2 text-xs whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{dest.remarks || '—'}</td>
+                    </tr>
+                  ))
+                })()}
+              </tbody>
+            </Table>
+          </div>
+        </div>
+      ) : null}
 
       {/* Add / Edit Document Modal */}
       <AddDocumentModal
@@ -714,19 +985,6 @@ const Outbox: React.FC = () => {
           setIsAddModalOpen(true)
         }}
         mode={detailModalMode}
-      />
-
-      {/* Document Destinations Modal (Master Record + TABLE: Document Destination) */}
-      <DocumentDestinationsModal
-        isOpen={isDestinationsModalOpen}
-        onClose={() => {
-          setIsDestinationsModalOpen(false)
-          setDocumentForDestinations(null)
-        }}
-        document={documentForDestinations}
-        destinations={documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []}
-        onAddDestination={handleAddDestinationRow}
-        onDeleteDestinations={handleDeleteDestinationRows}
       />
 
       {/* Add Destination Row Modal */}

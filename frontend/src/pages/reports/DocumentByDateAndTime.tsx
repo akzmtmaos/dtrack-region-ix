@@ -38,7 +38,9 @@ const DocumentByDateAndTime: React.FC = () => {
           subject: row.subject ?? '',
           recipient: (row.internalOriginatingEmployee || row.externalOriginatingEmployee) ?? '',
           dateSent: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '',
-          status: 'Active',
+          status: (row.status && ['ACCOMPLISHED', 'PENDING'].includes((row.status as string).toUpperCase()))
+            ? (row.status as string).toUpperCase()
+            : 'PENDING',
           documentType: row.documentType ?? '',
           remarks: row.remarks ?? '',
           releasingOffice: (row.internalOriginatingEmployee || row.externalOriginatingEmployee) ?? '',
@@ -58,32 +60,6 @@ const DocumentByDateAndTime: React.FC = () => {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    if (theme === 'dark') {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-500/20 text-green-400'
-        case 'Pending':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Failed':
-          return 'bg-red-500/20 text-red-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
-      }
-    } else {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-100 text-green-800'
-        case 'Pending':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Failed':
-          return 'bg-red-100 text-red-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
-      }
     }
   }
 
@@ -447,58 +423,58 @@ const DocumentByDateAndTime: React.FC = () => {
       >
         <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
           <tr>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Doc Type
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Subject
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Releasing Officer
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Originating Office
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Date
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Officer
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Office
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Taken
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Doc. Control No.
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Remarks
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Status
             </th>
@@ -509,31 +485,84 @@ const DocumentByDateAndTime: React.FC = () => {
         }`}>
           {loading ? (
             <tr>
-              <td colSpan={11} className={`px-6 py-8 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              <td colSpan={11} className={`px-4 py-2 text-center text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 Loading...
               </td>
             </tr>
           ) : documents.length === 0 ? (
             <tr>
-              <td colSpan={11} className={`px-6 py-8 text-center text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-500'}`}>
+              <td colSpan={11} className={`px-4 py-2 text-center text-xs ${theme === 'dark' ? 'text-white' : 'text-gray-500'}`}>
                 No documents found
               </td>
             </tr>
           ) : (
             documents.map((doc) => (
-              <tr key={doc.id} className={`transition-colors ${theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}`}>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.documentType || '—'}</td>
-                <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.subject || '—'}</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.releasingOffice || '—'}</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.originatingOffice || '—'}</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.dateSent || '—'}</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>—</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>—</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>—</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.documentNumber || '—'}</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{doc.remarks || '—'}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>{doc.status}</span>
+              <tr
+                key={doc.id}
+                className={`transition-colors ${theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}`}
+              >
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.documentType || undefined}
+                >
+                  {doc.documentType || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 text-xs max-w-[200px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.subject || undefined}
+                >
+                  {doc.subject || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.releasingOffice || undefined}
+                >
+                  {doc.releasingOffice || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.originatingOffice || undefined}
+                >
+                  {doc.originatingOffice || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.dateSent || undefined}
+                >
+                  {doc.dateSent || '—'}
+                </td>
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Action Officer">—</td>
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Office">—</td>
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Action Taken">—</td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[120px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.documentNumber || undefined}
+                >
+                  {doc.documentNumber || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 text-xs max-w-[160px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.remarks || undefined}
+                >
+                  {doc.remarks || '—'}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-xs text-left">
+                  <span
+                    className={`
+                    inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide border
+                    ${(doc.status ?? '').toUpperCase() === 'ACCOMPLISHED'
+                      ? theme === 'dark'
+                        ? 'bg-green-900/60 text-green-300 border-green-600/50'
+                        : 'bg-green-100 text-green-700 border-green-500'
+                      : theme === 'dark'
+                        ? 'bg-amber-900/50 text-amber-200 border-amber-600/50'
+                        : 'bg-amber-100 text-amber-800 border-amber-400'
+                    }
+                  `}
+                    title={doc.status ? `Status: ${doc.status}` : undefined}
+                  >
+                    {(doc.status ?? 'PENDING').toUpperCase()}
+                  </span>
                 </td>
               </tr>
             ))

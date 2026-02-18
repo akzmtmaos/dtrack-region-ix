@@ -234,7 +234,7 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#4a4b4c]' : 'divide-gray-200'}`}>
                   {destinations.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="px-3 py-6 text-center text-sm" style={{ color: textSecondary }}>
+                      <td colSpan={12} className="px-3 py-6 text-center text-sm" style={{ color: textSecondary }}>
                         No destinations. Click Add to add a destination.
                       </td>
                     </tr>
@@ -252,7 +252,6 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
                             className={`rounded ${theme === 'dark' ? 'bg-dark-panel border-[#4a4b4c]' : 'border-gray-300'}`}
                           />
                         </td>
-                        <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{dest.documentControlNo || '—'}</td>
                         <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{dest.routeNo || '—'}</td>
                         <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{dest.sequenceNo}</td>
                         <td className="px-3 py-2 text-sm whitespace-nowrap" style={{ color: textPrimary }}>{dest.destinationOffice || '—'}</td>

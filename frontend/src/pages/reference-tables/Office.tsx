@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
@@ -30,6 +31,38 @@ const Office: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [tooltip, setTooltip] = useState<string | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null)
+  const [tooltipMounted, setTooltipMounted] = useState(false)
+
+  useEffect(() => {
+    setTooltipMounted(true)
+  }, [])
+
+  const hideTooltip = () => {
+    setTooltip(null)
+    setTooltipPos(null)
+  }
+
+  const showTooltip = (label: string, el: HTMLElement) => {
+    const rect = el.getBoundingClientRect()
+    setTooltip(label)
+    setTooltipPos({
+      left: rect.left + rect.width / 2,
+      top: rect.bottom + 6
+    })
+  }
+
+  const TooltipLabel = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div
+      className="relative inline-flex flex-col items-center"
+      onMouseEnter={(e) => showTooltip(label, e.currentTarget)}
+      onMouseLeave={hideTooltip}
+      onPointerLeave={hideTooltip}
+    >
+      {children}
+    </div>
+  )
 
   // Fetch items from API on component mount
   useEffect(() => {
@@ -344,6 +377,30 @@ const Office: React.FC = () => {
   
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
+  const tooltipEl =
+    tooltipMounted &&
+    tooltip &&
+    tooltipPos &&
+    typeof window !== 'undefined' &&
+    window.document?.body &&
+    createPortal(
+      <span
+        className="fixed px-2 py-1 text-xs font-medium whitespace-nowrap rounded border pointer-events-none tooltip-animate-in"
+        style={{
+          left: tooltipPos.left,
+          top: tooltipPos.top,
+          transform: 'translate(-50%, 0)',
+          backgroundColor: theme === 'dark' ? '#171717' : '#000',
+          color: '#fff',
+          borderColor: 'rgba(255,255,255,0.9)',
+          zIndex: 2147483647
+        }}
+      >
+        {tooltip}
+      </span>,
+      window.document.body
+    )
+
   return (
     <div className="pt-4 pb-8">
       <h1 className={`text-2xl font-semibold mb-4 ${
@@ -449,7 +506,7 @@ const Office: React.FC = () => {
       >
         <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {paginatedItems.length > 0 && (
@@ -464,32 +521,32 @@ const Office: React.FC = () => {
                 />
               )}
             </th>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Office Code <RequiredAsterisk />
             </th>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Office <RequiredAsterisk />
             </th>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Region
             </th>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Short Name
             </th>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Head Office
             </th>
-            <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               ACTIONS
@@ -501,7 +558,7 @@ const Office: React.FC = () => {
         }`}>
           {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={7} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={7} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
@@ -509,7 +566,7 @@ const Office: React.FC = () => {
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td colSpan={7} className={`px-4 py-4 text-center text-sm ${
+              <td colSpan={7} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
@@ -531,7 +588,7 @@ const Office: React.FC = () => {
                       : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-6 py-2 whitespace-nowrap text-sm font-medium ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   <input
@@ -544,59 +601,71 @@ const Office: React.FC = () => {
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
                 </td>
-                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {String(item.id).padStart(5, '0')}
                 </td>
-                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.office}
                 </td>
-                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.region}
                 </td>
-                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.shortName}
                 </td>
-                <td className={`px-6 py-2 whitespace-nowrap text-sm text-left ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {item.headOffice}
                 </td>
-                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-left">
+                <td
+                  className="px-4 py-2 whitespace-nowrap text-xs font-medium text-left"
+                  onMouseLeave={hideTooltip}
+                  onPointerLeave={hideTooltip}
+                >
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className={`p-1.5 rounded transition-colors ${
-                        theme === 'dark'
-                          ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                      }`}
-                      title="Edit"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item)}
-                      className={`p-1.5 rounded transition-colors ${
-                        theme === 'dark'
-                          ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                      }`}
-                      title="Delete"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    <TooltipLabel label="Edit">
+                      <button
+                        onClick={() => {
+                          hideTooltip()
+                          handleEdit(item)
+                        }}
+                        className={`p-1.5 rounded transition-colors ${
+                          theme === 'dark'
+                            ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </TooltipLabel>
+                    <TooltipLabel label="Delete">
+                      <button
+                        onClick={() => {
+                          hideTooltip()
+                          handleDelete(item)
+                        }}
+                        className={`p-1.5 rounded transition-colors ${
+                          theme === 'dark'
+                            ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </TooltipLabel>
                   </div>
                 </td>
               </tr>
@@ -629,6 +698,7 @@ const Office: React.FC = () => {
         isBulk={deleteType === 'bulk'}
         count={selectedItems.length}
       />
+      {tooltipEl}
     </div>
   )
 }

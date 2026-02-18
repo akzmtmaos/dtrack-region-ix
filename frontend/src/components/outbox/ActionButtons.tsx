@@ -52,6 +52,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
     setMounted(true)
   }, [])
 
+  const hideTooltip = () => {
+    setTooltip(null)
+    setTooltipPos(null)
+  }
+
   const iconClass = theme === 'dark'
     ? 'text-gray-400 hover:text-gray-200'
     : 'text-gray-500 hover:text-gray-800'
@@ -65,16 +70,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
     })
   }
 
-  const hideTooltip = () => {
-    setTooltip(null)
-    setTooltipPos(null)
-  }
-
   const TooltipLabel = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div
       className="relative inline-flex flex-col items-center"
       onMouseEnter={(e) => showTooltip(label, e.currentTarget)}
       onMouseLeave={hideTooltip}
+      onPointerLeave={hideTooltip}
     >
       {children}
     </div>
@@ -105,7 +106,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
     )
 
   return (
-    <div className="flex items-center space-x-2">
+    <div
+      className="flex items-center space-x-2"
+      onMouseLeave={hideTooltip}
+      onPointerLeave={hideTooltip}
+    >
       <TooltipLabel label="View">
         <button
           onClick={(e) => {

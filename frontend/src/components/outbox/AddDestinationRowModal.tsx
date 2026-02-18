@@ -29,6 +29,7 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
   const [dateRequired, setDateRequired] = useState('')
   const [timeRequired, setTimeRequired] = useState('')
   const [remarks, setRemarks] = useState('')
+  const [routeNo, setRouteNo] = useState('')
   const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
   const [actionRequiredOptions, setActionRequiredOptions] = useState<Array<{ id: number; action_required: string }>>([])
 
@@ -74,12 +75,18 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const autoRouteNo = document.routeNo && document.routeNo.trim()
-      ? document.routeNo
-      : `RN-${Date.now().toString().slice(-6)}`
+    // Route No. must never be the Document Control No. (e.g. DC-2026-00002). Use user-entered route no,
+    // or source document's route no only if it's not the same as documentControlNo, else generate one.
+    const sourceRoute = (document.routeNo || '').trim()
+    const docNo = (document.documentControlNo || '').trim()
+    const isSourceRouteSameAsDocNo = sourceRoute && docNo && sourceRoute === docNo
+    let userRoute = (routeNo || '').trim()
+    if (userRoute && docNo && userRoute === docNo) userRoute = '' // never use Document Control No. as Route No.
+    const resolvedRouteNo = userRoute
+      || (!isSourceRouteSameAsDocNo && sourceRoute ? sourceRoute : `RN-${Date.now().toString().slice(-8)}`)
     onSave({
       documentControlNo: document.documentControlNo,
-      routeNo: autoRouteNo,
+      routeNo: resolvedRouteNo,
       sequenceNo: nextSequenceNo,
       destinationOffice,
       employeeActionOfficer,
@@ -104,6 +111,7 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
     setDateRequired('')
     setTimeRequired('')
     setRemarks('')
+    setRouteNo('')
     onClose()
   }
 
@@ -116,6 +124,7 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
     setDateRequired('')
     setTimeRequired('')
     setRemarks('')
+    setRouteNo('')
     onClose()
   }
 
@@ -135,6 +144,18 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
           <p className="text-xs mt-1" style={{ color: textSecondary }}>Document Control No.: {document.documentControlNo} (same for all) · Sequence: {nextSequenceNo}</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Route No.</label>
+            <input
+              type="text"
+              value={routeNo}
+              onChange={(e) => setRouteNo(e.target.value)}
+              className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none"
+              style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
+              placeholder="e.g. R2026-000000049 (not the Document No.)"
+            />
+            <span className="text-xs" style={{ color: textSecondary }}>Optional</span>
+          </div>
           <div className="flex items-center gap-3">
             <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '160px' }}>Destination Office</label>
             <div className="flex-1">

@@ -496,21 +496,37 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
                       External Originating Office
                     </label>
-                    <input
-                      type="text"
-                      name="externalOriginatingOffice"
-                      value={formData.externalOriginatingOffice}
-                      onChange={handleChange}
-                      placeholder="Enter external originating office"
-                      className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                      style={{
-                        backgroundColor: inputBg,
-                        border: `1px solid ${inputBorder}`,
-                        color: textPrimary
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                      onBlur={(e) => e.target.style.borderColor = inputBorder}
-                    />
+                    <div className="flex-1">
+                      <SearchableSelect
+                        options={[...offices].sort((a, b) =>
+                          a.office.localeCompare(b.office)
+                        ).map(o => ({
+                          id: o.id,
+                          value: o.office,
+                          label: o.office,
+                        }))}
+                        value={formData.externalOriginatingOffice}
+                        onChange={(value) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            externalOriginatingOffice: value,
+                          }))
+                          if (errors.externalOriginatingOffice) {
+                            setErrors(prev => ({
+                              ...prev,
+                              externalOriginatingOffice: '',
+                            }))
+                          }
+                        }}
+                        placeholder="Select external originating office"
+                        style={{
+                          borderColor: errors.externalOriginatingOffice ? '#ef4444' : inputBorder,
+                        }}
+                      />
+                      {errors.externalOriginatingOffice && (
+                        <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.externalOriginatingOffice}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3">

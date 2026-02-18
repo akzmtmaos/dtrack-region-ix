@@ -11,7 +11,7 @@ interface Document {
   documentNumber: string
   subject: string
   recipient: string
-  dateSent: string
+  dateAdded: string
   status: string
   priority?: string
   documentType?: string
@@ -36,8 +36,15 @@ const DocumentByReleasingOfficer: React.FC = () => {
           documentNumber: row.documentControlNo ?? '',
           subject: row.subject ?? '',
           recipient: (row.internalOriginatingEmployee || row.externalOriginatingEmployee) ?? '',
-          dateSent: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '',
-          status: 'Active',
+          dateAdded: (() => {
+            const raw = row.createdAt
+            if (!raw) return new Date().toLocaleDateString()
+            const d = new Date(raw)
+            return Number.isNaN(d.getTime()) ? new Date().toLocaleDateString() : d.toLocaleDateString()
+          })(),
+          status: (row.status && ['ACCOMPLISHED', 'PENDING'].includes((row.status as string).toUpperCase()))
+            ? (row.status as string).toUpperCase()
+            : 'PENDING',
           documentType: row.documentType ?? '',
           remarks: row.remarks ?? '',
           releasingOffice: row.internalOriginatingOffice || row.externalOriginatingOffice || '',
@@ -56,58 +63,6 @@ const DocumentByReleasingOfficer: React.FC = () => {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    if (theme === 'dark') {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-500/20 text-green-400'
-        case 'Pending':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Failed':
-          return 'bg-red-500/20 text-red-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
-      }
-    } else {
-      switch (status) {
-        case 'Sent':
-          return 'bg-green-100 text-green-800'
-        case 'Pending':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Failed':
-          return 'bg-red-100 text-red-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
-      }
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    if (theme === 'dark') {
-      switch (priority) {
-        case 'High':
-          return 'bg-red-500/20 text-red-400'
-        case 'Medium':
-          return 'bg-yellow-500/20 text-yellow-400'
-        case 'Low':
-          return 'bg-blue-500/20 text-blue-400'
-        default:
-          return 'bg-gray-500/20 text-gray-400'
-      }
-    } else {
-      switch (priority) {
-        case 'High':
-          return 'bg-red-100 text-red-800'
-        case 'Medium':
-          return 'bg-yellow-100 text-yellow-800'
-        case 'Low':
-          return 'bg-blue-100 text-blue-800'
-        default:
-          return 'bg-gray-100 text-gray-800'
-      }
     }
   }
 
@@ -172,7 +127,7 @@ const DocumentByReleasingOfficer: React.FC = () => {
               <tr>
                 <th>Releasing Officer Office</th>
                 <th>Doc Type</th>
-                <th>Date</th>
+                <th>Date Added</th>
                 <th>Action Officer</th>
                 <th>Office</th>
                 <th>Action Taken</th>
@@ -188,7 +143,7 @@ const DocumentByReleasingOfficer: React.FC = () => {
                   <tr>
                     <td>${doc.releasingOffice || '—'}</td>
                     <td>${doc.documentType || '—'}</td>
-                    <td>${doc.dateSent || '—'}</td>
+                    <td>${doc.dateAdded || '—'}</td>
                     <td>${doc.recipient || '—'}</td>
                     <td>—</td>
                     <td>—</td>
@@ -215,14 +170,14 @@ const DocumentByReleasingOfficer: React.FC = () => {
 
   const handleExportToExcel = () => {
     // Create CSV content
-    const headers = ['Releasing Officer Office', 'Doc Type', 'Date', 'Action Officer', 'Office', 'Action Taken', 'Doc. Control No.', 'Remarks', 'Status']
+    const headers = ['Releasing Officer Office', 'Doc Type', 'Date Added', 'Action Officer', 'Office', 'Action Taken', 'Doc. Control No.', 'Remarks', 'Status']
     const csvRows = [headers.join(',')]
 
     documents.forEach(doc => {
       const row = [
         `\"${(doc.releasingOffice || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.documentType || '').replace(/\"/g, '\"\"')}\"`,
-        `\"${(doc.dateSent || '').replace(/\"/g, '\"\"')}\"`,
+        `\"${(doc.dateAdded || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.recipient || '').replace(/\"/g, '\"\"')}\"`,
         '\"\"',
         '\"\"',
@@ -301,7 +256,7 @@ const DocumentByReleasingOfficer: React.FC = () => {
               <tr>
                 <th>Releasing Officer Office</th>
                 <th>Doc Type</th>
-                <th>Date</th>
+                <th>Date Added</th>
                 <th>Action Officer</th>
                 <th>Office</th>
                 <th>Action Taken</th>
@@ -317,7 +272,7 @@ const DocumentByReleasingOfficer: React.FC = () => {
                   <tr>
                     <td>${doc.releasingOffice || '—'}</td>
                     <td>${doc.documentType || '—'}</td>
-                    <td>${doc.dateSent || '—'}</td>
+                    <td>${doc.dateAdded || '—'}</td>
                     <td>${doc.recipient || '—'}</td>
                     <td>—</td>
                     <td>—</td>
@@ -430,50 +385,50 @@ const DocumentByReleasingOfficer: React.FC = () => {
           />
         }
       >
-        <thead className={theme === 'dark' ? 'bg-dark-hover/50' : 'bg-gray-50/50'}>
+        <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
           <tr>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Releasing Officer Office
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Doc Type
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              Date
+              Date Added
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Officer
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Office
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Action Taken
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Doc. Control No.
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Remarks
             </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Status
             </th>
@@ -484,15 +439,15 @@ const DocumentByReleasingOfficer: React.FC = () => {
         }`}>
           {loading ? (
             <tr>
-              <td colSpan={9} className={`px-6 py-8 text-center text-sm ${
-                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              <td colSpan={9} className={`px-4 py-2 text-center text-xs ${
+                theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
               </td>
             </tr>
           ) : documents.length === 0 ? (
             <tr>
-              <td colSpan={9} className={`px-6 py-8 text-center text-sm ${
+              <td colSpan={9} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No documents found
@@ -506,45 +461,55 @@ const DocumentByReleasingOfficer: React.FC = () => {
                   theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
                 }`}
               >
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {doc.releasingOffice || '—'}
                 </td>
-                <td className={`px-6 py-4 text-sm ${
+                <td className={`px-4 py-2 text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {doc.documentType || '—'}
                 </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {doc.dateSent || '—'}
+                  {doc.dateAdded || '—'}
                 </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {doc.recipient || '—'}
                 </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>—</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>—</td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {doc.documentNumber || '—'}
                 </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {doc.remarks || '—'}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
-                    {doc.status}
+                <td className="px-4 py-2 whitespace-nowrap text-xs text-left">
+                  <span className={`
+                    inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide border
+                    ${(doc.status ?? '').toUpperCase() === 'ACCOMPLISHED'
+                      ? theme === 'dark'
+                        ? 'bg-green-900/60 text-green-300 border-green-600/50'
+                        : 'bg-green-100 text-green-700 border-green-500'
+                      : theme === 'dark'
+                        ? 'bg-amber-900/50 text-amber-200 border-amber-600/50'
+                        : 'bg-amber-100 text-amber-800 border-amber-400'
+                    }
+                  `}>
+                    {(doc.status ?? 'PENDING').toUpperCase()}
                   </span>
                 </td>
               </tr>
