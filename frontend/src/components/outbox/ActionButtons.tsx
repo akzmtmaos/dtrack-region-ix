@@ -19,11 +19,6 @@ interface Document {
   userid: string
   inSequence: string
   remarks: string
-  referenceDocumentControlNo1: string
-  referenceDocumentControlNo2: string
-  referenceDocumentControlNo3: string
-  referenceDocumentControlNo4: string
-  referenceDocumentControlNo5: string
 }
 
 interface ActionButtonsProps {

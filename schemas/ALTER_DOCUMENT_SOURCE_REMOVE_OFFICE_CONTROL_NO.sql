@@ -12,7 +12,7 @@ BEGIN
     NEW.document_control_no := 'DC-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_source_document_control_seq')::TEXT, 5, '0');
   END IF;
   IF NEW.route_no IS NULL OR NEW.route_no = '' THEN
-    NEW.route_no := 'RN-' || LPAD(NEXTVAL('document_source_route_no_seq')::TEXT, 5, '0');
+    NEW.route_no := 'R' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_source_route_no_seq')::TEXT, 9, '0');
   END IF;
   RETURN NEW;
 END;

@@ -29,11 +29,6 @@ interface Document {
   userid: string
   inSequence: string
   remarks: string
-  referenceDocumentControlNo1: string
-  referenceDocumentControlNo2: string
-  referenceDocumentControlNo3: string
-  referenceDocumentControlNo4: string
-  referenceDocumentControlNo5: string
 }
 
 const Outbox: React.FC = () => {
@@ -58,6 +53,9 @@ const Outbox: React.FC = () => {
   const [selectedDestinationIds, setSelectedDestinationIds] = useState<number[]>([])
   const [destinationPage, setDestinationPage] = useState(1)
   const destinationPageSize = 10
+  const [destinationSearch, setDestinationSearch] = useState('')
+  const [isDeleteDestinationsModalOpen, setIsDeleteDestinationsModalOpen] = useState(false)
+  const [pendingDestinationDeleteIds, setPendingDestinationDeleteIds] = useState<number[]>([])
 
   // Fetch documents from Supabase on mount and when refetch is needed
   const fetchDocuments = () => {
@@ -74,6 +72,7 @@ const Outbox: React.FC = () => {
   useEffect(() => {
     if (!documentForDestinations) return
     setDestinationPage(1)
+    setDestinationSearch('')
     apiService.getDocumentDestination(documentForDestinations.id).then((res) => {
       if (res.success) {
         const list = Array.isArray(res.data) ? res.data : []
@@ -790,25 +789,52 @@ const Outbox: React.FC = () => {
             }`}
           >
             <div
-              className={`px-4 py-3 flex items-center justify-between border-b ${
+              className={`px-4 py-3 flex flex-wrap items-center gap-3 border-b ${
                 theme === 'dark' ? 'border-[#4a4b4c]' : 'border-gray-200'
               }`}
             >
               <h2 className={`text-sm font-semibold ${theme === 'dark' ? 'text-[#3ecf8e]' : 'text-gray-800'}`}>
                 Document Destination
               </h2>
-              <div className="flex items-center gap-2">
-                {documentForDestinations && (destinationsByDocumentId[documentForDestinations.id] ?? []).length > 0 && (
-                  <Pagination
-                    currentPage={destinationPage}
-                    totalPages={Math.max(1, Math.ceil((destinationsByDocumentId[documentForDestinations.id] ?? []).length / destinationPageSize))}
-                    onPageChange={(p) => setDestinationPage(p)}
-                    totalItems={(destinationsByDocumentId[documentForDestinations.id] ?? []).length}
-                    itemsPerPage={destinationPageSize}
-                    showResultsText={false}
-                    compact
-                  />
-                )}
+              <Input
+                type="text"
+                placeholder="Search destinations..."
+                value={destinationSearch}
+                onChange={(e) => {
+                  setDestinationSearch(e.target.value)
+                  setDestinationPage(1)
+                }}
+                className="w-48"
+                icon={
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                }
+                iconPosition="left"
+              />
+              <div className="flex items-center gap-2 ml-auto">
+                {documentForDestinations && (() => {
+                  const rawDests = destinationsByDocumentId[documentForDestinations.id] ?? []
+                  const q = (destinationSearch || '').trim().toLowerCase()
+                  const filteredDests = q ? rawDests.filter((d) =>
+                    (d.routeNo || '').toLowerCase().includes(q) ||
+                    (d.destinationOffice || '').toLowerCase().includes(q) ||
+                    (d.employeeActionOfficer || '').toLowerCase().includes(q) ||
+                    (d.actionRequired || '').toLowerCase().includes(q) ||
+                    (d.remarks || '').toLowerCase().includes(q)
+                  ) : rawDests
+                  return filteredDests.length > 0 && (
+                    <Pagination
+                      currentPage={destinationPage}
+                      totalPages={Math.max(1, Math.ceil(filteredDests.length / destinationPageSize))}
+                      onPageChange={(p) => setDestinationPage(p)}
+                      totalItems={filteredDests.length}
+                      itemsPerPage={destinationPageSize}
+                      showResultsText={false}
+                      compact
+                    />
+                  )
+                })()}
                 <Button
                   onClick={() => handleAddDestinationRow(documentForDestinations)}
                   variant="primary"
@@ -822,7 +848,10 @@ const Outbox: React.FC = () => {
                   Add
                 </Button>
                 <Button
-                  onClick={() => handleDeleteDestinationRows(selectedDestinationIds)}
+                  onClick={() => {
+                    setPendingDestinationDeleteIds(selectedDestinationIds)
+                    setIsDeleteDestinationsModalOpen(true)
+                  }}
                   disabled={selectedDestinationIds.length === 0}
                   variant="danger"
                 >
@@ -839,15 +868,31 @@ const Outbox: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={(() => {
-                        const dests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                        const rawDests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                        const q = (destinationSearch || '').trim().toLowerCase()
+                        const filteredDests = q ? rawDests.filter((d) =>
+                          (d.routeNo || '').toLowerCase().includes(q) ||
+                          (d.destinationOffice || '').toLowerCase().includes(q) ||
+                          (d.employeeActionOfficer || '').toLowerCase().includes(q) ||
+                          (d.actionRequired || '').toLowerCase().includes(q) ||
+                          (d.remarks || '').toLowerCase().includes(q)
+                        ) : rawDests
                         const start = (destinationPage - 1) * destinationPageSize
-                        const pageDests = dests.slice(start, start + destinationPageSize)
+                        const pageDests = filteredDests.slice(start, start + destinationPageSize)
                         return pageDests.length > 0 && pageDests.every((d) => selectedDestinationIds.includes(d.id))
                       })()}
                       onChange={(e) => {
-                        const dests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                        const rawDests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                        const q = (destinationSearch || '').trim().toLowerCase()
+                        const filteredDests = q ? rawDests.filter((d) =>
+                          (d.routeNo || '').toLowerCase().includes(q) ||
+                          (d.destinationOffice || '').toLowerCase().includes(q) ||
+                          (d.employeeActionOfficer || '').toLowerCase().includes(q) ||
+                          (d.actionRequired || '').toLowerCase().includes(q) ||
+                          (d.remarks || '').toLowerCase().includes(q)
+                        ) : rawDests
                         const start = (destinationPage - 1) * destinationPageSize
-                        const pageDests = dests.slice(start, start + destinationPageSize)
+                        const pageDests = filteredDests.slice(start, start + destinationPageSize)
                         if (e.target.checked) {
                           setSelectedDestinationIds((prev) => {
                             const add = pageDests.map((d) => d.id)
@@ -895,12 +940,20 @@ const Outbox: React.FC = () => {
               </thead>
               <tbody className={theme === 'dark' ? 'divide-[#4a4b4c]' : 'divide-gray-200'}>
                 {(() => {
-                  const dests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                  const rawDests = documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []
+                  const q = (destinationSearch || '').trim().toLowerCase()
+                  const filteredDests = q ? rawDests.filter((d) =>
+                    (d.routeNo || '').toLowerCase().includes(q) ||
+                    (d.destinationOffice || '').toLowerCase().includes(q) ||
+                    (d.employeeActionOfficer || '').toLowerCase().includes(q) ||
+                    (d.actionRequired || '').toLowerCase().includes(q) ||
+                    (d.remarks || '').toLowerCase().includes(q)
+                  ) : rawDests
                   const startIdx = (destinationPage - 1) * destinationPageSize
-                  const paginatedDests = dests.slice(startIdx, startIdx + destinationPageSize)
+                  const paginatedDests = filteredDests.slice(startIdx, startIdx + destinationPageSize)
                   const formatDate = (d: string) => (d ? new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '')
                   const formatTime = (t: string) => (t ? new Date(`1970-01-01T${t}`).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '')
-                  if (dests.length === 0) {
+                  if (filteredDests.length === 0) {
                     return (
                       <tr>
                         <td
@@ -913,8 +966,8 @@ const Outbox: React.FC = () => {
                             <svg className={`w-10 h-10 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                             </svg>
-                            <span>No destinations.</span>
-                            <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>Click Add to add a destination.</span>
+                            <span>{q ? 'No destinations match your search.' : 'No destinations.'}</span>
+                            <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>{q ? 'Try a different search.' : 'Click Add to add a destination.'}</span>
                           </div>
                         </td>
                       </tr>
@@ -996,7 +1049,7 @@ const Outbox: React.FC = () => {
         nextSequenceNo={(documentForDestinations ? (destinationsByDocumentId[documentForDestinations.id] ?? []) : []).length + 1}
       />
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (documents) */}
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
@@ -1009,6 +1062,24 @@ const Outbox: React.FC = () => {
         itemName={deleteItemName}
         isBulk={deleteType === 'bulk'}
         count={selectedItems.length}
+      />
+
+      {/* Delete Confirmation Modal (document destinations) */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteDestinationsModalOpen}
+        onClose={() => {
+          setIsDeleteDestinationsModalOpen(false)
+          setPendingDestinationDeleteIds([])
+        }}
+        onConfirm={() => {
+          handleDeleteDestinationRows(pendingDestinationDeleteIds)
+          setPendingDestinationDeleteIds([])
+          setIsDeleteDestinationsModalOpen(false)
+        }}
+        title="Delete selected destinations"
+        message="This will permanently remove the selected destination row(s) from this document."
+        isBulk={pendingDestinationDeleteIds.length > 1}
+        count={pendingDestinationDeleteIds.length}
       />
     </div>
   )

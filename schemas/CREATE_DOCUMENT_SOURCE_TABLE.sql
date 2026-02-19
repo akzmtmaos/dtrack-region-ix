@@ -41,13 +41,6 @@ CREATE TABLE IF NOT EXISTS document_source (
   in_sequence TEXT,
   remarks TEXT NOT NULL,
 
-  -- Reference documents (up to 5)
-  reference_document_control_no_1 TEXT,
-  reference_document_control_no_2 TEXT,
-  reference_document_control_no_3 TEXT,
-  reference_document_control_no_4 TEXT,
-  reference_document_control_no_5 TEXT,
-
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -69,7 +62,7 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 -- Trigger: auto-fill document_control_no, route_no on INSERT when null
--- Format: document_control_no = DC-YYYY-NNNNN, route_no = RN-NNNNN
+-- Format: document_control_no = DC-YYYY-NNNNN, route_no = R2026-000000001
 CREATE OR REPLACE FUNCTION document_source_set_control_numbers()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -77,7 +70,7 @@ BEGIN
     NEW.document_control_no := 'DC-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_source_document_control_seq')::TEXT, 5, '0');
   END IF;
   IF NEW.route_no IS NULL OR NEW.route_no = '' THEN
-    NEW.route_no := 'RN-' || LPAD(NEXTVAL('document_source_route_no_seq')::TEXT, 5, '0');
+    NEW.route_no := 'R' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_source_route_no_seq')::TEXT, 9, '0');
   END IF;
   RETURN NEW;
 END;
@@ -93,7 +86,7 @@ EXECUTE FUNCTION document_source_set_control_numbers();
 COMMENT ON TABLE document_source IS 'Document Source (Outbox) - stores outgoing/source documents with control numbers';
 COMMENT ON COLUMN document_source.id IS 'Primary key';
 COMMENT ON COLUMN document_source.document_control_no IS 'Unique document control number (e.g. DC-YYYY-NNNNN); auto-generated if not provided';
-COMMENT ON COLUMN document_source.route_no IS 'Route number for tracking on source; auto-generated if not provided';
+COMMENT ON COLUMN document_source.route_no IS 'Route number for tracking on source (e.g. R2026-000000001); auto-generated if not provided';
 COMMENT ON COLUMN document_source.subject IS 'Document subject';
 COMMENT ON COLUMN document_source.document_type IS 'Type of document';
 COMMENT ON COLUMN document_source.source_type IS 'Internal or External';

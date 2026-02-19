@@ -95,11 +95,14 @@ def document_destination_create(request):
                 'success': False,
                 'error': 'document_source_id is required'
             }, status=status.HTTP_400_BAD_REQUEST)
-        if payload.get('document_control_no') == '' or payload.get('route_no') == '':
+        if payload.get('document_control_no') == '':
             return Response({
                 'success': False,
-                'error': 'document_control_no and route_no are required'
+                'error': 'document_control_no is required'
             }, status=status.HTTP_400_BAD_REQUEST)
+        # route_no empty or missing: DB trigger generates R{year}-000000001, R{year}-000000002, ...
+        if not payload.get('route_no'):
+            payload['route_no'] = ''
         response = supabase.table('document_destination').insert(payload).execute()
         if response.data and len(response.data) > 0:
             return Response({

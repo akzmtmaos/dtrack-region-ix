@@ -41,12 +41,6 @@ CREATE TABLE IF NOT EXISTS document_source (
   in_sequence TEXT,
   remarks TEXT NOT NULL,
 
-  reference_document_control_no_1 TEXT,
-  reference_document_control_no_2 TEXT,
-  reference_document_control_no_3 TEXT,
-  reference_document_control_no_4 TEXT,
-  reference_document_control_no_5 TEXT,
-
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -72,7 +66,7 @@ BEGIN
     NEW.document_control_no := 'DC-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_source_document_control_seq')::TEXT, 5, '0');
   END IF;
   IF NEW.route_no IS NULL OR NEW.route_no = '' THEN
-    NEW.route_no := 'RN-' || LPAD(NEXTVAL('document_source_route_no_seq')::TEXT, 5, '0');
+    NEW.route_no := 'R' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_source_route_no_seq')::TEXT, 9, '0');
   END IF;
   RETURN NEW;
 END;
@@ -86,7 +80,7 @@ EXECUTE FUNCTION document_source_set_control_numbers();
 
 COMMENT ON TABLE document_source IS 'Document Source (Outbox) - stores outgoing/source documents with control numbers';
 COMMENT ON COLUMN document_source.document_control_no IS 'Unique document control number (e.g. DC-YYYY-NNNNN); auto-generated if not provided';
-COMMENT ON COLUMN document_source.route_no IS 'Route number for tracking on source; auto-generated if not provided';
+COMMENT ON COLUMN document_source.route_no IS 'Route number for tracking on source (e.g. R2026-000000001); auto-generated if not provided';
 COMMENT ON COLUMN document_source.subject IS 'Document subject';
 COMMENT ON COLUMN document_source.remarks IS 'Remarks or notes';
 
@@ -104,12 +98,15 @@ FOR ALL USING (true) WITH CHECK (true);
 -- PART 2: DOCUMENT DESTINATION
 -- =============================================================================
 
+-- Sequence for Route No. (R{year}-000000001, R{year}-000000002, ...)
+CREATE SEQUENCE IF NOT EXISTS document_destination_route_no_seq START 1;
+
 CREATE TABLE IF NOT EXISTS document_destination (
   id BIGSERIAL PRIMARY KEY,
 
   document_source_id BIGINT NOT NULL REFERENCES document_source(id) ON DELETE CASCADE,
   document_control_no TEXT NOT NULL,
-  route_no TEXT NOT NULL,
+  route_no TEXT NOT NULL UNIQUE,
   sequence_no INTEGER NOT NULL,
 
   destination_office TEXT,
@@ -134,6 +131,22 @@ CREATE TABLE IF NOT EXISTS document_destination (
 
   UNIQUE (document_source_id, sequence_no)
 );
+
+-- Auto-generate Route No. when null/empty: R{year}-{9-digit sequence}
+CREATE OR REPLACE FUNCTION document_destination_set_route_no()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.route_no IS NULL OR NEW.route_no = '' THEN
+    NEW.route_no := 'R' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('document_destination_route_no_seq')::TEXT, 9, '0');
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS document_destination_before_insert_route_no ON document_destination;
+CREATE TRIGGER document_destination_before_insert_route_no
+BEFORE INSERT ON document_destination
+FOR EACH ROW
+EXECUTE FUNCTION document_destination_set_route_no();
 
 DROP TRIGGER IF EXISTS update_document_destination_updated_at ON document_destination;
 CREATE TRIGGER update_document_destination_updated_at

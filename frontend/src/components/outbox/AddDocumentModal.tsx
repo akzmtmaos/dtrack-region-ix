@@ -20,11 +20,6 @@ interface EditingDocument {
   userid?: string
   inSequence?: string
   remarks: string
-  referenceDocumentControlNo1?: string
-  referenceDocumentControlNo2?: string
-  referenceDocumentControlNo3?: string
-  referenceDocumentControlNo4?: string
-  referenceDocumentControlNo5?: string
 }
 
 interface AddDocumentModalProps {
@@ -50,8 +45,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     attachmentList: '',
     userid: '',
     inSequence: '',
-    remarks: '',
-    referenceDocuments: ['']
+    remarks: ''
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -93,13 +87,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   // Prefill form when editing
   useEffect(() => {
     if (isOpen && editingDocument) {
-      const refs = [
-        editingDocument.referenceDocumentControlNo1 || '',
-        editingDocument.referenceDocumentControlNo2 || '',
-        editingDocument.referenceDocumentControlNo3 || '',
-        editingDocument.referenceDocumentControlNo4 || '',
-        editingDocument.referenceDocumentControlNo5 || ''
-      ].filter(Boolean)
       setFormData({
         subject: editingDocument.subject || '',
         documentType: editingDocument.documentType || '',
@@ -113,8 +100,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         attachmentList: editingDocument.attachmentList || '',
         userid: editingDocument.userid || '',
         inSequence: editingDocument.inSequence || '',
-        remarks: editingDocument.remarks || '',
-        referenceDocuments: refs.length > 0 ? refs : ['']
+        remarks: editingDocument.remarks || ''
       })
     } else if (isOpen && !editingDocument) {
       setFormData({
@@ -130,8 +116,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         attachmentList: '',
         userid: '',
         inSequence: '',
-        remarks: '',
-        referenceDocuments: ['']
+        remarks: ''
       })
     }
   }, [isOpen, editingDocument])
@@ -150,50 +135,27 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     }
   }
 
-  const handleReferenceDocumentChange = (index: number, value: string) => {
-    setFormData(prev => {
-      const newReferences = [...prev.referenceDocuments]
-      newReferences[index] = value
-      return {
-        ...prev,
-        referenceDocuments: newReferences
-      }
-    })
-  }
-
-  const addReferenceDocument = () => {
-    setFormData(prev => {
-      if (prev.referenceDocuments.length >= 5) {
-        return prev
-      }
-      return {
-        ...prev,
-        referenceDocuments: [...prev.referenceDocuments, '']
-      }
-    })
-  }
-
-  const removeReferenceDocument = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      referenceDocuments: prev.referenceDocuments.filter((_, i) => i !== index)
-    }))
-  }
-
   const validate = () => {
     const newErrors: Record<string, string> = {}
     
     if (!formData.subject.trim()) {
       newErrors.subject = 'Subject is required'
     }
-    if (!formData.internalOriginatingOffice.trim()) {
-      newErrors.internalOriginatingOffice = 'Internal Originating Office is required'
+    if (formData.sourceType === 'Internal') {
+      if (!formData.internalOriginatingOffice.trim()) {
+        newErrors.internalOriginatingOffice = 'Internal Originating Office is required'
+      }
+      if (!formData.internalOriginatingEmployee.trim()) {
+        newErrors.internalOriginatingEmployee = 'Internal Originating Employee is required'
+      }
     }
-    if (!formData.internalOriginatingEmployee.trim()) {
-      newErrors.internalOriginatingEmployee = 'Internal Originating Employee is required'
-    }
-    if (formData.sourceType === 'External' && !formData.externalOriginatingEmployee.trim()) {
-      newErrors.externalOriginatingEmployee = 'External Originating Employee is required'
+    if (formData.sourceType === 'External') {
+      if (!formData.externalOriginatingOffice.trim()) {
+        newErrors.externalOriginatingOffice = 'External Originating Office is required'
+      }
+      if (!formData.externalOriginatingEmployee.trim()) {
+        newErrors.externalOriginatingEmployee = 'External Originating Employee is required'
+      }
     }
     if (!formData.remarks.trim()) {
       newErrors.remarks = 'Remarks is required'
@@ -207,7 +169,6 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     e.preventDefault()
     
     if (validate()) {
-      const referenceDocs = formData.referenceDocuments.filter(ref => ref.trim() !== '')
       const documentData: any = {
         subject: formData.subject,
         documentType: formData.documentType,
@@ -221,12 +182,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         attachmentList: formData.attachmentList,
         userid: formData.userid,
         inSequence: formData.inSequence,
-        remarks: formData.remarks,
-        referenceDocumentControlNo1: referenceDocs[0] || '',
-        referenceDocumentControlNo2: referenceDocs[1] || '',
-        referenceDocumentControlNo3: referenceDocs[2] || '',
-        referenceDocumentControlNo4: referenceDocs[3] || '',
-        referenceDocumentControlNo5: referenceDocs[4] || ''
+        remarks: formData.remarks
       }
 
       if (editingDocument && onUpdate) {
@@ -256,8 +212,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         attachmentList: '',
         userid: '',
         inSequence: '',
-        remarks: '',
-        referenceDocuments: ['']
+        remarks: ''
       }
       setFormData(emptyForm)
       setErrors({})
@@ -280,8 +235,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       attachmentList: '',
       userid: '',
       inSequence: '',
-      remarks: '',
-      referenceDocuments: ['']
+      remarks: ''
     }
     setFormData(emptyForm)
     setErrors({})

@@ -45,11 +45,6 @@ def _row_to_camel(row):
         'userid': row.get('userid') or '',
         'inSequence': row.get('in_sequence') or '',
         'remarks': row.get('remarks') or '',
-        'referenceDocumentControlNo1': row.get('reference_document_control_no_1') or '',
-        'referenceDocumentControlNo2': row.get('reference_document_control_no_2') or '',
-        'referenceDocumentControlNo3': row.get('reference_document_control_no_3') or '',
-        'referenceDocumentControlNo4': row.get('reference_document_control_no_4') or '',
-        'referenceDocumentControlNo5': row.get('reference_document_control_no_5') or '',
         'createdAt': _normalize_created_at(row.get('created_at')),
     }
 
@@ -70,11 +65,6 @@ def _payload_to_snake(data):
         'userid': data.get('userid', ''),
         'in_sequence': data.get('inSequence', ''),
         'remarks': data.get('remarks', ''),
-        'reference_document_control_no_1': data.get('referenceDocumentControlNo1', ''),
-        'reference_document_control_no_2': data.get('referenceDocumentControlNo2', ''),
-        'reference_document_control_no_3': data.get('referenceDocumentControlNo3', ''),
-        'reference_document_control_no_4': data.get('referenceDocumentControlNo4', ''),
-        'reference_document_control_no_5': data.get('referenceDocumentControlNo5', ''),
     }
 
 
