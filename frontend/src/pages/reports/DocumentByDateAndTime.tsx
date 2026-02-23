@@ -502,13 +502,13 @@ const DocumentByDateAndTime: React.FC = () => {
                 className={`transition-colors ${theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}`}
               >
                 <td
-                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  className={`px-4 py-2 text-xs min-w-[160px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
                   title={doc.documentType || undefined}
                 >
                   {doc.documentType || '—'}
                 </td>
                 <td
-                  className={`px-4 py-2 text-xs max-w-[200px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  className={`px-4 py-2 text-xs min-w-[180px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
                   title={doc.subject || undefined}
                 >
                   {doc.subject || '—'}

@@ -60,8 +60,11 @@ const Outbox: React.FC = () => {
   // Fetch documents from Supabase on mount and when refetch is needed
   const fetchDocuments = () => {
     apiService.getDocumentSource().then((res) => {
-      if (res.success && res.data) setDocuments(res.data)
-    })
+      if (!res) return
+      const raw = res.success && res.data != null ? res.data : []
+      const list = Array.isArray(raw) ? raw : []
+      setDocuments(list)
+    }).catch(() => setDocuments([]))
   }
 
   useEffect(() => {
@@ -660,9 +663,9 @@ const Outbox: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                documents.map((doc) => (
+                documents.map((doc, idx) => (
                   <tr 
-                    key={doc.id} 
+                    key={doc?.id ?? doc?.documentControlNo ?? `row-${idx}`} 
                     className={`transition-all duration-150 cursor-pointer ${
                       theme === 'dark' 
                         ? 'hover:bg-dark-hover/50 active:bg-dark-hover' 

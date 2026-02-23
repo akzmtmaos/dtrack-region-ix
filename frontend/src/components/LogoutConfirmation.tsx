@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useTheme } from '../context/ThemeContext'
 
 interface LogoutConfirmationProps {
   isOpen: boolean
@@ -8,91 +10,97 @@ interface LogoutConfirmationProps {
 
 const LogoutConfirmation: React.FC<LogoutConfirmationProps> = ({ isOpen, onClose, onConfirm }) => {
   const [isLoading, setIsLoading] = useState(false)
+  const { theme } = useTheme()
 
   if (!isOpen) return null
 
+  const modalBg = theme === 'dark' ? '#171717' : '#ffffff'
+  const borderColor = theme === 'dark' ? '#262626' : '#e5e5e5'
+  const textPrimary = theme === 'dark' ? '#fafafa' : '#171717'
+  const textSecondary = theme === 'dark' ? '#a3a3a3' : '#525252'
+
   const handleConfirm = () => {
-    if (isLoading) return // Prevent double clicks
-    
+    if (isLoading) return
     setIsLoading(true)
-    // Close modal immediately
     onClose()
-    // Execute logout
-    setTimeout(() => {
-      onConfirm()
-    }, 100)
+    setTimeout(() => onConfirm(), 100)
   }
 
   const handleClose = () => {
-    if (isLoading) return // Prevent closing during logout
+    if (isLoading) return
     onClose()
   }
 
-  return (
-    <div 
-      className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
-      style={{ margin: 0, padding: 0 }}
+  const modal = (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-[9999]"
       onClick={handleClose}
+      style={{ backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)' }}
     >
-      <div 
-        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+      <div
+        className="rounded-lg max-w-md w-full mx-4 overflow-hidden flex flex-col shadow-xl"
+        style={{ backgroundColor: modalBg, border: `1px solid ${borderColor}` }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-            <svg
-              className="w-6 h-6 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+        {/* Header - same pattern as DeleteConfirmationModal */}
+        <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: theme === 'dark' ? '#7f1d1d' : '#fee2e2' }}>
+              <svg className="w-5 h-5" style={{ color: '#ef4444' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-semibold mb-1" style={{ color: textPrimary }}>
+                Confirm Logout
+              </h2>
+              <p className="text-xs" style={{ color: textSecondary }}>
+                You will need to login again to access the system.
+              </p>
+            </div>
           </div>
-          
-          <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-            Confirm Logout
-          </h3>
-          
-          <p className="text-sm text-gray-600 text-center mb-6">
-            Are you sure you want to logout? You will need to login again to access the system.
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-5">
+          <p className="text-sm" style={{ color: textPrimary }}>
+            Are you sure you want to logout?
           </p>
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={handleClose}
-              disabled={isLoading}
-              className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors ${
-                isLoading 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:bg-gray-50'
-              }`}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={isLoading}
-              className={`flex-1 px-4 py-2 rounded-lg text-white font-medium transition-colors ${
-                isLoading 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : ''
-              }`}
-              style={{ backgroundColor: 'rgba(100, 154, 70)' }}
-            >
-              {isLoading ? 'Logging out...' : 'Logout'}
-            </button>
-          </div>
+        </div>
+
+        {/* Footer - same as other modals */}
+        <div
+          className="px-6 py-4 flex justify-end gap-2"
+          style={{ borderTop: `1px solid ${borderColor}`, backgroundColor: modalBg }}
+        >
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={isLoading}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+            style={{ color: textSecondary, backgroundColor: 'transparent' }}
+            onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#f5f5f5' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isLoading}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+            style={{ color: '#ffffff', backgroundColor: '#ef4444' }}
+            onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = '#dc2626' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ef4444' }}
+          >
+            {isLoading ? 'Logging out...' : 'Logout'}
+          </button>
         </div>
       </div>
     </div>
   )
+
+  return createPortal(modal, document.body)
 }
 
 export default LogoutConfirmation
-

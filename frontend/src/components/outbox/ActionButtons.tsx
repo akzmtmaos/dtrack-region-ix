@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../../context/ThemeContext'
 
@@ -31,7 +31,7 @@ interface ActionButtonsProps {
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
-  document,
+  document: doc,
   onView,
   onRoutingSlip,
   onEdit,
@@ -42,21 +42,41 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   const [tooltip, setTooltip] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null)
   const [mounted, setMounted] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const tooltipVisibleRef = useRef(false)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
     setMounted(true)
+    isMountedRef.current = true
+    return () => { isMountedRef.current = false }
   }, [])
 
   const hideTooltip = () => {
-    setTooltip(null)
-    setTooltipPos(null)
+    tooltipVisibleRef.current = false
+    if (isMountedRef.current) {
+      setTooltip(null)
+      setTooltipPos(null)
+    }
   }
+
+  // Hide tooltip when pointer leaves this row's actions (fixes stuck tooltips when moving between rows)
+  useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      if (!tooltipVisibleRef.current || !isMountedRef.current) return
+      const el = e.target as Node
+      if (!containerRef.current?.contains(el)) hideTooltip()
+    }
+    document.addEventListener('pointermove', onPointerMove, { passive: true })
+    return () => document.removeEventListener('pointermove', onPointerMove)
+  }, [])
 
   const iconClass = theme === 'dark'
     ? 'text-gray-400 hover:text-gray-200'
     : 'text-gray-500 hover:text-gray-800'
 
   const showTooltip = (label: string, el: HTMLElement) => {
+    tooltipVisibleRef.current = true
     const rect = el.getBoundingClientRect()
     setTooltip(label)
     setTooltipPos({
@@ -75,6 +95,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       {children}
     </div>
   )
+
+  if (!doc) return null
 
   const tooltipEl =
     mounted &&
@@ -102,6 +124,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
   return (
     <div
+      ref={containerRef}
       className="flex items-center space-x-2"
       onMouseLeave={hideTooltip}
       onPointerLeave={hideTooltip}
@@ -111,7 +134,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           onClick={(e) => {
             e.stopPropagation()
             hideTooltip()
-            onView(document)
+            onView(doc)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
         >
@@ -127,7 +150,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           onClick={(e) => {
             e.stopPropagation()
             hideTooltip()
-            onRoutingSlip(document)
+            onRoutingSlip(doc)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
         >
@@ -142,7 +165,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           onClick={(e) => {
             e.stopPropagation()
             hideTooltip()
-            onEdit(document)
+            onEdit(doc)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
         >
@@ -157,7 +180,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           onClick={(e) => {
             e.stopPropagation()
             hideTooltip()
-            onAddDestination(document)
+            onAddDestination(doc)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
         >
@@ -172,7 +195,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           onClick={(e) => {
             e.stopPropagation()
             hideTooltip()
-            onDelete(document)
+            onDelete(doc)
           }}
           className={`p-1 rounded transition-colors ${iconClass}`}
         >
