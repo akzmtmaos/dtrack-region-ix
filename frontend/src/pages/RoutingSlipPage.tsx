@@ -1,8 +1,10 @@
 /**
  * Routing Slip – opens in a new tab. Displays formal DOH/DTRAK layout.
  * Data is passed via localStorage from Outbox when user clicks "Routing Slip".
+ * Barcode is auto-generated from Document Control No. (CODE128).
  */
 import React, { useEffect, useState } from 'react'
+import Barcode from 'react-barcode'
 import dohLogo from '../assets/doh-logo2.png'
 
 interface RoutingSlipDocument {
@@ -177,12 +179,22 @@ const RoutingSlipPage: React.FC = () => {
           <span className="text-[13px]" />
         </div>
 
-        {/* Barcode placeholder + Document Control No. */}
+        {/* Auto-generated barcode (CODE128) from Document Control No. */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-full max-w-xs h-12 border border-gray-400 bg-gray-50 flex items-center justify-center text-gray-500 text-[13px] mb-1">
-            Barcode
+          <div className="print:[transform-origin:top_left]">
+            <Barcode
+              value={document.documentControlNo || 'DC-00000'}
+              format="CODE128"
+              displayValue={true}
+              width={1.2}
+              height={36}
+              margin={0}
+              fontSize={11}
+              background="#ffffff"
+              lineColor="#000000"
+            />
           </div>
-          <p className="text-[13px] font-semibold">{document.documentControlNo}</p>
+          <p className="text-[13px] font-semibold mt-1">{document.documentControlNo}</p>
         </div>
 
         {/* Document details: two columns */}

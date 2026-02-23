@@ -25,9 +25,9 @@ interface EditingDocument {
 interface AddDocumentModalProps {
   isOpen: boolean
   onClose: () => void
-  onAdd: (document: any) => void
+  onAdd: (document: any, pendingFile?: File | null) => void
   editingDocument?: EditingDocument | null
-  onUpdate?: (document: any) => void
+  onUpdate?: (document: any, pendingFile?: File | null) => void
 }
 
 const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd, editingDocument, onUpdate }) => {
@@ -52,6 +52,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
   const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const pendingFileRef = useRef<File | null>(null)
 
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
@@ -185,20 +186,21 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         remarks: formData.remarks
       }
 
+      const file = pendingFileRef.current ?? null
       if (editingDocument && onUpdate) {
         onUpdate({
           ...editingDocument,
           ...documentData
-        })
+        }, file)
       } else {
         onAdd({
           id: Date.now(),
           documentControlNo: '',
           routeNo: '',
           ...documentData
-        })
+        }, file)
       }
-      
+      pendingFileRef.current = null
       const emptyForm = {
         subject: '',
         documentType: '',
@@ -240,6 +242,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     setFormData(emptyForm)
     setErrors({})
     if (fileInputRef.current) fileInputRef.current.value = ''
+    pendingFileRef.current = null
     onClose()
   }
 
@@ -545,6 +548,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     type="file"
                     onChange={(e) => {
                       const file = e.target.files?.[0]
+                      pendingFileRef.current = file ?? null
                       setFormData(prev => ({
                         ...prev,
                         attachedDocumentFilename: file ? file.name : ''
@@ -566,6 +570,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                           if (fileInputRef.current) {
                             fileInputRef.current.value = ''
                           }
+                          pendingFileRef.current = null
                           setFormData(prev => ({
                             ...prev,
                             attachedDocumentFilename: ''

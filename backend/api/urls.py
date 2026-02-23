@@ -2,12 +2,16 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import action_required, action_officer, action_taken, document_type, document_action_required_days, office, region, user_levels
-from .views import document_source, document_destination
+from .views import document_source, document_destination, auth
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
     path('health/', views.health_check, name='health-check'),
-    
+
+    # Auth (login / register using action_officer)
+    path('auth/login/', auth.auth_login, name='auth-login'),
+    path('auth/register/', auth.auth_register, name='auth-register'),
+
     # Action Required endpoints
     path('action-required/', action_required.action_required_list, name='action-required-list'),
     path('action-required/create/', action_required.action_required_create, name='action-required-create'),
@@ -67,7 +71,9 @@ urlpatterns = [
     # Document Source (Outbox) endpoints
     path('document-source/', document_source.document_source_list, name='document-source-list'),
     path('document-source/create/', document_source.document_source_create, name='document-source-create'),
+    path('document-source/upload-attachment/', document_source.document_source_upload_attachment, name='document-source-upload-attachment'),
     path('document-source/<int:item_id>/', document_source.document_source_update, name='document-source-update'),
+    path('document-source/<int:item_id>/attachment-url/', document_source.document_source_attachment_url, name='document-source-attachment-url'),
     path('document-source/<int:item_id>/delete/', document_source.document_source_delete, name='document-source-delete'),
     path('document-source/bulk-delete/', document_source.document_source_bulk_delete, name='document-source-bulk-delete'),
 

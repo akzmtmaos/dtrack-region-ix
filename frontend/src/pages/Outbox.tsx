@@ -121,10 +121,22 @@ const Outbox: React.FC = () => {
     })
   }
 
-  const handleAddDocument = (document: Partial<Document>) => {
-    apiService.createDocumentSource(document as Record<string, unknown>).then((res) => {
+  const handleAddDocument = (document: Partial<Document>, pendingFile?: File | null) => {
+    apiService.createDocumentSource(document as Record<string, unknown>).then(async (res) => {
       if (!res.success || !res.data) return
-      const newDocument = res.data as Document
+      let newDocument = res.data as Document
+      if (pendingFile) {
+        const up = await apiService.uploadDocumentAttachment(newDocument.id, pendingFile)
+        const path = up.data?.path
+        const filename = up.data?.filename
+        if (up.success && path && filename) {
+          const updateRes = await apiService.updateDocumentSource(newDocument.id, {
+            attachmentList: path,
+            attachedDocumentFilename: filename,
+          } as Record<string, unknown>)
+          if (updateRes.success && updateRes.data) newDocument = updateRes.data as Document
+        }
+      }
       setDocuments((prev) => [...prev, newDocument])
       setDocumentForDestinations(newDocument)
       setDestinationsByDocumentId((prev) => ({ ...prev, [newDocument.id]: [] }))
@@ -174,13 +186,32 @@ const Outbox: React.FC = () => {
     setIsDetailModalOpen(true)
   }
 
-  const handleUpdateDocument = (updatedDocument: Document) => {
-    apiService.updateDocumentSource(updatedDocument.id, updatedDocument as unknown as Record<string, unknown>).then((res) => {
-      if (!res.success || !res.data) return
-      const doc = res.data as Document
-      setDocuments((prev) => prev.map((d) => (d.id === doc.id ? doc : d)))
-      setSelectedDocument(doc)
-    })
+  const handleUpdateDocument = (updatedDocument: Document, pendingFile?: File | null) => {
+    const doUpdate = (payload: Record<string, unknown>) => {
+      apiService.updateDocumentSource(updatedDocument.id, payload).then((res) => {
+        if (!res.success || !res.data) return
+        const doc = res.data as Document
+        setDocuments((prev) => prev.map((d) => (d.id === doc.id ? doc : d)))
+        setSelectedDocument(doc)
+      })
+    }
+    if (pendingFile) {
+      apiService.uploadDocumentAttachment(updatedDocument.id, pendingFile).then((up) => {
+        const path = up.data?.path
+        const filename = up.data?.filename
+        if (up.success && path && filename) {
+          doUpdate({
+            ...(updatedDocument as unknown as Record<string, unknown>),
+            attachmentList: path,
+            attachedDocumentFilename: filename,
+          })
+        } else {
+          doUpdate(updatedDocument as unknown as Record<string, unknown>)
+        }
+      })
+    } else {
+      doUpdate(updatedDocument as unknown as Record<string, unknown>)
+    }
   }
 
   const handleDeleteDocument = (document: Document) => {

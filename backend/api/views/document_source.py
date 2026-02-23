@@ -2,6 +2,7 @@
 API views for Document Source (Outbox) - Supabase document_source table
 """
 import logging
+import uuid
 from datetime import datetime, timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -10,6 +11,10 @@ from rest_framework import status
 from ..supabase_client import get_supabase_admin_client
 
 logger = logging.getLogger(__name__)
+
+# Create a storage bucket named "document-attachments" in Supabase Dashboard (Storage) with access allowed for your project.
+ATTACHMENT_BUCKET = 'document-attachments'
+SIGNED_URL_EXPIRES = 3600  # 1 hour
 
 
 def _normalize_created_at(v):
@@ -211,6 +216,70 @@ def document_source_bulk_delete(request):
         }, status=status.HTTP_200_OK)
     except Exception as e:
         logger.exception("document_source_bulk_delete failed")
+        err_msg = _connection_error_message(e) or str(e) or "Server error"
+        return Response(
+            {'success': False, 'error': err_msg},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE if _is_connection_error(e) else status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def document_source_upload_attachment(request):
+    """Upload a file for a document source. Expects multipart: file, documentId. Returns path and filename for storing on document."""
+    try:
+        file_obj = request.FILES.get('file')
+        document_id = request.POST.get('documentId') or request.data.get('documentId')
+        if not file_obj:
+            return Response({'success': False, 'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+        if not document_id:
+            return Response({'success': False, 'error': 'documentId is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            document_id = int(document_id)
+        except (TypeError, ValueError):
+            return Response({'success': False, 'error': 'Invalid documentId'}, status=status.HTTP_400_BAD_REQUEST)
+        filename = (file_obj.name or 'attachment').strip() or 'attachment'
+        safe_name = "".join(c for c in filename if c.isalnum() or c in '._- ').strip() or 'attachment'
+        storage_path = f"{document_id}/{uuid.uuid4().hex}_{safe_name}"
+        supabase = get_supabase_admin_client()
+        file_bytes = file_obj.read()
+        supabase.storage.from_(ATTACHMENT_BUCKET).upload(storage_path, file_bytes, {"content-type": file_obj.content_type or "application/octet-stream"})
+        return Response({
+            'success': True,
+            'path': storage_path,
+            'filename': filename,
+        }, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        logger.exception("document_source_upload_attachment failed")
+        err_msg = _connection_error_message(e) or str(e) or "Server error"
+        return Response(
+            {'success': False, 'error': err_msg},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE if _is_connection_error(e) else status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def document_source_attachment_url(request, item_id):
+    """Return a signed URL for the document's attachment so the frontend can download or open it."""
+    try:
+        supabase = get_supabase_admin_client()
+        row = supabase.table('document_source').select('attachment_list').eq('id', item_id).execute()
+        if not row.data or len(row.data) == 0:
+            return Response({'success': False, 'error': 'Document not found'}, status=status.HTTP_404_NOT_FOUND)
+        path = (row.data[0] or {}).get('attachment_list') or ''
+        if not path or not path.strip():
+            return Response({'success': False, 'error': 'No attachment for this document'}, status=status.HTTP_404_NOT_FOUND)
+        path = path.strip()
+        result = supabase.storage.from_(ATTACHMENT_BUCKET).create_signed_url(path, SIGNED_URL_EXPIRES)
+        url = (result.get('signedURL') or result.get('signed_url') or result.get('path')) if isinstance(result, dict) else None
+        if not url:
+            url = str(result) if result else None
+        if not url:
+            return Response({'success': False, 'error': 'Could not generate download URL'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'success': True, 'url': url}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception("document_source_attachment_url failed")
         err_msg = _connection_error_message(e) or str(e) or "Server error"
         return Response(
             {'success': False, 'error': err_msg},

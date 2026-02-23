@@ -68,6 +68,30 @@ class ApiService {
     }
   }
 
+  // Auth (login / register via action_officer)
+  async login(employeeCode: string, password: string): Promise<ApiResponse<{ user: any }>> {
+    return this.request<{ user: any }>('/auth/login/', {
+      method: 'POST',
+      body: JSON.stringify({ employeeCode, password }),
+    })
+  }
+
+  async register(data: {
+    employeeCode: string
+    lastName: string
+    firstName: string
+    middleName: string
+    office?: string
+    userPassword: string
+    userLevel: string
+    officeRepresentative?: string
+  }): Promise<ApiResponse<{ user: any }>> {
+    return this.request<{ user: any }>('/auth/register/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
   // Action Required endpoints
   async getActionRequired(): Promise<ApiResponse<any[]>> {
     return this.request<any[]>('/action-required/')
@@ -428,6 +452,43 @@ class ApiService {
       method: 'DELETE',
       body: JSON.stringify({ ids }),
     })
+  }
+
+  /** Upload attachment for a document. Call after document is created/updated. Returns path and filename to store on document. */
+  async uploadDocumentAttachment(documentId: number, file: File): Promise<ApiResponse<{ path: string; filename: string }>> {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('documentId', String(documentId))
+    try {
+      const response = await fetch(`${API_BASE_URL}/document-source/upload-attachment/`, {
+        method: 'POST',
+        body: form,
+        headers: {},
+      })
+      const text = await response.text()
+      let data: any = {}
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch {
+          return { success: false, error: text || `HTTP ${response.status}` }
+        }
+      }
+      if (!response.ok) {
+        return { success: false, error: data.error || data.message || `HTTP ${response.status}` }
+      }
+      return { success: true, data: { path: data.path, filename: data.filename } }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed',
+      }
+    }
+  }
+
+  /** Get a signed URL to download/open the document attachment. */
+  async getDocumentAttachmentUrl(documentId: number): Promise<ApiResponse<{ url: string }>> {
+    return this.request<{ url: string }>(`/document-source/${documentId}/attachment-url/`)
   }
 
   // Document Destination endpoints

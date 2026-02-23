@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { apiService } from '../../services/api'
 import Button from '../Button'
 
 interface Document {
@@ -37,6 +38,37 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   onEditRequest
 }) => {
   const { theme } = useTheme()
+  const [attachmentLoading, setAttachmentLoading] = useState(false)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+
+  const hasAttachment = !!(document?.attachedDocumentFilename?.trim() || document?.attachmentList?.trim())
+
+  const handleDownloadAttachment = async () => {
+    if (!document?.id) return
+    setAttachmentLoading(true)
+    setAttachmentError(null)
+    const res = await apiService.getDocumentAttachmentUrl(document.id)
+    setAttachmentLoading(false)
+    const url = (res as { url?: string }).url
+    if (res.success && url) {
+      try {
+        const response = await fetch(url)
+        const blob = await response.blob()
+        const objectUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = document.attachedDocumentFilename?.trim() || 'attachment'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(objectUrl)
+      } catch {
+        setAttachmentError('Download failed')
+      }
+    } else {
+      setAttachmentError(res.error || 'Could not get download link')
+    }
+  }
 
   if (!isOpen || !document) return null
 
@@ -165,8 +197,31 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
               <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
                 Attach Document Filename
               </label>
-              <Value>{document.attachedDocumentFilename}</Value>
+              <div className="flex-1 flex items-center gap-2 min-w-0">
+                <Value>{document.attachedDocumentFilename}</Value>
+                {hasAttachment && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDownloadAttachment}
+                      disabled={attachmentLoading}
+                      className="flex-shrink-0 inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+                      style={{ color: '#ffffff', backgroundColor: '#3ecf8e' }}
+                      onMouseEnter={(e) => { if (!attachmentLoading) e.currentTarget.style.backgroundColor = '#35b87a' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3ecf8e' }}
+                    >
+                      {attachmentLoading ? 'Downloading…' : 'Download'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
+            {hasAttachment && attachmentError && (
+              <div className="flex items-center gap-3">
+                <div style={{ width: '200px' }} />
+                <span className="text-xs" style={{ color: '#ef4444' }}>{attachmentError}</span>
+              </div>
+            )}
 
             {/* Remarks */}
             <div className="flex items-start gap-3">

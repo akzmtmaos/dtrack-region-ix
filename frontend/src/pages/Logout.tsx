@@ -7,12 +7,12 @@ const Logout: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Logout immediately when component mounts (confirmation already done in Navbar)
-    logout()
-    // Redirect to login page after a short delay
-    setTimeout(() => {
-      navigate('/login')
-    }, 500)
+    let cancelled = false
+    ;(async () => {
+      await logout()
+      if (!cancelled) navigate('/login')
+    })()
+    return () => { cancelled = true }
   }, [logout, navigate])
 
   return (

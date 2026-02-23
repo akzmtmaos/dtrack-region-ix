@@ -91,6 +91,25 @@ pip install supabase==2.8.0
 4. Click "Add" button and create a test item
 5. It should save to Supabase!
 
+## ✅ Create a reserved administrator account (optional)
+
+If you develop the site and need an account before anyone has registered, create one from the backend:
+
+1. Ensure Supabase Auth is set up (run `schemas/CREATE_PROFILES_TABLE.sql` in Supabase SQL Editor so profiles are created on signup).
+2. From the `backend` folder (with your `.env` containing `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`), run:
+
+   ```bash
+   python manage.py create_admin_user --email your@email.com --password YourSecurePassword
+   ```
+
+   Optional: add a display name and employee code:
+
+   ```bash
+   python manage.py create_admin_user --email admin@example.com --password YourPassword --name "Administrator" --employee-code ADMIN001 --user-level Admin
+   ```
+
+3. Sign in on the app’s Login page with that email and password.
+
 ## 🎉 You're Done!
 
 Your application is now fully connected to Supabase!

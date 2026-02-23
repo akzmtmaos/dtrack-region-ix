@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 
 // main navbar stuff
 import Login from './pages/Login'
+import Register from './pages/Register'
 import Logout from './pages/Logout'
 import Outbox from './pages/Outbox'
 import Inbox from './pages/Inbox'
@@ -53,9 +54,12 @@ function AppContent() {
   return (
     <Router>
       <Routes>
-        {/* Public Route */}
+        {/* Public routes */}
         <Route path="/login" element={
           isAuthenticated ? <Navigate to="/" replace /> : <Login />
+        } />
+        <Route path="/register" element={
+          isAuthenticated ? <Navigate to="/" replace /> : <Register />
         } />
 
         {/* Protected Routes */}
