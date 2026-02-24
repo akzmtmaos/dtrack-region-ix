@@ -49,7 +49,6 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
     { tableName: 'test_doc', displayName: 'test doc', color: 'normal', permissions: { addCopy: true, delete: true, edit: true, listSearchView: true } },
     { tableName: 'inbox_received', displayName: 'INBOX - Received', color: 'red', permissions: { addCopy: true, delete: true, edit: true, listSearchView: true } },
     { tableName: 'inbox_action_taken', displayName: 'INBOX - Action Taken', color: 'normal', permissions: { addCopy: true, delete: true, edit: true, listSearchView: true } },
-    { tableName: 'personal_group', displayName: 'Personal Group', color: 'normal', permissions: { addCopy: false, delete: false, edit: false, listSearchView: false } },
     { tableName: 'document_action_required_days', displayName: 'Document/Action Required Days', color: 'normal', permissions: { addCopy: false, delete: false, edit: false, listSearchView: false } },
   ]
 

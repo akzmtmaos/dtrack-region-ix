@@ -13,7 +13,6 @@ import Register from './pages/Register'
 import Logout from './pages/Logout'
 import Outbox from './pages/Outbox'
 import Inbox from './pages/Inbox'
-import PersonalGroup from './pages/PersonalGroup'
 import Reports from './pages/Reports'
 // reference tables stuff
 import ActionRequired from './pages/reference-tables/ActionRequired'
@@ -64,7 +63,8 @@ function AppContent() {
 
         {/* Protected Routes */}
         <Route path="/logout" element={<Logout />} />
-        <Route path="/routing-slip" element={<ProtectedRoute><RoutingSlipPage /></ProtectedRoute>} />
+        {/* Routing Slip: public so new tab from Outbox opens without re-auth; data comes from localStorage set by authenticated user */}
+        <Route path="/routing-slip" element={<RoutingSlipPage />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <div className={`min-h-screen transition-colors duration-300 ${
@@ -91,7 +91,6 @@ function AppContent() {
                   {/* main routes */}
                   <Route path="/" element={<Outbox />} />
                   <Route path="/inbox" element={<Inbox />} />
-                  <Route path="/personal-group" element={<PersonalGroup />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/office-with-overdue" element={<OfficeWithOverdue />} />
                   {/* reference tables routes */}

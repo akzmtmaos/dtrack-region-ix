@@ -166,12 +166,27 @@ const DocumentType: React.FC = () => {
     setError(null)
     try {
       if (editingItem) {
-        // Update existing item
-        const response = await apiService.updateDocumentType(editingItem.id, data)
+        const id = editingItem.id
+        if (id == null || id === undefined || Number.isNaN(Number(id))) {
+          setError('Cannot save: document type ID is missing. Please close and edit again.')
+          setLoading(false)
+          return
+        }
+        // Update reference table
+        const response = await apiService.updateDocumentType(Number(id), data)
         if (response.success && response.data) {
-          // Map database response to frontend format
+          const oldName = (editingItem.documentType || '').trim()
+          const newName = (data.documentType || '').trim()
+          // Backend already propagates to Outbox on update; also run sync so any rows with spaces etc. are updated
+          if (oldName && newName && oldName !== newName) {
+            try {
+              await apiService.syncDocumentTypeDisplayName({ oldName, newName })
+            } catch {
+              // Reference table is updated; sync is best-effort (backend propagation may have already updated Outbox)
+            }
+          }
           const updatedItem = {
-            id: response.data.id,
+            id: response.data.id ?? editingItem.id,
             documentType: response.data.document_type || data.documentType
           }
           setItems(prev => prev.map(item => 

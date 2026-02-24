@@ -342,7 +342,6 @@ const ActionOfficer: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Employee Code</th>
                 <th>Last Name</th>
                 <th>First Name</th>
@@ -354,10 +353,9 @@ const ActionOfficer: React.FC = () => {
             </thead>
             <tbody>
               ${filteredItems.length === 0
-                ? '<tr><td colspan="8" class="no-data">No items found</td></tr>'
+                ? '<tr><td colspan="7" class="no-data">No items found</td></tr>'
                 : filteredItems.map(item => `
                   <tr>
-                    <td>${String(item.id).padStart(5, '0')}</td>
                     <td>${item.employeeCode || '—'}</td>
                     <td>${item.lastName || '—'}</td>
                     <td>${item.firstName || '—'}</td>
@@ -385,12 +383,11 @@ const ActionOfficer: React.FC = () => {
 
   const handleExportToExcel = () => {
     // Create CSV content
-    const headers = ['ID', 'Employee Code', 'Last Name', 'First Name', 'Middle Name', 'Office', 'User Level', 'Office Representative']
+    const headers = ['Employee Code', 'Last Name', 'First Name', 'Middle Name', 'Office', 'User Level', 'Office Representative']
     const csvRows = [headers.join(',')]
 
     filteredItems.forEach(item => {
       const row = [
-        `\"${String(item.id).padStart(5, '0').replace(/\"/g, '\"\"')}\"`,
         `\"${(item.employeeCode || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(item.lastName || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(item.firstName || '').replace(/\"/g, '\"\"')}\"`,
@@ -564,11 +561,6 @@ const ActionOfficer: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              ID
-            </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-            }`}>
               Employee Code <RequiredAsterisk />
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wider ${
@@ -618,7 +610,7 @@ const ActionOfficer: React.FC = () => {
         }`}>
           {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={11} className={`px-4 py-2 text-center text-xs ${
+              <td colSpan={10} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
@@ -626,7 +618,7 @@ const ActionOfficer: React.FC = () => {
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td colSpan={11} className={`px-4 py-2 text-center text-xs ${
+              <td colSpan={10} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
@@ -660,11 +652,6 @@ const ActionOfficer: React.FC = () => {
                     }`}
                     style={theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
                   />
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {item.id}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'

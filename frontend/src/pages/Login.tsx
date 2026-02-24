@@ -106,9 +106,10 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2 px-3 border border-transparent rounded-md text-xs font-medium text-white"
+              className="w-full flex justify-center py-2 px-3 border rounded-md text-xs font-medium text-white"
               style={{
                 backgroundColor: 'rgba(100, 154, 70)',
+                borderColor: 'rgba(100, 154, 70)',
                 opacity: isLoading ? 0.6 : 1,
                 cursor: isLoading ? 'not-allowed' : 'pointer',
               }}

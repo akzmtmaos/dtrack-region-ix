@@ -242,6 +242,14 @@ class ApiService {
     })
   }
 
+  /** Sync document type name to Outbox and other tables (call after renaming a type). */
+  async syncDocumentTypeDisplayName(params: { oldName: string; newName: string }): Promise<ApiResponse<{ updatedSources?: number; updatedDays?: number }>> {
+    return this.request<any>('/document-type/sync-display-name/', {
+      method: 'POST',
+      body: JSON.stringify({ oldName: params.oldName, newName: params.newName }),
+    })
+  }
+
   async deleteDocumentType(id: number): Promise<ApiResponse<void>> {
     return this.request<void>(`/document-type/${id}/delete/`, {
       method: 'DELETE',

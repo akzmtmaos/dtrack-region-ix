@@ -36,6 +36,7 @@ urlpatterns = [
     # Document Type endpoints
     path('document-type/', document_type.document_type_list, name='document-type-list'),
     path('document-type/create/', document_type.document_type_create, name='document-type-create'),
+    path('document-type/sync-display-name/', document_type.document_type_sync_display_name, name='document-type-sync-display-name'),
     path('document-type/<int:item_id>/', document_type.document_type_update, name='document-type-update'),
     path('document-type/<int:item_id>/delete/', document_type.document_type_delete, name='document-type-delete'),
     path('document-type/bulk-delete/', document_type.document_type_bulk_delete, name='document-type-bulk-delete'),

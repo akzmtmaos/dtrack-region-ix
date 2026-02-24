@@ -28,8 +28,8 @@ const Button: React.FC<ButtonProps> = ({
 
   const getVariantClasses = () => {
     if (variant === 'primary') {
-      // Green: #3BA55C
-      return 'bg-[#3BA55C] text-white hover:bg-[#2d8f4a] active:bg-[#267a3f]'
+      // Green: #3BA55C – border matches icon/background
+      return 'bg-[#3BA55C] text-white border border-[#3BA55C] hover:bg-[#2d8f4a] hover:border-[#2d8f4a] active:bg-[#267a3f] active:border-[#267a3f]'
     }
     if (variant === 'secondary') {
       if (theme === 'dark') {
@@ -38,12 +38,12 @@ const Button: React.FC<ButtonProps> = ({
       return 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
     }
     if (variant === 'danger') {
-      // Red: #ED4245
-      return 'bg-[#ED4245] text-white hover:bg-[#d63639] active:bg-[#c02d30]'
+      // Red: #ED4245 – border matches icon/background
+      return 'bg-[#ED4245] text-white border border-[#ED4245] hover:bg-[#d63639] hover:border-[#d63639] active:bg-[#c02d30] active:border-[#c02d30]'
     }
     if (variant === 'success') {
-      // Blue: #5865F2
-      return 'bg-[#5865F2] text-white hover:bg-[#4752C4] active:bg-[#3c45a5]'
+      // Blue: #5865F2 – border matches icon/background
+      return 'bg-[#5865F2] text-white border border-[#5865F2] hover:bg-[#4752C4] hover:border-[#4752C4] active:bg-[#3c45a5] active:border-[#3c45a5]'
     }
     return ''
   }
