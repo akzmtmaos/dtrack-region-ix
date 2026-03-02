@@ -426,7 +426,17 @@ const DocumentByDateAndTime: React.FC = () => {
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
+              Status
+            </th>
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Doc Type
+            </th>
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              Doc. Control No.
             </th>
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
@@ -466,17 +476,7 @@ const DocumentByDateAndTime: React.FC = () => {
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              Doc. Control No.
-            </th>
-            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-            }`}>
               Remarks
-            </th>
-            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-            }`}>
-              Status
             </th>
           </tr>
         </thead>
@@ -501,51 +501,6 @@ const DocumentByDateAndTime: React.FC = () => {
                 key={doc.id}
                 className={`transition-colors ${theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}`}
               >
-                <td
-                  className={`px-4 py-2 text-xs min-w-[160px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.documentType || undefined}
-                >
-                  {doc.documentType || '—'}
-                </td>
-                <td
-                  className={`px-4 py-2 text-xs min-w-[180px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.subject || undefined}
-                >
-                  {doc.subject || '—'}
-                </td>
-                <td
-                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.releasingOffice || undefined}
-                >
-                  {doc.releasingOffice || '—'}
-                </td>
-                <td
-                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.originatingOffice || undefined}
-                >
-                  {doc.originatingOffice || '—'}
-                </td>
-                <td
-                  className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.dateSent || undefined}
-                >
-                  {doc.dateSent || '—'}
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Action Officer">—</td>
-                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Office">—</td>
-                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Action Taken">—</td>
-                <td
-                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[120px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.documentNumber || undefined}
-                >
-                  {doc.documentNumber || '—'}
-                </td>
-                <td
-                  className={`px-4 py-2 text-xs max-w-[160px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={doc.remarks || undefined}
-                >
-                  {doc.remarks || '—'}
-                </td>
                 <td className="px-4 py-2 whitespace-nowrap text-xs text-left">
                   <span
                     className={`
@@ -563,6 +518,50 @@ const DocumentByDateAndTime: React.FC = () => {
                   >
                     {(doc.status ?? 'PENDING').toUpperCase()}
                   </span>
+                </td>
+                <td
+                  className={`px-4 py-2 text-xs min-w-[160px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.documentType || undefined}
+                >
+                  {doc.documentType || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[120px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.documentNumber || undefined}
+                >
+                  {doc.documentNumber || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 text-xs min-w-[180px] ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.subject || undefined}
+                >
+                  {doc.subject || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs max-w-[140px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.releasingOffice || undefined}
+                >
+                  {doc.releasingOffice || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 text-xs min-w-[120px] max-w-[280px] break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  {doc.originatingOffice || '—'}
+                </td>
+                <td
+                  className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.dateSent || undefined}
+                >
+                  {doc.dateSent || '—'}
+                </td>
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Action Officer">—</td>
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Office">—</td>
+                <td className={`px-4 py-2 whitespace-nowrap text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title="Action Taken">—</td>
+                <td
+                  className={`px-4 py-2 text-xs max-w-[160px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                  title={doc.remarks || undefined}
+                >
+                  {doc.remarks || '—'}
                 </td>
               </tr>
             ))

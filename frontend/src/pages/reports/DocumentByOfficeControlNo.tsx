@@ -393,6 +393,11 @@ const DocumentByOfficeControlNo: React.FC = () => {
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
+              Status
+            </th>
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Document Control No.
             </th>
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
@@ -460,6 +465,24 @@ const DocumentByOfficeControlNo: React.FC = () => {
           ) : (
             documents.map((doc) => (
               <tr key={doc.id} className={`transition-colors ${theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}`}>
+                <td className="px-4 py-2 whitespace-nowrap text-xs text-left">
+                  <span
+                    className={`
+                    inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide border
+                    ${(doc.status ?? '').toUpperCase() === 'ACCOMPLISHED'
+                      ? theme === 'dark'
+                        ? 'bg-green-900/60 text-green-300 border-green-600/50'
+                        : 'bg-green-100 text-green-700 border-green-500'
+                      : theme === 'dark'
+                        ? 'bg-amber-900/50 text-amber-200 border-amber-600/50'
+                        : 'bg-amber-100 text-amber-800 border-amber-400'
+                    }
+                  `}
+                    title={doc.status ? `Status: ${doc.status}` : undefined}
+                  >
+                    {(doc.status ?? 'PENDING').toUpperCase()}
+                  </span>
+                </td>
                 <td
                   className={`px-4 py-2 text-xs whitespace-normal ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
                   title={doc.documentNumber || undefined}
@@ -493,24 +516,6 @@ const DocumentByOfficeControlNo: React.FC = () => {
                   title={doc.remarks || undefined}
                 >
                   {doc.remarks || '—'}
-                </td>
-                <td className="px-4 py-2 whitespace-nowrap text-xs text-left">
-                  <span
-                    className={`
-                    inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide border
-                    ${(doc.status ?? '').toUpperCase() === 'ACCOMPLISHED'
-                      ? theme === 'dark'
-                        ? 'bg-green-900/60 text-green-300 border-green-600/50'
-                        : 'bg-green-100 text-green-700 border-green-500'
-                      : theme === 'dark'
-                        ? 'bg-amber-900/50 text-amber-200 border-amber-600/50'
-                        : 'bg-amber-100 text-amber-800 border-amber-400'
-                    }
-                  `}
-                    title={doc.status ? `Status: ${doc.status}` : undefined}
-                  >
-                    {(doc.status ?? 'PENDING').toUpperCase()}
-                  </span>
                 </td>
               </tr>
             ))

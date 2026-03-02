@@ -72,7 +72,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   }, [])
 
   const baseButtonClasses =
-    'inline-flex items-center h-7 px-2.5 text-[11px] font-medium rounded-lg border transition-colors'
+    'inline-flex items-center justify-center h-7 w-8 rounded-lg border transition-colors'
 
   const showTooltip = (label: string, el: HTMLElement) => {
     tooltipVisibleRef.current = true
