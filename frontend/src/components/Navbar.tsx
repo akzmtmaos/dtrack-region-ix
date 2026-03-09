@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useNavbar } from '../context/NavbarContext'
 import { useTheme } from '../context/ThemeContext'
@@ -30,14 +30,27 @@ const REPORT_ITEMS = [
 const Navbar: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { isMinimized, isMobileOpen, toggleNavbar, closeMobileNavbar } = useNavbar()
+  const { navbarMode, setNavbarMode, isHoverExpanded, setHoverExpanded, isMobileOpen, closeMobileNavbar } = useNavbar()
   const { theme } = useTheme()
   const [isReferenceTablesOpen, setIsReferenceTablesOpen] = useState(false)
   const [isReportsOpen, setIsReportsOpen] = useState(false)
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-  const [isHoverExpanded, setIsHoverExpanded] = useState(false)
-  const showExpanded = !isMinimized || isHoverExpanded
+  const [sidebarControlOpen, setSidebarControlOpen] = useState(false)
+  const sidebarControlRef = useRef<HTMLDivElement>(null)
+  const showExpanded = navbarMode === 'expanded' || (navbarMode === 'hover' && isHoverExpanded)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sidebarControlRef.current && !sidebarControlRef.current.contains(e.target as Node)) {
+        setSidebarControlOpen(false)
+      }
+    }
+    if (sidebarControlOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [sidebarControlOpen])
 
   useEffect(() => {
     closeMobileNavbar()
@@ -123,9 +136,9 @@ const Navbar: React.FC = () => {
           borderRight: `1px solid ${colors.border}`,
         }}
         onMouseEnter={() => {
-          if (typeof window !== 'undefined' && window.innerWidth >= 768 && isMinimized) setIsHoverExpanded(true)
+          if (typeof window !== 'undefined' && window.innerWidth >= 768 && navbarMode === 'hover') setHoverExpanded(true)
         }}
-        onMouseLeave={() => setIsHoverExpanded(false)}
+        onMouseLeave={() => setHoverExpanded(false)}
       >
       <div className="flex flex-col h-full">
           {/* Mobile: Close button at top */}
@@ -312,36 +325,84 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom: Expand / Collapse (desktop only) – same alignment as other nav items */}
+          {/* Bottom: Sidebar control – single trigger opens dropdown (desktop only) */}
           <div
             className="hidden md:flex flex-shrink-0 py-2 px-1.5 mt-auto"
             style={{ borderTop: `1px solid ${colors.border}` }}
+            ref={sidebarControlRef}
           >
-            <button
-              onClick={toggleNavbar}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 text-[13px] rounded-md transition-colors ${
-                showExpanded ? '' : 'justify-center'
-              } ${
-                theme === 'dark' ? 'hover:bg-neutral-800 text-neutral-400' : 'hover:bg-neutral-100 text-neutral-500'
-              }`}
-              title={isMinimized ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isMinimized ? (
-                <>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                  </svg>
-                  {showExpanded && <span className="text-[13px]" style={{ color: colors.text }}>Expand</span>}
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                  </svg>
-                  {showExpanded && <span className="text-[13px]" style={{ color: colors.text }}>Collapse</span>}
-                </>
+            <div className="w-full relative">
+              <button
+                type="button"
+                onClick={() => setSidebarControlOpen(!sidebarControlOpen)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 text-[13px] rounded-md transition-colors ${
+                  showExpanded ? '' : 'justify-center'
+                } ${sidebarControlOpen ? 'ring-1 ring-inset' : ''} ${
+                  theme === 'dark' ? 'hover:bg-neutral-800 text-neutral-400' : 'hover:bg-neutral-100 text-neutral-500'
+                }`}
+                style={sidebarControlOpen ? { backgroundColor: colors.bgActive, color: colors.textActive } : undefined}
+                title="Sidebar control"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                {showExpanded && <span className="text-[13px]">Sidebar control</span>}
+              </button>
+
+              {sidebarControlOpen && (
+                <div
+                  className="absolute left-0 bottom-full mb-1 rounded-lg shadow-lg border py-1.5 z-50 w-[150px]"
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+                    borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                  }}
+                >
+                  <div
+                    className="px-2.5 pb-1.5 mb-1.5 text-[11px] font-semibold uppercase tracking-wide border-b"
+                    style={{
+                      color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                      borderColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                    }}
+                  >
+                    Sidebar control
+                  </div>
+                  <div className="px-0.5">
+                    {[
+                      { value: 'expanded' as const, label: 'Expanded' },
+                      { value: 'collapsed' as const, label: 'Collapsed' },
+                      { value: 'hover' as const, label: 'Expand on hover' },
+                    ].map(({ value, label }) => (
+                      <label
+                        key={value}
+                        className="flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-[11px] transition-colors"
+                        style={{
+                          backgroundColor: navbarMode === value ? (theme === 'dark' ? '#374151' : '#f3f4f6') : undefined,
+                          color: theme === 'dark' ? '#e5e7eb' : '#374151',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (navbarMode !== value) e.currentTarget.style.backgroundColor = ''
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="sidebar-mode"
+                          checked={navbarMode === value}
+                          onChange={() => {
+                            setNavbarMode(value)
+                            setSidebarControlOpen(false)
+                          }}
+                          className="h-3.5 w-3.5 text-green-600 focus:ring-green-500 border-gray-400"
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
           </div>
         </div>
             
