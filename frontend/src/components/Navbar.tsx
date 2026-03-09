@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useNavbar } from '../context/NavbarContext'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import LogoutConfirmation from './LogoutConfirmation'
 
 const REFERENCE_TABLE_ITEMS = [
@@ -32,6 +33,9 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate()
   const { navbarMode, setNavbarMode, isHoverExpanded, setHoverExpanded, isMobileOpen, closeMobileNavbar } = useNavbar()
   const { theme } = useTheme()
+  const { user } = useAuth()
+  const level = (user?.userLevel ?? '').toLowerCase()
+  const isEndUser = level === 'end-user' || level === 'end-users'
   const [isReferenceTablesOpen, setIsReferenceTablesOpen] = useState(false)
   const [isReportsOpen, setIsReportsOpen] = useState(false)
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false)
@@ -294,19 +298,21 @@ const Navbar: React.FC = () => {
               {/* Separator */}
               <div className="my-2" style={{ borderTop: `1px solid ${colors.border}` }} />
 
-              {/* Office with Overdue */}
-              <Link 
-                to="/office-with-overdue" 
-                className={navItemClass(isActive('/office-with-overdue'))}
-                style={navItemStyle(isActive('/office-with-overdue'), 'office-with-overdue')}
-                onMouseEnter={() => setHoveredItem('office-with-overdue')}
-                onMouseLeave={() => setHoveredItem(null)}
-            >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-                {showExpanded && <span>Office with Overdue</span>}
-            </Link>
+              {/* Registered Users – hidden for End-User */}
+              {!isEndUser && (
+                <Link
+                  to="/registered-users"
+                  className={navItemClass(isActive('/registered-users'))}
+                  style={navItemStyle(isActive('/registered-users'), 'registered-users')}
+                  onMouseEnter={() => setHoveredItem('registered-users')}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  {showExpanded && <span>Registered Users</span>}
+                </Link>
+              )}
 
               {/* Logout */}
               <button

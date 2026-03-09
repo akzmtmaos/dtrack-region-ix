@@ -140,24 +140,22 @@ const OverdueReport: React.FC = () => {
               <tr>
                 <th>Document Control No.</th>
                 <th>Route No.</th>
-                <th>Office Control No.</th>
                 <th>Date Received</th>
                 <th>Document Received By</th>
                 <th>Destination Office Code</th>
                 <th>Required Action</th>
                 <th>Employee Name</th>
-                <th>Remarks</th>
                 <th>Date/Time Required</th>
+                <th>Remarks</th>
               </tr>
             </thead>
             <tbody>
               ${documents.length === 0
-                ? '<tr><td colspan="10" class="no-data">No documents found</td></tr>'
+                ? '<tr><td colspan="9" class="no-data">No documents found</td></tr>'
                 : documents.map(doc => `
                   <tr>
                     <td>${doc.documentNumber || '—'}</td>
                     <td>${doc.subject || '—'}</td>
-                    <td>${doc.recipient || '—'}</td>
                     <td>${doc.dateSent || '—'}</td>
                     <td>—</td>
                     <td>—</td>
@@ -185,14 +183,13 @@ const OverdueReport: React.FC = () => {
 
   const handleExportToExcel = () => {
     // Create CSV content
-    const headers = ['Document Control No.', 'Route No.', 'Office Control No.', 'Date Received', 'Document Received By', 'Destination Office Code', 'Required Action', 'Employee Name', 'Remarks', 'Date/Time Required']
+    const headers = ['Document Control No.', 'Route No.', 'Date Received', 'Document Received By', 'Destination Office Code', 'Required Action', 'Employee Name', 'Date/Time Required', 'Remarks']
     const csvRows = [headers.join(',')]
 
     documents.forEach(doc => {
       const row = [
         `\"${(doc.documentNumber || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.subject || '').replace(/\"/g, '\"\"')}\"`,
-        `\"${(doc.recipient || '').replace(/\"/g, '\"\"')}\"`,
         `\"${(doc.dateSent || '').replace(/\"/g, '\"\"')}\"`,
         '\"\"',
         '\"\"',
@@ -272,24 +269,22 @@ const OverdueReport: React.FC = () => {
               <tr>
                 <th>Document Control No.</th>
                 <th>Route No.</th>
-                <th>Office Control No.</th>
                 <th>Date Received</th>
                 <th>Document Received By</th>
                 <th>Destination Office Code</th>
                 <th>Required Action</th>
                 <th>Employee Name</th>
-                <th>Remarks</th>
                 <th>Date/Time Required</th>
+                <th>Remarks</th>
               </tr>
             </thead>
             <tbody>
               ${documents.length === 0
-                ? '<tr><td colspan="10" class="no-data">No documents found</td></tr>'
+                ? '<tr><td colspan="9" class="no-data">No documents found</td></tr>'
                 : documents.map(doc => `
                   <tr>
                     <td>${doc.documentNumber || '—'}</td>
                     <td>${doc.subject || '—'}</td>
-                    <td>${doc.recipient || '—'}</td>
                     <td>${doc.dateSent || '—'}</td>
                     <td>—</td>
                     <td>—</td>
@@ -418,11 +413,6 @@ const OverdueReport: React.FC = () => {
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              Office Control No.
-            </th>
-            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-            }`}>
               Date Received
             </th>
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -448,12 +438,12 @@ const OverdueReport: React.FC = () => {
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              Remarks
+              Date/Time Required
             </th>
             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
             }`}>
-              Date/Time Required
+              Remarks
             </th>
           </tr>
         </thead>
@@ -462,7 +452,7 @@ const OverdueReport: React.FC = () => {
         }`}>
           {documents.length === 0 ? (
             <tr>
-              <td colSpan={11} className={`px-6 py-8 text-center text-sm ${
+              <td colSpan={9} className={`px-6 py-8 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No documents found
@@ -485,11 +475,6 @@ const OverdueReport: React.FC = () => {
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   {doc.subject}
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {doc.recipient}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'

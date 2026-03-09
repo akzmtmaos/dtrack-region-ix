@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { apiService } from '../services/api'
 import SearchableSelect from '../components/SearchableSelect'
 import logo from '../assets/doh-logo.png'
 
 const Register: React.FC = () => {
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [middleInitial, setMiddleInitial] = useState('')
   const [employeeCode, setEmployeeCode] = useState('')
   const [office, setOffice] = useState('')
   const [userLevel, setUserLevel] = useState('')
   const [officeRepresentative, setOfficeRepresentative] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [userLevels, setUserLevels] = useState<Array<{ id: number; user_level_name: string }>>([])
   const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
   const navigate = useNavigate()
-  const { register } = useAuth()
 
   useEffect(() => {
     const load = async () => {
@@ -58,30 +58,40 @@ const Register: React.FC = () => {
       setError('Please select a user level')
       return
     }
-    if (!fullName.trim()) {
-      setError('Full name is required')
+    if (!firstName.trim()) {
+      setError('First name is required')
+      return
+    }
+    if (!lastName.trim()) {
+      setError('Last name is required')
       return
     }
     if (!employeeCode.trim()) {
       setError('Employee code is required')
       return
     }
+    const middleNameForBackend = middleInitial.trim() || '-'
+
     setIsLoading(true)
+    setError('')
+    setSuccessMessage('')
     try {
-      const result = await register({
-        email: email.trim(),
-        password,
-        fullName: fullName.trim(),
+      const backendRes = await apiService.register({
         employeeCode: employeeCode.trim(),
+        lastName: lastName.trim(),
+        firstName: firstName.trim(),
+        middleName: middleNameForBackend,
         office: office.trim() || undefined,
+        userPassword: password,
         userLevel: userLevel.trim(),
         officeRepresentative: officeRepresentative.trim() || undefined,
       })
-      if (result.success) {
-        navigate('/login', { replace: true })
-      } else {
-        setError(result.error || 'Registration failed')
+      if (!backendRes.success) {
+        setError(backendRes.error || 'Registration failed')
+        return
       }
+      setSuccessMessage('Account created successfully. You will be able to sign in after an administrator approves your account.')
+      setTimeout(() => navigate('/login', { replace: true }), 3000)
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
@@ -115,29 +125,48 @@ const Register: React.FC = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              <div>
-                <label className={labelClass}>Email <span className="text-red-500">*</span></label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className={inputClass}
-                />
+            {successMessage && (
+              <div className="bg-green-50 border border-green-200 text-green-800 px-2.5 py-1.5 rounded-md text-xs">
+                {successMessage}
               </div>
+            )}
 
-              <div>
-                <label className={labelClass}>Full name <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Last name, First name Middle name"
-                  className={inputClass}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              {/* Name in one row: First name, Last name, Middle initial */}
+              <div className="md:col-span-2 flex flex-wrap gap-3 items-end">
+                <div className="flex-1 min-w-[100px]">
+                  <label className={labelClass}>First name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex-1 min-w-[100px]">
+                  <label className={labelClass}>Last name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="w-20 flex-shrink-0">
+                  <label className={labelClass}>Middle initial</label>
+                  <input
+                    type="text"
+                    value={middleInitial}
+                    onChange={(e) => setMiddleInitial(e.target.value.slice(0, 5))}
+                    placeholder="M"
+                    className={inputClass}
+                    maxLength={5}
+                  />
+                </div>
               </div>
 
               <div>

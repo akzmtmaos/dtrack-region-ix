@@ -6,6 +6,7 @@ import { useTheme } from './context/ThemeContext'
 import Header from './components/Header'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminOnlyRoute from './components/AdminOnlyRoute'
 
 // main navbar stuff
 import Login from './pages/Login'
@@ -23,7 +24,7 @@ import DocumentActionRequiredDays from './pages/reference-tables/DocumentActionR
 import Office from './pages/reference-tables/Office'
 import Region from './pages/reference-tables/Region'
 import UserLevels from './pages/reference-tables/UserLevels'
-import OfficeWithOverdue from './pages/OfficeWithOverdue'
+import RegisteredUsers from './pages/RegisteredUsers'
 // reports stuff
 import DocumentByReleasingOfficer from './pages/reports/DocumentByReleasingOfficer'
 import DocumentByDateAndTime from './pages/reports/DocumentByDateAndTime'
@@ -92,7 +93,7 @@ function AppContent() {
                   <Route path="/" element={<Outbox />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/reports" element={<Reports />} />
-                  <Route path="/office-with-overdue" element={<OfficeWithOverdue />} />
+                  <Route path="/registered-users" element={<AdminOnlyRoute><RegisteredUsers /></AdminOnlyRoute>} />
                   {/* reference tables routes */}
                   <Route path="/reference-tables/action-required" element={<ActionRequired />} />
                   <Route path="/reference-tables/action-officer" element={<ActionOfficer />} />

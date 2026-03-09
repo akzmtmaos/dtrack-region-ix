@@ -68,7 +68,7 @@ class ApiService {
     }
   }
 
-  // Auth (login / register via action_officer)
+  // Auth (login / register via users table)
   async login(employeeCode: string, password: string): Promise<ApiResponse<{ user: any }>> {
     return this.request<{ user: any }>('/auth/login/', {
       method: 'POST',
@@ -88,6 +88,21 @@ class ApiService {
   }): Promise<ApiResponse<{ user: any }>> {
     return this.request<{ user: any }>('/auth/register/', {
       method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Users (registered accounts – used by Registered Users page)
+  async getUsers(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/users/')
+  }
+
+  async updateUser(
+    id: number,
+    data: { verified?: boolean; [key: string]: any }
+  ): Promise<ApiResponse<any>> {
+    return this.request<any>(`/users/${id}/`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     })
   }
@@ -156,6 +171,7 @@ class ApiService {
       userPassword?: string
       userLevel?: string
       officeRepresentative?: string
+      verified?: boolean
     }
   ): Promise<ApiResponse<any>> {
     return this.request<any>(`/action-officer/${id}/`, {
@@ -431,8 +447,15 @@ class ApiService {
   }
 
   // Document Source (Outbox) endpoints
-  async getDocumentSource(): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>('/document-source/')
+  /** Pass employeeCode to filter list by current user (e.g. for End-User so they only see their own documents). */
+  async getDocumentSource(employeeCode?: string): Promise<ApiResponse<any[]>> {
+    const headers: Record<string, string> = {}
+    if (employeeCode != null && String(employeeCode).trim()) {
+      headers['X-Employee-Code'] = String(employeeCode).trim()
+    }
+    return this.request<any[]>('/document-source/', {
+      ...(Object.keys(headers).length ? { headers } : {}),
+    })
   }
 
   async createDocumentSource(data: Record<string, unknown>): Promise<ApiResponse<any>> {

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import logo from '../assets/doh-logo.png'
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('')
+  const [employeeCode, setEmployeeCode] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -17,12 +17,12 @@ const Login: React.FC = () => {
     setError('')
     setIsLoading(true)
     try {
-      const result = await login(email, password)
+      const result = await login(employeeCode, password)
       if (result.success) {
         const from = (location.state as any)?.from?.pathname || '/'
         navigate(from, { replace: true })
       } else {
-        setError(result.error || 'Invalid email or password')
+        setError(result.error || 'Invalid employee code or password')
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -55,17 +55,17 @@ const Login: React.FC = () => {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-2">
-                Email
+              <label htmlFor="employeeCode" className="block text-xs font-medium text-gray-700 mb-2">
+                Employee code
               </label>
               <input
-                id="email"
-                type="email"
+                id="employeeCode"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={employeeCode}
+                onChange={(e) => setEmployeeCode(e.target.value)}
                 className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
-                placeholder="Enter your email"
+                placeholder="Enter your employee code"
               />
             </div>
 

@@ -2,15 +2,19 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import action_required, action_officer, action_taken, document_type, document_action_required_days, office, region, user_levels
-from .views import document_source, document_destination, auth
+from .views import document_source, document_destination, auth, users
 
 urlpatterns = [
     path('', include('rest_framework.urls')),
     path('health/', views.health_check, name='health-check'),
 
-    # Auth (login / register using action_officer)
+    # Auth (login / register using users table)
     path('auth/login/', auth.auth_login, name='auth-login'),
     path('auth/register/', auth.auth_register, name='auth-register'),
+
+    # Users (registered accounts – list, update e.g. approve)
+    path('users/', users.users_list, name='users-list'),
+    path('users/<int:item_id>/', users.users_update, name='users-update'),
 
     # Action Required endpoints
     path('action-required/', action_required.action_required_list, name='action-required-list'),

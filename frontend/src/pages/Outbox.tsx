@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import { apiService } from '../services/api'
 import AddDocumentModal from '../components/outbox/AddDocumentModal'
 import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
@@ -33,6 +34,7 @@ interface Document {
 
 const Outbox: React.FC = () => {
   const { theme } = useTheme()
+  const { user } = useAuth()
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -56,10 +58,14 @@ const Outbox: React.FC = () => {
   const [destinationSearch, setDestinationSearch] = useState('')
   const [isDeleteDestinationsModalOpen, setIsDeleteDestinationsModalOpen] = useState(false)
   const [pendingDestinationDeleteIds, setPendingDestinationDeleteIds] = useState<number[]>([])
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
 
-  // Fetch documents from Supabase on mount and when refetch is needed
+  // Fetch documents: End-User only sees their own (filtered by userid = employeeCode)
   const fetchDocuments = () => {
-    apiService.getDocumentSource().then((res) => {
+    const level = (user?.userLevel ?? '').toLowerCase()
+    const isEndUser = level === 'end-user' || level === 'end-users'
+    const employeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
+    apiService.getDocumentSource(employeeCode).then((res) => {
       if (!res) return
       const raw = res.success && res.data != null ? res.data : []
       const list = Array.isArray(raw) ? raw : []
@@ -69,7 +75,7 @@ const Outbox: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments()
-  }, [])
+  }, [user?.employeeCode, user?.userLevel])
 
   // When a document is selected for destinations (inline section), fetch its destinations
   useEffect(() => {
@@ -125,7 +131,12 @@ const Outbox: React.FC = () => {
   }
 
   const handleAddDocument = (document: Partial<Document>, pendingFile?: File | null) => {
-    apiService.createDocumentSource(document as Record<string, unknown>).then(async (res) => {
+    const payload: Record<string, unknown> = {
+      ...document,
+      userid: user?.employeeCode ?? (document.userid ?? ''),
+    }
+    setAttachmentError(null)
+    apiService.createDocumentSource(payload).then(async (res) => {
       if (!res.success || !res.data) return
       let newDocument = res.data as Document
       if (pendingFile) {
@@ -134,10 +145,14 @@ const Outbox: React.FC = () => {
         const filename = up.data?.filename
         if (up.success && path && filename) {
           const updateRes = await apiService.updateDocumentSource(newDocument.id, {
+            ...newDocument,
             attachmentList: path,
             attachedDocumentFilename: filename,
+            userid: user?.employeeCode ?? newDocument.userid ?? '',
           } as Record<string, unknown>)
           if (updateRes.success && updateRes.data) newDocument = updateRes.data as Document
+        } else {
+          setAttachmentError(up.error || 'Attachment upload failed.')
         }
       }
       setDocuments((prev) => [...prev, newDocument])
@@ -191,7 +206,11 @@ const Outbox: React.FC = () => {
 
   const handleUpdateDocument = (updatedDocument: Document, pendingFile?: File | null) => {
     const doUpdate = (payload: Record<string, unknown>) => {
-      apiService.updateDocumentSource(updatedDocument.id, payload).then((res) => {
+      const withUserid = {
+        ...payload,
+        userid: user?.employeeCode ?? payload.userid ?? updatedDocument.userid ?? '',
+      }
+      apiService.updateDocumentSource(updatedDocument.id, withUserid).then((res) => {
         if (!res.success || !res.data) return
         const doc = res.data as Document
         setDocuments((prev) => prev.map((d) => (d.id === doc.id ? doc : d)))
@@ -199,6 +218,7 @@ const Outbox: React.FC = () => {
       })
     }
     if (pendingFile) {
+      setAttachmentError(null)
       apiService.uploadDocumentAttachment(updatedDocument.id, pendingFile).then((up) => {
         const path = up.data?.path
         const filename = up.data?.filename
@@ -209,6 +229,7 @@ const Outbox: React.FC = () => {
             attachedDocumentFilename: filename,
           })
         } else {
+          setAttachmentError(up.error || 'Attachment upload failed.')
           doUpdate(updatedDocument as unknown as Record<string, unknown>)
         }
       })
@@ -488,7 +509,28 @@ const Outbox: React.FC = () => {
         <h1 className={`text-2xl font-semibold mb-4 ${
           theme === 'dark' ? 'text-white' : 'text-gray-800'
         }`}>Outbox - Document Source</h1>
-        
+
+        {attachmentError && (
+          <div
+            className="mb-4 p-3 rounded-lg text-sm flex items-center justify-between"
+            style={{
+              backgroundColor: theme === 'dark' ? 'rgba(254, 226, 226, 0.15)' : '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
+            }}
+          >
+            <span>{attachmentError}</span>
+            <button
+              type="button"
+              onClick={() => setAttachmentError(null)}
+              className="ml-2 px-2 py-0.5 rounded hover:opacity-80"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <div className="flex justify-between items-center gap-3">
           <div className="flex items-center">
             <Pagination

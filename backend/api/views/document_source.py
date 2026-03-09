@@ -12,9 +12,23 @@ from ..supabase_client import get_supabase_admin_client
 
 logger = logging.getLogger(__name__)
 
-# Create a storage bucket named "document-attachments" in Supabase Dashboard (Storage) with access allowed for your project.
+# Storage bucket for Outbox document attachments. Created automatically if missing.
 ATTACHMENT_BUCKET = 'document-attachments'
 SIGNED_URL_EXPIRES = 3600  # 1 hour
+
+
+def _ensure_attachment_bucket(supabase):
+    """Create the attachment bucket if it does not exist. Idempotent."""
+    try:
+        supabase.storage.create_bucket(ATTACHMENT_BUCKET, options={"public": False})
+        logger.info("Created storage bucket %s", ATTACHMENT_BUCKET)
+    except Exception as e:
+        msg = str(e).lower()
+        # Bucket already exists or similar - ignore
+        if "already exists" in msg or "duplicate" in msg or "conflict" in msg:
+            return
+        logger.warning("Could not create bucket %s: %s", ATTACHMENT_BUCKET, e)
+        raise
 
 
 def _normalize_created_at(v):
@@ -94,10 +108,15 @@ def _connection_error_message(e):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def document_source_list(request):
-    """Get all document source (Outbox) items."""
+    """Get all document source (Outbox) items. If X-Employee-Code header is set, return only rows where userid matches (for End-User scope)."""
     try:
         supabase = get_supabase_admin_client()
-        response = supabase.table('document_source').select('*').order('created_at', desc=True).execute()
+        query = supabase.table('document_source').select('*').order('created_at', desc=True)
+        # Filter by current user when header is present (End-User sees only their own documents)
+        employee_code = request.headers.get('X-Employee-Code') or request.query_params.get('employee_code')
+        if employee_code and str(employee_code).strip():
+            query = query.eq('userid', str(employee_code).strip())
+        response = query.execute()
         rows = response.data if response and hasattr(response, 'data') and response.data is not None else []
         if not isinstance(rows, list):
             rows = []
@@ -223,6 +242,13 @@ def document_source_bulk_delete(request):
         )
 
 
+def _upload_to_storage(supabase, storage_path, file_bytes, content_type):
+    """Upload bytes to the attachment bucket. Raises on failure."""
+    supabase.storage.from_(ATTACHMENT_BUCKET).upload(
+        storage_path, file_bytes, {"content-type": content_type or "application/octet-stream"}
+    )
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def document_source_upload_attachment(request):
@@ -243,7 +269,47 @@ def document_source_upload_attachment(request):
         storage_path = f"{document_id}/{uuid.uuid4().hex}_{safe_name}"
         supabase = get_supabase_admin_client()
         file_bytes = file_obj.read()
-        supabase.storage.from_(ATTACHMENT_BUCKET).upload(storage_path, file_bytes, {"content-type": file_obj.content_type or "application/octet-stream"})
+        content_type = getattr(file_obj, 'content_type', None) or "application/octet-stream"
+
+        # Ensure bucket exists (create if missing), then upload
+        try:
+            _ensure_attachment_bucket(supabase)
+        except AttributeError:
+            pass  # create_bucket not available on this client
+        try:
+            _upload_to_storage(supabase, storage_path, file_bytes, content_type)
+        except Exception as upload_err:
+            err_str = str(upload_err).lower()
+            if "bucket not found" in err_str:
+                try:
+                    _ensure_attachment_bucket(supabase)
+                    _upload_to_storage(supabase, storage_path, file_bytes, content_type)
+                except AttributeError:
+                    return Response({
+                        'success': False,
+                        'error': (
+                            "Storage bucket 'document-attachments' not found. "
+                            "Create it in Supabase Dashboard → Storage → New bucket, name: document-attachments (private)."
+                        ),
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as retry_err:
+                    logger.exception("document_source_upload_attachment retry after bucket create failed")
+                    retry_str = str(retry_err).lower()
+                    if "bucket not found" in retry_str:
+                        return Response({
+                            'success': False,
+                            'error': (
+                                "Storage bucket 'document-attachments' not found. "
+                                "Create it in Supabase Dashboard → Storage → New bucket, name: document-attachments (private)."
+                            ),
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {'success': False, 'error': str(retry_err)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+            else:
+                raise
+
         return Response({
             'success': True,
             'path': storage_path,
@@ -269,7 +335,10 @@ def document_source_attachment_url(request, item_id):
             return Response({'success': False, 'error': 'Document not found'}, status=status.HTTP_404_NOT_FOUND)
         path = (row.data[0] or {}).get('attachment_list') or ''
         if not path or not path.strip():
-            return Response({'success': False, 'error': 'No attachment for this document'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'success': False,
+                'error': 'No attachment for this document. If you added a file, the upload may have failed (e.g. storage bucket not set up).',
+            }, status=status.HTTP_404_NOT_FOUND)
         path = path.strip()
         result = supabase.storage.from_(ATTACHMENT_BUCKET).create_signed_url(path, SIGNED_URL_EXPIRES)
         url = (result.get('signedURL') or result.get('signed_url') or result.get('path')) if isinstance(result, dict) else None

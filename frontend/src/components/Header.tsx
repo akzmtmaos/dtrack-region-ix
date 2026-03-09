@@ -58,7 +58,7 @@ const Header: React.FC = () => {
             {user && (
               <div className="hidden md:flex items-center space-x-3 text-white">
                 <span className="text-sm">
-                  Welcome, {user.displayName || user.username || user.email}
+                  Welcome, {user.fullName || user.employeeCode || user.username}
                 </span>
               </div>
             )}

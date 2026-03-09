@@ -11,25 +11,27 @@ import { apiService } from '../../services/api'
 import { usePagination } from '../../hooks/usePagination'
 
 interface ActionOfficerItem {
-  id: number
+  id: number | string
   employeeCode: string
   lastName: string
   firstName: string
   middleName: string
   office: string
-  userPassword: string
+  userPassword?: string
   userLevel: string
   officeRepresentative: string
+  source?: 'users' | 'profiles'
 }
 
 const ActionOfficer: React.FC = () => {
   const { theme } = useTheme()
   const [items, setItems] = useState<ActionOfficerItem[]>([])
-  const [selectedItems, setSelectedItems] = useState<number[]>([])
+  const [selectedItems, setSelectedItems] = useState<(number | string)[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleteType, setDeleteType] = useState<'single' | 'bulk'>('single')
-  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteId, setDeleteId] = useState<number | string | null>(null)
+  const [deleteItem, setDeleteItem] = useState<ActionOfficerItem | null>(null)
   const [deleteItemName, setDeleteItemName] = useState<string>('')
   const [editingItem, setEditingItem] = useState<ActionOfficerItem | null>(null)
   const [loading, setLoading] = useState(false)
@@ -113,20 +115,27 @@ const ActionOfficer: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await apiService.getActionOfficer()
+      const response = await apiService.getUsers()
       if (response.success && response.data) {
-        // Map database snake_case to frontend camelCase
-        const mappedItems = response.data.map((item: any) => ({
-          id: item.id,
-          employeeCode: item.employee_code || '',
-          lastName: item.last_name || '',
-          firstName: item.first_name || '',
-          middleName: item.middle_name || '',
-          office: item.office || '',
-          userPassword: item.user_password || '',
-          userLevel: item.user_level || '',
-          officeRepresentative: item.office_representative || ''
-        }))
+        const raw = Array.isArray(response.data) ? response.data : []
+        // Show only users whose User Level is Action Officer (or Action Officers)
+        const actionOfficerLevel = (level: string) => {
+          const l = (level || '').toLowerCase()
+          return l === 'action officer' || l === 'action officers' || l.includes('action officer')
+        }
+        const mappedItems: ActionOfficerItem[] = raw
+          .filter((item: any) => actionOfficerLevel(item.user_level || item.userLevel || ''))
+          .map((item: any) => ({
+            id: item.id,
+            employeeCode: item.employee_code || '',
+            lastName: item.last_name || '',
+            firstName: item.first_name || '',
+            middleName: item.middle_name || '',
+            office: item.office || '',
+            userLevel: item.user_level || '',
+            officeRepresentative: item.office_representative || '',
+            source: item.source,
+          }))
         setItems(mappedItems)
       } else {
         setError(response.error || 'Failed to fetch items')
@@ -150,9 +159,9 @@ const ActionOfficer: React.FC = () => {
     }
   }
 
-  const handleSelectItem = (id: number) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
+  const handleSelectItem = (id: number | string) => {
+    setSelectedItems(prev =>
+      prev.includes(id)
         ? prev.filter(itemId => itemId !== id)
         : [...prev, id]
     )
@@ -168,23 +177,17 @@ const ActionOfficer: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await apiService.bulkDeleteActionOfficer(selectedItems)
-      if (response.success) {
-        setItems(prev => prev.filter(item => !selectedItems.includes(item.id)))
-        setSelectedItems([])
-      } else {
-        setError(response.error || 'Failed to delete items')
+      const toRemove = items.filter(item => selectedItems.includes(item.id) && item.source === 'users' && typeof item.id === 'number')
+      for (const item of toRemove) {
+        await apiService.updateUser(item.id as number, { userLevel: 'End-User' })
       }
+      await fetchItems()
+      setSelectedItems([])
     } catch (err) {
-      setError('An error occurred while deleting items')
+      setError('An error occurred while removing items')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleAdd = () => {
-    setEditingItem(null)
-    setIsModalOpen(true)
   }
 
   const handleEdit = (item: ActionOfficerItem) => {
@@ -202,55 +205,31 @@ const ActionOfficer: React.FC = () => {
     userLevel: string
     officeRepresentative: string
   }) => {
+    if (!editingItem) return
+    if (editingItem.source !== 'users' || typeof editingItem.id !== 'number') {
+      setError('This user can only be edited from Registered Users.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
-      if (editingItem) {
-        // Update existing item
-        const response = await apiService.updateActionOfficer(editingItem.id, data)
-        if (response.success && response.data) {
-          // Map database response to frontend format
-          const updatedItem = {
-            id: response.data.id,
-            employeeCode: response.data.employee_code || data.employeeCode,
-            lastName: response.data.last_name || data.lastName,
-            firstName: response.data.first_name || data.firstName,
-            middleName: response.data.middle_name || data.middleName,
-            office: response.data.office || data.office,
-            userPassword: response.data.user_password || data.userPassword,
-            userLevel: response.data.user_level || data.userLevel,
-            officeRepresentative: response.data.office_representative || data.officeRepresentative
-          }
-          setItems(prev => prev.map(item => 
-            item.id === editingItem.id ? updatedItem : item
-          ))
-          setIsModalOpen(false)
-          setEditingItem(null)
-        } else {
-          setError(response.error || 'Failed to update item')
-        }
+      const payload: Record<string, unknown> = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
+        employeeCode: data.employeeCode,
+        office: data.office,
+        userLevel: data.userLevel,
+        officeRepresentative: data.officeRepresentative,
+      }
+      if (data.userPassword?.trim()) payload.userPassword = data.userPassword
+      const response = await apiService.updateUser(editingItem.id, payload)
+      if (response.success) {
+        await fetchItems()
+        setIsModalOpen(false)
+        setEditingItem(null)
       } else {
-        // Add new item
-        const response = await apiService.createActionOfficer(data)
-        if (response.success && response.data) {
-          // Map database response to frontend format
-          const newItem = {
-            id: response.data.id,
-            employeeCode: response.data.employee_code || data.employeeCode,
-            lastName: response.data.last_name || data.lastName,
-            firstName: response.data.first_name || data.firstName,
-            middleName: response.data.middle_name || data.middleName,
-            office: response.data.office || data.office,
-            userPassword: response.data.user_password || data.userPassword,
-            userLevel: response.data.user_level || data.userLevel,
-            officeRepresentative: response.data.office_representative || data.officeRepresentative
-          }
-          setItems(prev => [...prev, newItem])
-          setIsModalOpen(false)
-          setEditingItem(null)
-        } else {
-          setError(response.error || 'Failed to create item')
-        }
+        setError(response.error || 'Failed to update item')
       }
     } catch (err) {
       setError('An error occurred while saving')
@@ -262,27 +241,38 @@ const ActionOfficer: React.FC = () => {
   const handleDelete = (item: ActionOfficerItem) => {
     setDeleteType('single')
     setDeleteId(item.id)
+    setDeleteItem(item)
     setDeleteItemName(`${item.firstName} ${item.lastName} (${item.employeeCode})`)
     setIsDeleteModalOpen(true)
   }
 
   const confirmSingleDelete = async () => {
-    if (!deleteId) return
+    if (!deleteId || !deleteItem) return
+    if (deleteItem.source !== 'users' || typeof deleteItem.id !== 'number') {
+      setError('This user can only be managed from Registered Users.')
+      setDeleteId(null)
+      setDeleteItem(null)
+      setDeleteItemName('')
+      setIsDeleteModalOpen(false)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
-      const response = await apiService.deleteActionOfficer(deleteId)
+      const response = await apiService.updateUser(deleteItem.id, { userLevel: 'End-User' })
       if (response.success) {
-        setItems(prev => prev.filter(item => item.id !== deleteId))
+        await fetchItems()
       } else {
-        setError(response.error || 'Failed to delete item')
+        setError(response.error || 'Failed to remove item')
       }
     } catch (err) {
-      setError('An error occurred while deleting item')
+      setError('An error occurred while removing item')
     } finally {
       setLoading(false)
       setDeleteId(null)
+      setDeleteItem(null)
       setDeleteItemName('')
+      setIsDeleteModalOpen(false)
     }
   }
 
@@ -443,10 +433,15 @@ const ActionOfficer: React.FC = () => {
 
   return (
     <div className="pt-4 pb-8">
-      <h1 className={`text-2xl font-semibold mb-4 ${
+      <h1 className={`text-2xl font-semibold mb-1 ${
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>Action Officer</h1>
-      
+      <p className={`text-sm mb-4 ${
+        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+      }`}>
+        Users with User Level &quot;Action Officer&quot;. Add or change users in Registered Users.
+      </p>
+
       {error && (
         <div className={`mb-4 p-3 rounded-md ${
           theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
@@ -498,19 +493,6 @@ const ActionOfficer: React.FC = () => {
             variant="danger"
           >
             Delete {selectedItems.length > 0 && `(${selectedItems.length})`}
-          </Button>
-          <Button
-            onClick={handleAdd}
-            disabled={loading}
-            variant="primary"
-            icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            }
-            iconPosition="left"
-          >
-            Add
           </Button>
           <Input
             type="text"
@@ -589,11 +571,6 @@ const ActionOfficer: React.FC = () => {
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wider ${
               theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              User Password <RequiredAsterisk />
-            </th>
-            <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wider ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-            }`}>
               User Level <RequiredAsterisk />
             </th>
             <th className={`px-4 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wider ${
@@ -613,7 +590,7 @@ const ActionOfficer: React.FC = () => {
         }`}>
           {loading && items.length === 0 ? (
             <tr>
-              <td colSpan={10} className={`px-4 py-2 text-center text-xs ${
+              <td colSpan={9} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 Loading...
@@ -621,7 +598,7 @@ const ActionOfficer: React.FC = () => {
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td colSpan={10} className={`px-4 py-2 text-center text-xs ${
+              <td colSpan={9} className={`px-4 py-2 text-center text-xs ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
               }`}>
                 No items found
@@ -684,11 +661,6 @@ const ActionOfficer: React.FC = () => {
                 <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  ••••••••
-                </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
                   {item.userLevel}
                 </td>
                 <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
@@ -701,42 +673,46 @@ const ActionOfficer: React.FC = () => {
                   onMouseLeave={hideTooltip}
                   onPointerLeave={hideTooltip}
                 >
-                  <div className="flex items-center gap-1">
-                    <TooltipLabel label="Edit">
-                      <button
-                        onClick={() => {
-                          hideTooltip()
-                          handleEdit(item)
-                        }}
-                        className={`${baseActionButtonClasses} ${
-                          theme === 'dark'
-                            ? 'border-amber-500 text-amber-200 bg-gray-900 hover:bg-amber-900/30'
-                            : 'border-amber-500 text-amber-700 bg-white hover:bg-amber-50'
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                    </TooltipLabel>
-                    <TooltipLabel label="Delete">
-                      <button
-                        onClick={() => {
-                          hideTooltip()
-                          handleDelete(item)
-                        }}
-                        className={`${baseActionButtonClasses} ${
-                          theme === 'dark'
-                            ? 'border-red-500 text-red-200 bg-gray-900 hover:bg-red-900/30'
-                            : 'border-red-500 text-red-700 bg-white hover:bg-red-50'
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </TooltipLabel>
-                  </div>
+                  {item.source === 'users' ? (
+                    <div className="flex items-center gap-1">
+                      <TooltipLabel label="Edit">
+                        <button
+                          onClick={() => {
+                            hideTooltip()
+                            handleEdit(item)
+                          }}
+                          className={`${baseActionButtonClasses} ${
+                            theme === 'dark'
+                              ? 'border-amber-500 text-amber-200 bg-gray-900 hover:bg-amber-900/30'
+                              : 'border-amber-500 text-amber-700 bg-white hover:bg-amber-50'
+                          }`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                      </TooltipLabel>
+                      <TooltipLabel label="Delete">
+                        <button
+                          onClick={() => {
+                            hideTooltip()
+                            handleDelete(item)
+                          }}
+                          className={`${baseActionButtonClasses} ${
+                            theme === 'dark'
+                              ? 'border-red-500 text-red-200 bg-gray-900 hover:bg-red-900/30'
+                              : 'border-red-500 text-red-700 bg-white hover:bg-red-50'
+                          }`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </TooltipLabel>
+                    </div>
+                  ) : (
+                    <span className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>—</span>
+                  )}
                 </td>
               </tr>
               )
@@ -752,7 +728,17 @@ const ActionOfficer: React.FC = () => {
           setEditingItem(null)
         }}
         onSave={handleSave}
-        initialData={editingItem}
+        initialData={editingItem ? {
+          id: Number(editingItem.id),
+          employeeCode: editingItem.employeeCode,
+          lastName: editingItem.lastName,
+          firstName: editingItem.firstName,
+          middleName: editingItem.middleName,
+          office: editingItem.office,
+          userPassword: editingItem.userPassword ?? '',
+          userLevel: editingItem.userLevel,
+          officeRepresentative: editingItem.officeRepresentative,
+        } : null}
       />
 
       <DeleteConfirmationModal
@@ -760,10 +746,11 @@ const ActionOfficer: React.FC = () => {
         onClose={() => {
           setIsDeleteModalOpen(false)
           setDeleteId(null)
+          setDeleteItem(null)
           setDeleteItemName('')
         }}
         onConfirm={deleteType === 'bulk' ? confirmBulkDelete : confirmSingleDelete}
-        message={deleteType === 'bulk' ? 'This will permanently delete all selected items.' : 'This will permanently delete this item.'}
+        message={deleteType === 'bulk' ? 'Selected users will no longer be Action Officers (their User Level will be set to End-User).' : 'This user will no longer be an Action Officer (User Level will be set to End-User).'}
         itemName={deleteItemName}
         isBulk={deleteType === 'bulk'}
         count={selectedItems.length}

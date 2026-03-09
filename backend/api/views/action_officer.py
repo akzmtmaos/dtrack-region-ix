@@ -147,6 +147,8 @@ def action_officer_update(request, item_id):
         if 'officeRepresentative' in request.data:
             office_rep = request.data.get('officeRepresentative')
             update_data['office_representative'] = office_rep if office_rep else None
+        if 'verified' in request.data:
+            update_data['verified'] = bool(request.data.get('verified'))
         
         if not update_data:
             return Response({
