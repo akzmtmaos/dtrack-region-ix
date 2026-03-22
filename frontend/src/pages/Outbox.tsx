@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 import { apiService } from '../services/api'
 import AddDocumentModal from '../components/outbox/AddDocumentModal'
@@ -28,14 +30,20 @@ interface Document {
   attachedDocumentFilename: string
   attachmentList: string
   userid: string
+  /** Who currently holds the document in Outbox (after routing receipt). */
+  currentCustodian?: string
   inSequence: string
   remarks: string
 }
 
 const Outbox: React.FC = () => {
   const { theme } = useTheme()
+  const { showSuccess, showError, showWarning } = useToast()
   const { user } = useAuth()
+  const employeeCodeHeader = user?.employeeCode?.trim() || undefined
+  const [searchParams, setSearchParams] = useSearchParams()
   const [documents, setDocuments] = useState<Document[]>([])
+  const [documentsFetchDone, setDocumentsFetchDone] = useState(false)
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -60,10 +68,14 @@ const Outbox: React.FC = () => {
   const [pendingDestinationDeleteIds, setPendingDestinationDeleteIds] = useState<number[]>([])
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
 
+  const level = (user?.userLevel ?? '').toLowerCase()
+  const isEndUser = level === 'end-user' || level === 'end-users'
+  /** Pass to delete APIs so End-Users can only soft-delete their own documents */
+  const deleteEmployeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
+
   // Fetch documents: End-User only sees their own (filtered by userid = employeeCode)
   const fetchDocuments = () => {
-    const level = (user?.userLevel ?? '').toLowerCase()
-    const isEndUser = level === 'end-user' || level === 'end-users'
+    setDocumentsFetchDone(false)
     const employeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
     apiService.getDocumentSource(employeeCode).then((res) => {
       if (!res) return
@@ -71,11 +83,57 @@ const Outbox: React.FC = () => {
       const list = Array.isArray(raw) ? raw : []
       setDocuments(list)
     }).catch(() => setDocuments([]))
+      .finally(() => setDocumentsFetchDone(true))
   }
 
   useEffect(() => {
     fetchDocuments()
   }, [user?.employeeCode, user?.userLevel])
+
+  // Open a specific document (inline "inside document" view) when arriving with ?doc=<id>, e.g. from Home
+  useEffect(() => {
+    const raw = searchParams.get('doc')
+    if (!raw || !documentsFetchDone) return
+    const id = Number.parseInt(raw, 10)
+    const clearDocParam = () => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('doc')
+          return next
+        },
+        { replace: true }
+      )
+    }
+    if (!Number.isFinite(id) || id <= 0) {
+      clearDocParam()
+      return
+    }
+    const doc = documents.find((d) => d.id === id)
+    if (doc) {
+      setDocumentForDestinations(doc)
+      setSelectedDestinationIds([])
+    }
+    clearDocParam()
+  }, [documents, documentsFetchDone, searchParams, setSearchParams])
+
+  // Open "Add document" modal when arriving from Home (?add=1) or similar
+  useEffect(() => {
+    const raw = searchParams.get('add')
+    if (raw == null || raw === '' || raw === '0' || raw.toLowerCase() === 'false') return
+    setDocumentForDestinations(null)
+    setSelectedDestinationIds([])
+    setEditingDocument(null)
+    setIsAddModalOpen(true)
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('add')
+        return next
+      },
+      { replace: true }
+    )
+  }, [searchParams, setSearchParams])
 
   // When a document is selected for destinations (inline section), fetch its destinations
   useEffect(() => {
@@ -122,8 +180,12 @@ const Outbox: React.FC = () => {
   }
 
   const confirmBulkDelete = () => {
-    apiService.bulkDeleteDocumentSource(selectedItems).then((res) => {
-      if (!res.success) return
+    apiService.bulkDeleteDocumentSource(selectedItems, deleteEmployeeCode).then((res) => {
+      if (!res.success) {
+        showError(res.error || 'Could not move documents to Trash')
+        return
+      }
+      showSuccess('Document(s) moved to Trash')
       setDocuments((prev) => prev.filter((doc) => !selectedItems.includes(doc.id)))
       setSelectedItems([])
       setIsDeleteModalOpen(false)
@@ -137,10 +199,13 @@ const Outbox: React.FC = () => {
     }
     setAttachmentError(null)
     apiService.createDocumentSource(payload).then(async (res) => {
-      if (!res.success || !res.data) return
+      if (!res.success || !res.data) {
+        showError(res.error || 'Could not create document')
+        return
+      }
       let newDocument = res.data as Document
       if (pendingFile) {
-        const up = await apiService.uploadDocumentAttachment(newDocument.id, pendingFile)
+        const up = await apiService.uploadDocumentAttachment(newDocument.id, pendingFile, employeeCodeHeader)
         const path = up.data?.path
         const filename = up.data?.filename
         if (up.success && path && filename) {
@@ -152,9 +217,12 @@ const Outbox: React.FC = () => {
           } as Record<string, unknown>)
           if (updateRes.success && updateRes.data) newDocument = updateRes.data as Document
         } else {
-          setAttachmentError(up.error || 'Attachment upload failed.')
+          const errMsg = up.error || 'Attachment upload failed.'
+          setAttachmentError(errMsg)
+          showWarning(errMsg)
         }
       }
+      showSuccess('Document created')
       setDocuments((prev) => [...prev, newDocument])
       setDocumentForDestinations(newDocument)
       setDestinationsByDocumentId((prev) => ({ ...prev, [newDocument.id]: [] }))
@@ -177,8 +245,12 @@ const Outbox: React.FC = () => {
     if (!documentForDestinations) return
     const payload = { documentSourceId: documentForDestinations.id, ...row }
     apiService.createDocumentDestination(payload as Record<string, unknown>).then((res) => {
-      if (!res.success || !res.data) return
+      if (!res.success || !res.data) {
+        showError(res.error || 'Could not add destination')
+        return
+      }
       const newRow = res.data as DocumentDestinationRow
+      showSuccess('Destination added')
       setDestinationsByDocumentId((prev) => ({
         ...prev,
         [documentForDestinations.id]: [...(prev[documentForDestinations.id] ?? []), newRow]
@@ -190,7 +262,11 @@ const Outbox: React.FC = () => {
   const handleDeleteDestinationRows = (ids: number[]) => {
     if (!documentForDestinations || ids.length === 0) return
     apiService.bulkDeleteDocumentDestination(ids).then((res) => {
-      if (!res.success) return
+      if (!res.success) {
+        showError(res.error || 'Could not remove destination(s)')
+        return
+      }
+      showSuccess(ids.length > 1 ? 'Destinations removed' : 'Destination removed')
       setSelectedDestinationIds([])
       apiService.getDocumentDestination(documentForDestinations.id).then((r) => {
         if (r.success && r.data)
@@ -210,16 +286,20 @@ const Outbox: React.FC = () => {
         ...payload,
         userid: user?.employeeCode ?? payload.userid ?? updatedDocument.userid ?? '',
       }
-      apiService.updateDocumentSource(updatedDocument.id, withUserid).then((res) => {
-        if (!res.success || !res.data) return
+      apiService.updateDocumentSource(updatedDocument.id, withUserid, employeeCodeHeader).then((res) => {
+        if (!res.success || !res.data) {
+          showError(res.error || 'Could not save document')
+          return
+        }
         const doc = res.data as Document
+        showSuccess('Document saved')
         setDocuments((prev) => prev.map((d) => (d.id === doc.id ? doc : d)))
         setSelectedDocument(doc)
       })
     }
     if (pendingFile) {
       setAttachmentError(null)
-      apiService.uploadDocumentAttachment(updatedDocument.id, pendingFile).then((up) => {
+      apiService.uploadDocumentAttachment(updatedDocument.id, pendingFile, employeeCodeHeader).then((up) => {
         const path = up.data?.path
         const filename = up.data?.filename
         if (up.success && path && filename) {
@@ -229,7 +309,9 @@ const Outbox: React.FC = () => {
             attachedDocumentFilename: filename,
           })
         } else {
-          setAttachmentError(up.error || 'Attachment upload failed.')
+          const errMsg = up.error || 'Attachment upload failed.'
+          setAttachmentError(errMsg)
+          showWarning(errMsg)
           doUpdate(updatedDocument as unknown as Record<string, unknown>)
         }
       })
@@ -247,8 +329,12 @@ const Outbox: React.FC = () => {
 
   const confirmSingleDelete = () => {
     if (!deleteId) return
-    apiService.deleteDocumentSource(deleteId).then((res) => {
-      if (!res.success) return
+    apiService.deleteDocumentSource(deleteId, deleteEmployeeCode).then((res) => {
+      if (!res.success) {
+        showError(res.error || 'Could not move document to Trash')
+        return
+      }
+      showSuccess('Document moved to Trash')
       setDocuments((prev) => prev.filter((doc) => doc.id !== deleteId))
       if (selectedDocument?.id === deleteId) {
         setIsDetailModalOpen(false)
@@ -705,20 +791,29 @@ const Outbox: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                documents.map((doc, idx) => (
+                documents.map((doc, idx) => {
+                  // Background on <tr> is unreliable in tables; use classes on each <td> for full-row hover + selection.
+                  const isSelected = selectedItems.includes(doc.id)
+                  const rowHoverCell =
+                    theme === 'dark'
+                      ? 'transition-colors duration-150 group-hover:bg-dark-hover/70 group-active:bg-dark-hover'
+                      : 'transition-colors duration-150 group-hover:bg-gray-100 group-active:bg-gray-200'
+                  const rowCell =
+                    isSelected
+                      ? theme === 'dark'
+                        ? 'transition-colors duration-150 bg-blue-900/40 group-hover:bg-blue-900/55 group-active:bg-blue-900/65'
+                        : 'transition-colors duration-150 bg-blue-100 group-hover:bg-blue-200 group-active:bg-blue-300'
+                      : rowHoverCell
+                  return (
                   <tr 
                     key={doc?.id ?? doc?.documentControlNo ?? `row-${idx}`} 
-                    className={`transition-all duration-150 cursor-pointer ${
-                      theme === 'dark' 
-                        ? 'hover:bg-dark-hover/50 active:bg-dark-hover' 
-                        : 'hover:bg-gray-50 active:bg-gray-100'
-                    }`}
+                    className="group cursor-pointer"
                     style={{ position: 'relative', zIndex: hoveredRowId === doc.id ? 10 : 0 }}
                     onMouseEnter={() => setHoveredRowId(doc.id)}
                     onMouseLeave={() => setHoveredRowId(null)}
                     onClick={() => handleRowClick(doc)}
                   >
-                    <td className="px-4 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className={`px-4 py-2 whitespace-nowrap ${rowCell}`} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedItems.includes(doc.id)}
@@ -728,34 +823,34 @@ const Outbox: React.FC = () => {
                         }`}
                       />
                     </td>
-                    <td className={`px-4 py-2 whitespace-nowrap text-xs font-semibold ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs font-semibold ${rowCell} ${
                       theme === 'dark' ? 'text-white' : 'text-gray-900'
                     }`}>
                       {doc.documentControlNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-4 py-2 whitespace-nowrap text-xs ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs ${rowCell} ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.routeNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-4 py-2 text-xs max-w-xs ${
+                    <td className={`px-4 py-2 text-xs max-w-xs ${rowCell} ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       <div className="truncate" title={doc.subject}>
                         {doc.subject || <span className="text-gray-500 italic">—</span>}
                       </div>
                     </td>
-                    <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs text-left ${rowCell} ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.documentType || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-4 py-2 whitespace-nowrap text-xs ${
+                    <td className={`px-4 py-2 whitespace-nowrap text-xs ${rowCell} ${
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.sourceType || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className={`px-4 py-2 whitespace-nowrap ${rowCell}`} onClick={(e) => e.stopPropagation()}>
                       <ActionButtons
                         document={doc}
                         onView={handleView}
@@ -766,7 +861,8 @@ const Outbox: React.FC = () => {
                       />
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </Table>
@@ -1134,7 +1230,7 @@ const Outbox: React.FC = () => {
           setDeleteItemName('')
         }}
         onConfirm={deleteType === 'bulk' ? confirmBulkDelete : confirmSingleDelete}
-        message={deleteType === 'bulk' ? 'This will permanently delete all selected documents.' : 'This will permanently delete this document.'}
+        message={deleteType === 'bulk' ? 'Selected documents will be moved to Trash. You can restore them from Trash in the sidebar.' : 'This document will be moved to Trash. You can restore it from Trash in the sidebar.'}
         itemName={deleteItemName}
         isBulk={deleteType === 'bulk'}
         count={selectedItems.length}

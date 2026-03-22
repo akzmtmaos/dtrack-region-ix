@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
 import { apiService } from '../../services/api'
-import Button from '../Button'
+import { triggerBrowserDownload } from '../../utils/triggerDownload'
 
 interface Document {
   id: number
@@ -18,6 +19,8 @@ interface Document {
   attachedDocumentFilename: string
   attachmentList: string
   userid: string
+  /** Employee code of who currently holds the document (routing). */
+  currentCustodian?: string
   inSequence: string
   remarks: string
   }
@@ -38,6 +41,8 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   onEditRequest
 }) => {
   const { theme } = useTheme()
+  const { user } = useAuth()
+  const employeeCodeHeader = user?.employeeCode?.trim() || undefined
   const [attachmentLoading, setAttachmentLoading] = useState(false)
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
 
@@ -47,26 +52,18 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
     if (!document?.id) return
     setAttachmentLoading(true)
     setAttachmentError(null)
-    const res = await apiService.getDocumentAttachmentUrl(document.id)
-    setAttachmentLoading(false)
-    const url = (res as { url?: string }).url
-    if (res.success && url) {
-      try {
-        const response = await fetch(url)
-        const blob = await response.blob()
-        const objectUrl = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = objectUrl
-        a.download = document.attachedDocumentFilename?.trim() || 'attachment'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(objectUrl)
-      } catch {
-        setAttachmentError('Download failed')
+    try {
+      const res = await apiService.getDocumentAttachmentUrl(document.id, employeeCodeHeader)
+      const url = typeof res === 'object' && res && 'url' in res ? (res as { url?: string }).url : undefined
+      if (res.success && url) {
+        triggerBrowserDownload(url, document.attachedDocumentFilename?.trim() || 'attachment')
+      } else {
+        setAttachmentError(res.error || 'Could not get download link')
       }
-    } else {
-      setAttachmentError(res.error || 'Could not get download link')
+    } catch (e) {
+      setAttachmentError(e instanceof Error ? e.message : 'Download failed')
+    } finally {
+      setAttachmentLoading(false)
     }
   }
 
@@ -222,6 +219,23 @@ const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 <span className="text-xs" style={{ color: '#ef4444' }}>{attachmentError}</span>
               </div>
             )}
+
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Registered by (employee code)
+              </label>
+              <Value>{document.userid}</Value>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>
+                Currently held by
+              </label>
+              <Value>
+                {(document.currentCustodian && document.currentCustodian.trim())
+                  ? document.currentCustodian
+                  : document.userid}
+              </Value>
+            </div>
 
             {/* Remarks */}
             <div className="flex items-start gap-3">

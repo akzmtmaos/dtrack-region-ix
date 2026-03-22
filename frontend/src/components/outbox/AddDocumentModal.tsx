@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { apiService } from '../../services/api'
 import SearchableSelect from '../SearchableSelect'
@@ -30,6 +30,62 @@ interface AddDocumentModalProps {
   onUpdate?: (document: any, pendingFile?: File | null) => void
 }
 
+/** User row from GET /users/ — used to filter by office for originating employee dropdowns */
+interface OutboxUserRow {
+  id: number | string
+  employeeCode: string
+  firstName: string
+  lastName: string
+  middleName: string
+  office: string
+}
+
+function normalizeOfficeName(s: string): string {
+  return (s || '').trim().toLowerCase()
+}
+
+function formatUserDisplayName(u: Pick<OutboxUserRow, 'firstName' | 'lastName' | 'middleName' | 'employeeCode'>): string {
+  const mid = u.middleName && u.middleName !== '-' ? ` ${u.middleName}` : ''
+  const name = `${u.lastName}, ${u.firstName}${mid}`.trim()
+  if (name.replace(/[, ]/g, '')) return name
+  return u.employeeCode || ''
+}
+
+function mapApiUserToRow(item: any): OutboxUserRow {
+  return {
+    id: item.id,
+    employeeCode: String(item.employee_code ?? ''),
+    firstName: String(item.first_name ?? ''),
+    lastName: String(item.last_name ?? ''),
+    middleName: String(item.middle_name ?? ''),
+    office: String(item.office ?? ''),
+  }
+}
+
+function usersForOffice(users: OutboxUserRow[], office: string): OutboxUserRow[] {
+  const o = normalizeOfficeName(office)
+  if (!o) return []
+  return users.filter((u) => normalizeOfficeName(u.office) === o)
+}
+
+function toSelectOptions(users: OutboxUserRow[]): Array<{ id: number | string; value: string; label: string }> {
+  return users.map((u) => {
+    const value = formatUserDisplayName(u)
+    const label = u.employeeCode ? `${value} (${u.employeeCode})` : value
+    return { id: u.id, value, label }
+  })
+}
+
+function mergeLegacyEmployeeOption(
+  options: Array<{ id: number | string; value: string; label: string }>,
+  currentValue: string
+): Array<{ id: number | string; value: string; label: string }> {
+  const v = (currentValue || '').trim()
+  if (!v) return options
+  if (options.some((o) => o.value === v)) return options
+  return [{ id: '__legacy__', value: v, label: `${v} (saved)` }, ...options]
+}
+
 const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd, editingDocument, onUpdate }) => {
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
@@ -51,6 +107,7 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
   const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
+  const [allUsers, setAllUsers] = useState<OutboxUserRow[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingFileRef = useRef<File | null>(null)
 
@@ -61,9 +118,10 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     if (isOpen) {
       const fetchLookups = async () => {
         try {
-          const [docTypeRes, officeRes] = await Promise.all([
+          const [docTypeRes, officeRes, usersRes] = await Promise.all([
             apiService.getDocumentType(),
             apiService.getOffice(),
+            apiService.getUsers(),
           ])
 
           if (docTypeRes.success && docTypeRes.data) {
@@ -76,6 +134,12 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
               office: item.office || '',
             }))
             setOffices(mappedOffices)
+          }
+
+          if (usersRes.success && usersRes.data && Array.isArray(usersRes.data)) {
+            setAllUsers((usersRes.data as any[]).map(mapApiUserToRow))
+          } else {
+            setAllUsers([])
           }
         } catch (error) {
           console.error('Failed to fetch lookups:', error)
@@ -121,6 +185,16 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       })
     }
   }, [isOpen, editingDocument])
+
+  const internalEmployeeOptions = useMemo(() => {
+    const raw = toSelectOptions(usersForOffice(allUsers, formData.internalOriginatingOffice))
+    return mergeLegacyEmployeeOption(raw, formData.internalOriginatingEmployee)
+  }, [allUsers, formData.internalOriginatingOffice, formData.internalOriginatingEmployee])
+
+  const externalEmployeeOptions = useMemo(() => {
+    const raw = toSelectOptions(usersForOffice(allUsers, formData.externalOriginatingOffice))
+    return mergeLegacyEmployeeOption(raw, formData.externalOriginatingEmployee)
+  }, [allUsers, formData.externalOriginatingOffice, formData.externalOriginatingEmployee])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -399,12 +473,16 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                           setFormData(prev => ({
                             ...prev,
                             internalOriginatingOffice: value,
+                            internalOriginatingEmployee: '',
                           }))
                           if (errors.internalOriginatingOffice) {
                             setErrors(prev => ({
                               ...prev,
                               internalOriginatingOffice: '',
                             }))
+                          }
+                          if (errors.internalOriginatingEmployee) {
+                            setErrors(prev => ({ ...prev, internalOriginatingEmployee: '' }))
                           }
                         }}
                         placeholder="Select internal originating office"
@@ -423,21 +501,31 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                       Internal Originating Employee <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <input
-                        type="text"
-                        name="internalOriginatingEmployee"
+                      <SearchableSelect
+                        options={internalEmployeeOptions}
                         value={formData.internalOriginatingEmployee}
-                        onChange={handleChange}
-                        placeholder="Enter internal originating employee"
-                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                        style={{
-                          backgroundColor: inputBg,
-                          border: `1px solid ${errors.internalOriginatingEmployee ? '#ef4444' : inputBorder}`,
-                          color: textPrimary
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, internalOriginatingEmployee: value }))
+                          if (errors.internalOriginatingEmployee) {
+                            setErrors((prev) => ({ ...prev, internalOriginatingEmployee: '' }))
+                          }
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                        onBlur={(e) => e.target.style.borderColor = errors.internalOriginatingEmployee ? '#ef4444' : inputBorder}
+                        placeholder={
+                          !formData.internalOriginatingOffice.trim()
+                            ? 'Select an office first'
+                            : 'Select employee'
+                        }
+                        disabled={!formData.internalOriginatingOffice.trim()}
+                        style={{
+                          borderColor: errors.internalOriginatingEmployee ? '#ef4444' : inputBorder,
+                        }}
                       />
+                      {formData.internalOriginatingOffice.trim() &&
+                        internalEmployeeOptions.filter((o) => o.id !== '__legacy__').length === 0 && (
+                          <p className="mt-1 text-xs" style={{ color: textSecondary }}>
+                            No users found for this office. Register users with this office in Registered Users.
+                          </p>
+                        )}
                       {errors.internalOriginatingEmployee && (
                         <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.internalOriginatingEmployee}</p>
                       )}
@@ -467,12 +555,16 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                           setFormData(prev => ({
                             ...prev,
                             externalOriginatingOffice: value,
+                            externalOriginatingEmployee: '',
                           }))
                           if (errors.externalOriginatingOffice) {
                             setErrors(prev => ({
                               ...prev,
                               externalOriginatingOffice: '',
                             }))
+                          }
+                          if (errors.externalOriginatingEmployee) {
+                            setErrors(prev => ({ ...prev, externalOriginatingEmployee: '' }))
                           }
                         }}
                         placeholder="Select external originating office"
@@ -491,21 +583,31 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                       External Originating Employee <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <input
-                        type="text"
-                        name="externalOriginatingEmployee"
+                      <SearchableSelect
+                        options={externalEmployeeOptions}
                         value={formData.externalOriginatingEmployee}
-                        onChange={handleChange}
-                        placeholder="Enter external originating employee"
-                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
-                        style={{
-                          backgroundColor: inputBg,
-                          border: `1px solid ${errors.externalOriginatingEmployee ? '#ef4444' : inputBorder}`,
-                          color: textPrimary
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, externalOriginatingEmployee: value }))
+                          if (errors.externalOriginatingEmployee) {
+                            setErrors((prev) => ({ ...prev, externalOriginatingEmployee: '' }))
+                          }
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#3ecf8e'}
-                        onBlur={(e) => e.target.style.borderColor = errors.externalOriginatingEmployee ? '#ef4444' : inputBorder}
+                        placeholder={
+                          !formData.externalOriginatingOffice.trim()
+                            ? 'Select an office first'
+                            : 'Select employee'
+                        }
+                        disabled={!formData.externalOriginatingOffice.trim()}
+                        style={{
+                          borderColor: errors.externalOriginatingEmployee ? '#ef4444' : inputBorder,
+                        }}
                       />
+                      {formData.externalOriginatingOffice.trim() &&
+                        externalEmployeeOptions.filter((o) => o.id !== '__legacy__').length === 0 && (
+                          <p className="mt-1 text-xs" style={{ color: textSecondary }}>
+                            No users found for this office. Register users with this office in Registered Users.
+                          </p>
+                        )}
                       {errors.externalOriginatingEmployee && (
                         <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.externalOriginatingEmployee}</p>
                       )}

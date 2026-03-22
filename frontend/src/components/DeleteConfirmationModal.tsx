@@ -1,5 +1,6 @@
 import React from 'react'
 import { useTheme } from '../context/ThemeContext'
+import Button from './Button'
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean
@@ -104,19 +105,9 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
           >
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-            style={{
-              color: '#ffffff',
-              backgroundColor: '#ef4444'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
-          >
+          <Button type="button" variant="danger" onClick={handleConfirm}>
             Delete
-          </button>
+          </Button>
         </div>
       </div>
     </div>

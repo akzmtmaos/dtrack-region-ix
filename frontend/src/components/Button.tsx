@@ -1,6 +1,17 @@
 import React from 'react'
 import { useTheme } from '../context/ThemeContext'
 
+const TrashOutlineIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg className={`flex-shrink-0 ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
+  </svg>
+)
+
 export interface ButtonProps {
   children: React.ReactNode
   onClick?: () => void
@@ -38,8 +49,11 @@ const Button: React.FC<ButtonProps> = ({
       return 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
     }
     if (variant === 'danger') {
-      // Red: #ED4245 – border matches icon/background
-      return 'bg-[#ED4245] text-white border border-[#ED4245] hover:bg-[#d63639] hover:border-[#d63639] active:bg-[#c02d30] active:border-[#c02d30]'
+      // Outline delete: red border + red icon/text (matches Trash / reference tables)
+      if (theme === 'dark') {
+        return 'bg-transparent text-red-400 border border-red-500 hover:bg-red-950/30 active:bg-red-950/40'
+      }
+      return 'bg-transparent text-red-600 border border-red-500 hover:bg-red-50 active:bg-red-100'
     }
     if (variant === 'success') {
       // Blue: #5865F2 – border matches icon/background
@@ -73,8 +87,13 @@ const Button: React.FC<ButtonProps> = ({
         ${widthClass}
         ${className}
       `.trim().replace(/\s+/g, ' ')}
-      style={variant === 'secondary' && theme === 'dark' ? { borderColor: '#4a4b4c' } : undefined}
+      style={
+        variant === 'secondary' && theme === 'dark'
+          ? { borderColor: '#4a4b4c' }
+          : undefined
+      }
     >
+      {variant === 'danger' && !icon && <TrashOutlineIcon />}
       {icon && iconPosition === 'left' && (
         <span className="flex-shrink-0">{icon}</span>
       )}

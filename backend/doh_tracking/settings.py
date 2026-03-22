@@ -156,3 +156,8 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+# Trash: permanently remove soft-deleted documents after this many days (matches UI copy).
+TRASH_RETENTION_DAYS = int(os.getenv('TRASH_RETENTION_DAYS', '30'))
+# Required for POST /api/document-source/purge-expired-trash/ (set a long random string in production).
+TRASH_PURGE_SECRET = os.getenv('TRASH_PURGE_SECRET', '').strip()
+

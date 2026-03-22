@@ -81,6 +81,14 @@ urlpatterns = [
     path('document-source/<int:item_id>/attachment-url/', document_source.document_source_attachment_url, name='document-source-attachment-url'),
     path('document-source/<int:item_id>/delete/', document_source.document_source_delete, name='document-source-delete'),
     path('document-source/bulk-delete/', document_source.document_source_bulk_delete, name='document-source-bulk-delete'),
+    path('document-source/<int:item_id>/restore/', document_source.document_source_restore, name='document-source-restore'),
+    path('document-source/bulk-restore/', document_source.document_source_bulk_restore, name='document-source-bulk-restore'),
+    path('document-source/<int:item_id>/permanent/', document_source.document_source_permanent_delete, name='document-source-permanent-delete'),
+    path('document-source/bulk-permanent-delete/', document_source.document_source_bulk_permanent_delete, name='document-source-bulk-permanent-delete'),
+    path('document-source/purge-expired-trash/', document_source.document_source_purge_expired_trash, name='document-source-purge-expired-trash'),
+
+    # Inbox (destinations + originating-employee matches for X-Employee-Code)
+    path('inbox/', document_destination.inbox_documents_list, name='inbox-list'),
 
     # Document Destination endpoints
     path('document-destination/', document_destination.document_destination_list, name='document-destination-list'),

@@ -8,6 +8,7 @@ import Button from '../../components/Button'
 import ActionOfficerModal from '../../components/reference-tables/ActionOfficerModal'
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal'
 import { apiService } from '../../services/api'
+import { DELETE_ROW_ACTION_BUTTON_CLASS } from '../../constants/deleteActionStyles'
 import { usePagination } from '../../hooks/usePagination'
 
 interface ActionOfficerItem {
@@ -436,12 +437,6 @@ const ActionOfficer: React.FC = () => {
       <h1 className={`text-2xl font-semibold mb-1 ${
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>Action Officer</h1>
-      <p className={`text-sm mb-4 ${
-        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-      }`}>
-        Users with User Level &quot;Action Officer&quot;. Add or change users in Registered Users.
-      </p>
-
       {error && (
         <div className={`mb-4 p-3 rounded-md ${
           theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
@@ -681,11 +676,11 @@ const ActionOfficer: React.FC = () => {
                             hideTooltip()
                             handleEdit(item)
                           }}
-                          className={`${baseActionButtonClasses} ${
-                            theme === 'dark'
-                              ? 'border-amber-500 text-amber-200 bg-gray-900 hover:bg-amber-900/30'
-                              : 'border-amber-500 text-amber-700 bg-white hover:bg-amber-50'
-                          }`}
+                        className={`${baseActionButtonClasses} ${
+                          theme === 'dark'
+                            ? 'border-gray-600 text-gray-100 bg-gray-900 hover:bg-gray-800'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                        }`}
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -698,11 +693,7 @@ const ActionOfficer: React.FC = () => {
                             hideTooltip()
                             handleDelete(item)
                           }}
-                          className={`${baseActionButtonClasses} ${
-                            theme === 'dark'
-                              ? 'border-red-500 text-red-200 bg-gray-900 hover:bg-red-900/30'
-                              : 'border-red-500 text-red-700 bg-white hover:bg-red-50'
-                          }`}
+                          className={DELETE_ROW_ACTION_BUTTON_CLASS}
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

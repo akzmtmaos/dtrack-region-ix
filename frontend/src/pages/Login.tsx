@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import logo from '../assets/doh-logo.png'
 
 const Login: React.FC = () => {
@@ -9,6 +10,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
+  const { showSuccess, showError } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -19,13 +21,17 @@ const Login: React.FC = () => {
     try {
       const result = await login(employeeCode, password)
       if (result.success) {
+        showSuccess('Signed in successfully')
         const from = (location.state as any)?.from?.pathname || '/'
         navigate(from, { replace: true })
       } else {
-        setError(result.error || 'Invalid employee code or password')
+        const msg = result.error || 'Invalid employee code or password'
+        setError(msg)
+        showError(msg)
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
+      showError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }

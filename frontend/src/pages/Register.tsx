@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { apiService } from '../services/api'
 import SearchableSelect from '../components/SearchableSelect'
+import { useToast } from '../context/ToastContext'
 import logo from '../assets/doh-logo.png'
 
 const Register: React.FC = () => {
@@ -20,6 +21,7 @@ const Register: React.FC = () => {
   const [userLevels, setUserLevels] = useState<Array<{ id: number; user_level_name: string }>>([])
   const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
   const navigate = useNavigate()
+  const { showSuccess, showError } = useToast()
 
   useEffect(() => {
     const load = async () => {
@@ -47,27 +49,39 @@ const Register: React.FC = () => {
     e.preventDefault()
     setError('')
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      const msg = 'Passwords do not match'
+      setError(msg)
+      showError(msg)
       return
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      const msg = 'Password must be at least 6 characters'
+      setError(msg)
+      showError(msg)
       return
     }
     if (!userLevel.trim()) {
-      setError('Please select a user level')
+      const msg = 'Please select a user level'
+      setError(msg)
+      showError(msg)
       return
     }
     if (!firstName.trim()) {
-      setError('First name is required')
+      const msg = 'First name is required'
+      setError(msg)
+      showError(msg)
       return
     }
     if (!lastName.trim()) {
-      setError('Last name is required')
+      const msg = 'Last name is required'
+      setError(msg)
+      showError(msg)
       return
     }
     if (!employeeCode.trim()) {
-      setError('Employee code is required')
+      const msg = 'Employee code is required'
+      setError(msg)
+      showError(msg)
       return
     }
     const middleNameForBackend = middleInitial.trim() || '-'
@@ -87,13 +101,19 @@ const Register: React.FC = () => {
         officeRepresentative: officeRepresentative.trim() || undefined,
       })
       if (!backendRes.success) {
-        setError(backendRes.error || 'Registration failed')
+        const msg = backendRes.error || 'Registration failed'
+        setError(msg)
+        showError(msg)
         return
       }
-      setSuccessMessage('Account created successfully. You will be able to sign in after an administrator approves your account.')
+      const okMsg =
+        'Account created successfully. You will be able to sign in after an administrator approves your account.'
+      setSuccessMessage(okMsg)
+      showSuccess(okMsg)
       setTimeout(() => navigate('/login', { replace: true }), 3000)
     } catch (err) {
       setError('An error occurred. Please try again.')
+      showError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }

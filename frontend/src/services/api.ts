@@ -17,12 +17,16 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
+      const headers: Record<string, string> = {
+        ...(options.headers as Record<string, string>),
+      }
+      // Only set JSON content-type when sending a body (GET + Content-Type can confuse some proxies/CORS)
+      if (options.body && !headers['Content-Type'] && !headers['content-type']) {
+        headers['Content-Type'] = 'application/json'
+      }
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
         ...options,
+        headers,
       })
 
       // Check if response has content before parsing JSON
@@ -458,6 +462,54 @@ class ApiService {
     })
   }
 
+  /** Soft-deleted documents (Trash). Same employee scope as Outbox when employeeCode is set. */
+  async getDocumentSourceTrash(employeeCode?: string): Promise<ApiResponse<any[]>> {
+    const headers: Record<string, string> = {}
+    if (employeeCode != null && String(employeeCode).trim()) {
+      headers['X-Employee-Code'] = String(employeeCode).trim()
+    }
+    return this.request<any[]>('/document-source/?trash=1', {
+      ...(Object.keys(headers).length ? { headers } : {}),
+    })
+  }
+
+  private _employeeHeader(employeeCode?: string): Record<string, string> {
+    if (employeeCode != null && String(employeeCode).trim()) {
+      return { 'X-Employee-Code': String(employeeCode).trim() }
+    }
+    return {}
+  }
+
+  async restoreDocumentSource(id: number, employeeCode?: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/document-source/${id}/restore/`, {
+      method: 'POST',
+      headers: this._employeeHeader(employeeCode),
+    })
+  }
+
+  async bulkRestoreDocumentSource(ids: number[], employeeCode?: string): Promise<ApiResponse<{ restoredIds?: number[] }>> {
+    return this.request(`/document-source/bulk-restore/`, {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+      headers: this._employeeHeader(employeeCode),
+    })
+  }
+
+  async permanentDeleteDocumentSource(id: number, employeeCode?: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/document-source/${id}/permanent/`, {
+      method: 'DELETE',
+      headers: this._employeeHeader(employeeCode),
+    })
+  }
+
+  async bulkPermanentDeleteDocumentSource(ids: number[], employeeCode?: string): Promise<ApiResponse<void>> {
+    return this.request<void>('/document-source/bulk-permanent-delete/', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+      headers: this._employeeHeader(employeeCode),
+    })
+  }
+
   async createDocumentSource(data: Record<string, unknown>): Promise<ApiResponse<any>> {
     return this.request<any>('/document-source/create/', {
       method: 'POST',
@@ -465,36 +517,51 @@ class ApiService {
     })
   }
 
-  async updateDocumentSource(id: number, data: Record<string, unknown>): Promise<ApiResponse<any>> {
+  async updateDocumentSource(
+    id: number,
+    data: Record<string, unknown>,
+    employeeCode?: string
+  ): Promise<ApiResponse<any>> {
     return this.request<any>(`/document-source/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(data),
+      headers: this._employeeHeader(employeeCode),
     })
   }
 
-  async deleteDocumentSource(id: number): Promise<ApiResponse<void>> {
+  async deleteDocumentSource(id: number, employeeCode?: string): Promise<ApiResponse<void>> {
     return this.request<void>(`/document-source/${id}/delete/`, {
       method: 'DELETE',
+      headers: this._employeeHeader(employeeCode),
     })
   }
 
-  async bulkDeleteDocumentSource(ids: number[]): Promise<ApiResponse<void>> {
+  async bulkDeleteDocumentSource(ids: number[], employeeCode?: string): Promise<ApiResponse<void>> {
     return this.request<void>('/document-source/bulk-delete/', {
       method: 'DELETE',
       body: JSON.stringify({ ids }),
+      headers: this._employeeHeader(employeeCode),
     })
   }
 
   /** Upload attachment for a document. Call after document is created/updated. Returns path and filename to store on document. */
-  async uploadDocumentAttachment(documentId: number, file: File): Promise<ApiResponse<{ path: string; filename: string }>> {
+  async uploadDocumentAttachment(
+    documentId: number,
+    file: File,
+    employeeCode?: string
+  ): Promise<ApiResponse<{ path: string; filename: string }>> {
     const form = new FormData()
     form.append('file', file)
     form.append('documentId', String(documentId))
+    const ecHeaders: Record<string, string> = {}
+    if (employeeCode != null && String(employeeCode).trim()) {
+      ecHeaders['X-Employee-Code'] = String(employeeCode).trim()
+    }
     try {
       const response = await fetch(`${API_BASE_URL}/document-source/upload-attachment/`, {
         method: 'POST',
         body: form,
-        headers: {},
+        headers: ecHeaders,
       })
       const text = await response.text()
       let data: any = {}
@@ -518,8 +585,29 @@ class ApiService {
   }
 
   /** Get a signed URL to download/open the document attachment. */
-  async getDocumentAttachmentUrl(documentId: number): Promise<ApiResponse<{ url: string }>> {
-    return this.request<{ url: string }>(`/document-source/${documentId}/attachment-url/`)
+  async getDocumentAttachmentUrl(
+    documentId: number,
+    employeeCode?: string
+  ): Promise<ApiResponse<{ url: string }>> {
+    const ec = employeeCode != null && String(employeeCode).trim() ? String(employeeCode).trim() : ''
+    const qs = ec ? `?employee_code=${encodeURIComponent(ec)}` : ''
+    return this.request<{ url: string }>(`/document-source/${documentId}/attachment-url/${qs}`, {
+      headers: this._employeeHeader(employeeCode),
+    })
+  }
+
+  /**
+   * Inbox: documents routed to this employee (destination action officer) or where they are
+   * internal/external originating employee. Requires X-Employee-Code.
+   */
+  async getInboxDocuments(employeeCode?: string): Promise<ApiResponse<any[]>> {
+    const headers: Record<string, string> = {}
+    if (employeeCode != null && String(employeeCode).trim()) {
+      headers['X-Employee-Code'] = String(employeeCode).trim()
+    }
+    return this.request<any[]>('/inbox/', {
+      ...(Object.keys(headers).length ? { headers } : {}),
+    })
   }
 
   // Document Destination endpoints

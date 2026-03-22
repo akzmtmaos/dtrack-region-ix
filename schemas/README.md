@@ -14,3 +14,17 @@ After running the ALTER script, `document_source` matches the current app schema
 
 - **Existing table with duplicate Route No.:** Run **`ALTER_DOCUMENT_DESTINATION_UNIQUE_ROUTE_NO.sql`** to make Route No. unique (like a primary key).
 - **Sequential Route No. (R2026-000000001, R2026-000000002, …):** Run **`ALTER_DOCUMENT_DESTINATION_ROUTE_NO_SEQUENCE.sql`** to add a sequence and trigger so new rows get a sequential number when `route_no` is sent empty.
+
+## Trash auto-purge (30-day retention)
+
+Documents in Trash are **permanently removed** after **30 days** (configurable) using one of:
+
+1. **Django (recommended):** On the server that runs the backend, schedule daily:
+   ```bash
+   python manage.py purge_trash
+   ```
+   Optional: `TRASH_RETENTION_DAYS=30` in `.env` (default 30).
+
+2. **HTTP (optional):** `POST /api/document-source/purge-expired-trash/` with header `X-Trash-Purge-Secret: <value>` matching `TRASH_PURGE_SECRET` in `.env`. Requires `TRASH_PURGE_SECRET` to be set.
+
+3. **Supabase only:** Run **`purge_expired_trash.sql`** in SQL Editor to create `purge_expired_trash(days)`. Optionally schedule with **`pg_cron`** (see comments in that file).

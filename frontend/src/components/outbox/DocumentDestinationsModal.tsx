@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
 import { apiService } from '../../services/api'
+import { triggerBrowserDownload } from '../../utils/triggerDownload'
 import Button from '../Button'
 
 export interface DocumentSource {
@@ -18,6 +20,7 @@ export interface DocumentSource {
   attachedDocumentFilename: string
   attachmentList: string
   userid: string
+  currentCustodian?: string
   inSequence: string
   remarks: string
 }
@@ -62,6 +65,8 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
   onDeleteDestinations
 }) => {
   const { theme } = useTheme()
+  const { user } = useAuth()
+  const employeeCodeHeader = user?.employeeCode?.trim() || undefined
   const [selectedDestinationIds, setSelectedDestinationIds] = useState<number[]>([])
   const [attachmentLoading, setAttachmentLoading] = useState(false)
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
@@ -72,26 +77,18 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
     if (!document?.id) return
     setAttachmentLoading(true)
     setAttachmentError(null)
-    const res = await apiService.getDocumentAttachmentUrl(document.id)
-    setAttachmentLoading(false)
-    const url = (res as { url?: string }).url
-    if (res.success && url) {
-      try {
-        const response = await fetch(url)
-        const blob = await response.blob()
-        const objectUrl = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = objectUrl
-        a.download = document.attachedDocumentFilename?.trim() || 'attachment'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(objectUrl)
-      } catch {
-        setAttachmentError('Download failed')
+    try {
+      const res = await apiService.getDocumentAttachmentUrl(document.id, employeeCodeHeader)
+      const url = typeof res === 'object' && res && 'url' in res ? (res as { url?: string }).url : undefined
+      if (res.success && url) {
+        triggerBrowserDownload(url, document.attachedDocumentFilename?.trim() || 'attachment')
+      } else {
+        setAttachmentError(res.error || 'Could not get download link')
       }
-    } else {
-      setAttachmentError(res.error || 'Could not get download link')
+    } catch (e) {
+      setAttachmentError(e instanceof Error ? e.message : 'Download failed')
+    } finally {
+      setAttachmentLoading(false)
     }
   }
 

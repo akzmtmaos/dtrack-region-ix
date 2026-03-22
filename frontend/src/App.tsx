@@ -12,7 +12,9 @@ import AdminOnlyRoute from './components/AdminOnlyRoute'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Logout from './pages/Logout'
+import Home from './pages/Home'
 import Outbox from './pages/Outbox'
+import Trash from './pages/Trash'
 import Inbox from './pages/Inbox'
 import Reports from './pages/Reports'
 // reference tables stuff
@@ -90,7 +92,9 @@ function AppContent() {
               >
                 <Routes>
                   {/* main routes */}
-                  <Route path="/" element={<Outbox />} />
+                  <Route path="/" element={<Home />} />
+                  <Route path="/outbox" element={<Outbox />} />
+                  <Route path="/trash" element={<Trash />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/registered-users" element={<AdminOnlyRoute><RegisteredUsers /></AdminOnlyRoute>} />

@@ -78,3 +78,19 @@ code {
   animation: tooltip-enter 0.15s ease-out forwards;
 }
 
+/* Toast enter (bottom-right stack) */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-animate-in {
+  animation: toast-enter 0.2s ease-out forwards;
+}
+

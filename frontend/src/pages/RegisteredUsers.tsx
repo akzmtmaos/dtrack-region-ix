@@ -4,6 +4,7 @@ import { apiService } from '../services/api'
 import { usePagination } from '../hooks/usePagination'
 import Input from '../components/Input'
 import SearchableSelect from '../components/SearchableSelect'
+import { useToast } from '../context/ToastContext'
 
 interface RegisteredUser {
   id: number | string
@@ -20,6 +21,7 @@ interface RegisteredUser {
 
 const RegisteredUsers: React.FC = () => {
   const { theme } = useTheme()
+  const { showSuccess, showError } = useToast()
   const [users, setUsers] = useState<RegisteredUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -223,11 +225,15 @@ const RegisteredUsers: React.FC = () => {
         officeRepresentative: addOfficeRepresentative.trim() || undefined,
       })
       if (!res.success) {
-        setAddError(res.error || 'Failed to create user')
+        const msg = res.error || 'Failed to create user'
+        setAddError(msg)
+        showError(msg)
         return
       }
 
-      setAddSuccessMessage('User created successfully. Approve the account to enable sign in.')
+      const okMsg = 'User created successfully. Approve the account to enable sign in.'
+      setAddSuccessMessage(okMsg)
+      showSuccess(okMsg)
       // Refresh list so the new user appears
       await fetchUsers()
 
@@ -242,7 +248,9 @@ const RegisteredUsers: React.FC = () => {
       setAddUserLevel('')
       setAddOfficeRepresentative('')
     } catch {
-      setAddError('An error occurred while creating the user')
+      const msg = 'An error occurred while creating the user'
+      setAddError(msg)
+      showError(msg)
     } finally {
       setIsAdding(false)
     }
@@ -316,10 +324,14 @@ const RegisteredUsers: React.FC = () => {
 
       const res = await apiService.updateUser(Number(editingUser.id), payload)
       if (!res.success) {
-        setEditError(res.error || 'Failed to update user')
+        const msg = res.error || 'Failed to update user'
+        setEditError(msg)
+        showError(msg)
         return
       }
-      setEditSuccessMessage('User updated successfully.')
+      const okMsg = 'User updated successfully.'
+      setEditSuccessMessage(okMsg)
+      showSuccess(okMsg)
       await fetchUsers()
       setEditPassword('')
       setEditConfirmPassword('')
@@ -644,7 +656,7 @@ const RegisteredUsers: React.FC = () => {
                               type="button"
                               title="Edit user"
                               onClick={() => openEditModal(user)}
-                              className="p-1.5 rounded border border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-50 inline-flex items-center justify-center"
+                              className="p-1.5 rounded border inline-flex items-center justify-center disabled:opacity-50 bg-[#3ecf8e] text-white border-[#3ecf8e] hover:brightness-95 active:brightness-90 shadow-sm"
                             >
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -660,12 +672,17 @@ const RegisteredUsers: React.FC = () => {
                                 setApprovingId(user.id)
                                 try {
                                   const res = await apiService.updateUser(Number(user.id), { verified: true })
-                                  if (res.success) await fetchUsers()
+                                  if (res.success) {
+                                    showSuccess('User approved')
+                                    await fetchUsers()
+                                  } else {
+                                    showError(res.error || 'Could not approve user')
+                                  }
                                 } finally {
                                   setApprovingId(null)
                                 }
                               }}
-                              className="p-1.5 rounded border border-green-600 text-green-600 hover:bg-green-50 disabled:opacity-50 inline-flex items-center justify-center"
+                              className="p-1.5 rounded border inline-flex items-center justify-center disabled:opacity-50 bg-[#3ecf8e] text-white border-[#3ecf8e] hover:brightness-95 active:brightness-90 shadow-sm"
                             >
                               {approvingId === user.id ? (
                                 <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden>

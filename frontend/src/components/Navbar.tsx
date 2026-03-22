@@ -164,11 +164,25 @@ const Navbar: React.FC = () => {
           <div className="flex-1 overflow-y-auto py-2 px-1.5 min-h-0">
             <div className="flex flex-col gap-0.5">
               
-              {/* Outbox */}
+              {/* Home */}
               <Link 
                 to="/" 
                 className={navItemClass(isActive('/'))}
-                style={navItemStyle(isActive('/'), 'outbox')}
+                style={navItemStyle(isActive('/'), 'home')}
+                onMouseEnter={() => setHoveredItem('home')}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5.25a.75.75 0 01-.75-.75V15a1 1 0 00-1-1H11a1 1 0 00-1 1v5.25a.75.75 0 01-.75.75H4a1 1 0 01-1-1v-9.5z" />
+                </svg>
+                {showExpanded && <span>Home</span>}
+              </Link>
+
+              {/* Outbox */}
+              <Link 
+                to="/outbox" 
+                className={navItemClass(isActive('/outbox'))}
+                style={navItemStyle(isActive('/outbox'), 'outbox')}
                 onMouseEnter={() => setHoveredItem('outbox')}
                 onMouseLeave={() => setHoveredItem(null)}
               >
@@ -294,9 +308,22 @@ const Navbar: React.FC = () => {
                 </div>
               )}
             </div>
-            
-              {/* Separator */}
+
+              {/* Under Reports: separator, then Trash, then Log out */}
               <div className="my-2" style={{ borderTop: `1px solid ${colors.border}` }} />
+
+              <Link
+                to="/trash"
+                className={navItemClass(isActive('/trash'))}
+                style={navItemStyle(isActive('/trash'), 'trash')}
+                onMouseEnter={() => setHoveredItem('trash')}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                {showExpanded && <span>Trash</span>}
+              </Link>
 
               {/* Registered Users – hidden for End-User */}
               {!isEndUser && (

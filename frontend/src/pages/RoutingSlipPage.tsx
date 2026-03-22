@@ -168,15 +168,14 @@ const RoutingSlipPage: React.FC = () => {
               <span>Revision No.</span>
               <span>Effectivity: {new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
+            <p className="text-[13px] font-medium mt-2 text-center">DTRAK 4.0</p>
           </div>
           <div className="w-24 flex-shrink-0" />
         </div>
 
-        {/* DTRAK 4.0 | ROUTING SLIP (text size matches Navbar: 13px) */}
-        <div className="flex justify-between items-center border-b border-black pb-2 mb-4">
-          <span className="text-[13px] font-medium">DTRAK 4.0</span>
+        {/* ROUTING SLIP label (text size matches Navbar: 13px); DTRAK 4.0 is centered under Revision / Effectivity above */}
+        <div className="flex justify-center items-center border-b border-black pb-2 mb-4">
           <span className="text-[13px] font-bold uppercase">Routing Slip</span>
-          <span className="text-[13px]" />
         </div>
 
         {/* Auto-generated barcode (CODE128) from Document Control No. */}
