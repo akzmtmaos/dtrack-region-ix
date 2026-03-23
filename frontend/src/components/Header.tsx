@@ -1,12 +1,13 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useNavbar } from '../context/NavbarContext'
+import ProfileModal from './ProfileModal'
 import logo from '../assets/doh-logo.png'
 
 const Header: React.FC = () => {
   const { user } = useAuth()
+  const [profileOpen, setProfileOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { toggleMobileNavbar } = useNavbar()
 
@@ -53,7 +54,7 @@ const Header: React.FC = () => {
             </div>
           </div>
           
-          {/* Right Section: User Info + Theme Toggle + Logout */}
+          {/* Right Section: User Info + Theme Toggle + Profile */}
           <div className="flex items-center space-x-3 flex-shrink-0">
             {user && (
               <div className="hidden md:flex items-center space-x-3 text-white">
@@ -88,10 +89,11 @@ const Header: React.FC = () => {
                 </svg>
               )}
             </button>
-            <Link 
-              to="/logout"
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
               className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-              title="Logout"
+              title="Profile"
             >
               <svg 
                 className="w-6 h-6 text-white" 
@@ -101,10 +103,11 @@ const Header: React.FC = () => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </header>
   )
 }

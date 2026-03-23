@@ -223,7 +223,7 @@ const Outbox: React.FC = () => {
         }
       }
       showSuccess('Document created')
-      setDocuments((prev) => [...prev, newDocument])
+      setDocuments((prev) => [newDocument, ...prev])
       setDocumentForDestinations(newDocument)
       setDestinationsByDocumentId((prev) => ({ ...prev, [newDocument.id]: [] }))
       setIsAddModalOpen(false)

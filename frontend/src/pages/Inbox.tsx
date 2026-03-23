@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import type { User } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Pagination from '../components/Pagination'
 import Input from '../components/Input'
@@ -59,6 +60,21 @@ function docToView(d: Record<string, unknown>): DocumentView {
 }
 
 const ITEMS_PER_PAGE = 10
+
+/** Same pattern as Add Destination / Routing Slip: "First M. Last (CODE)" for identity matching. */
+function formatNameWithEmployeeCode(u: User | null): string {
+  if (!u) return ''
+  const code = (u.employeeCode || '').trim()
+  const fn = (u.firstName || '').trim()
+  const mn = (u.middleName || '').trim()
+  const ln = (u.lastName || '').trim()
+  const mid = mn && mn !== '-' ? mn : ''
+  const parts = [fn, mid, ln].filter((p) => p.length > 0)
+  let name = parts.length > 0 ? parts.join(' ') : ''
+  if (!name) name = (u.fullName || '').trim()
+  if (!name) return code
+  return code ? `${name} (${code})` : name
+}
 
 const Inbox: React.FC = () => {
   const { theme } = useTheme()
@@ -151,10 +167,11 @@ const Inbox: React.FC = () => {
     const ss = String(now.getSeconds()).padStart(2, '0')
     const timeReceived = `${hh}:${mm}:${ss}`
     setReceivingId(destinationId)
+    const receivedBy = formatNameWithEmployeeCode(user) || employeeCode
     const res = await apiService.updateDocumentDestination(destinationId, {
       dateReceived: ymd,
       timeReceived,
-      employeeActionOfficer: employeeCode,
+      employeeActionOfficer: receivedBy,
     })
     setReceivingId(null)
     if (!res.success) {
@@ -234,52 +251,91 @@ const Inbox: React.FC = () => {
         >
           <thead className={theme === 'dark' ? 'bg-dark-hover/60' : 'bg-gray-50'}>
             <tr>
-              <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
                 Document Control No.
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-              }`}>
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
                 Route No.
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-              }`}>
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
                 Subject
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-              }`}>
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
                 Document Type
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-              }`}>
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
                 Received
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-              }`}>
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
                 Action Required
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
-              }`}>
-                Option
+              <th
+                className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
+                Actions
               </th>
             </tr>
           </thead>
-          <tbody className={`divide-y ${
-            theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
-          }`}>
+          <tbody
+            className={`divide-y ${
+              theme === 'dark' ? 'bg-dark-panel divide-[#4a4b4c]' : 'bg-white divide-gray-200'
+            }`}
+          >
             {pageRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className={`px-6 py-8 text-center text-sm ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-500'
-                }`}>
-                  No documents found
+                <td
+                  colSpan={7}
+                  className={`px-4 py-12 text-center ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <svg
+                      className={`w-16 h-16 mb-4 ${
+                        theme === 'dark' ? 'text-gray-600' : 'text-gray-300'
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 8h6M9 12h6M9 16h4" />
+                    </svg>
+                    <p className="text-base font-medium mb-1">No documents found</p>
+                    <p className="text-sm">Documents routed to you will appear here.</p>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -293,44 +349,59 @@ const Inbox: React.FC = () => {
                 const subject = String(doc.subject ?? '')
                 const docType = String(doc.documentType ?? '')
                 const actionReq = dest ? String(dest.actionRequired ?? '') : '—'
+                const rowHoverCell =
+                  theme === 'dark'
+                    ? 'transition-colors duration-150 group-hover:bg-dark-hover/70 group-active:bg-dark-hover'
+                    : 'transition-colors duration-150 group-hover:bg-gray-100 group-active:bg-gray-200'
                 return (
-                  <tr
-                    key={String(r.id)}
-                    className={`transition-colors ${
-                      theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                      theme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {controlNo}
+                  <tr key={String(r.id)} className="group">
+                    <td
+                      className={`px-4 py-2 whitespace-nowrap text-xs font-semibold ${rowHoverCell} ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      {controlNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 text-sm ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {routeNo || '—'}
+                    <td
+                      className={`px-4 py-2 whitespace-nowrap text-xs ${rowHoverCell} ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      {routeNo || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 text-sm max-w-xs truncate ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`} title={subject}>
-                      {subject}
+                    <td
+                      className={`px-4 py-2 text-xs max-w-xs ${rowHoverCell} ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      <div className="truncate" title={subject || undefined}>
+                        {subject.trim() ? subject : <span className="text-gray-500 italic">—</span>}
+                      </div>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {docType}
+                    <td
+                      className={`px-4 py-2 whitespace-nowrap text-xs text-left ${rowHoverCell} ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      {docType || <span className="text-gray-500 italic">—</span>}
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <td
+                      className={`px-4 py-2 whitespace-nowrap text-xs ${rowHoverCell} ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       {formatReceived(r)}
                     </td>
-                    <td className={`px-6 py-4 text-sm max-w-[12rem] truncate ${
-                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                    }`} title={actionReq}>
-                      {actionReq}
+                    <td
+                      className={`px-4 py-2 text-xs max-w-xs ${rowHoverCell} ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      <div className="truncate max-w-[12rem]" title={actionReq !== '—' ? actionReq : undefined}>
+                        {actionReq}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className={`px-4 py-2 whitespace-nowrap ${rowHoverCell}`}>
                       <div className="flex items-center gap-2">
                         {r.inboxType === 'destination' &&
                           dest &&
@@ -359,7 +430,7 @@ const Inbox: React.FC = () => {
                           title="View"
                           onClick={() => setDetailDoc(docToView(doc as Record<string, unknown>))}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>

@@ -14,7 +14,7 @@ urlpatterns = [
 
     # Users (registered accounts – list, update e.g. approve)
     path('users/', users.users_list, name='users-list'),
-    path('users/<int:item_id>/', users.users_update, name='users-update'),
+    path('users/<str:item_id>/', users.users_update, name='users-update'),
 
     # Action Required endpoints
     path('action-required/', action_required.action_required_list, name='action-required-list'),

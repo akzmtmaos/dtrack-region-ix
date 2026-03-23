@@ -5,6 +5,7 @@ import { usePagination } from '../hooks/usePagination'
 import Input from '../components/Input'
 import SearchableSelect from '../components/SearchableSelect'
 import { useToast } from '../context/ToastContext'
+import { EMPLOYEE_CODE_MAX_LENGTH } from '../constants/user'
 
 interface RegisteredUser {
   id: number | string
@@ -262,7 +263,7 @@ const RegisteredUsers: React.FC = () => {
     setEditFirstName(user.firstName || '')
     setEditLastName(user.lastName || '')
     setEditMiddleName(user.middleName || '')
-    setEditEmployeeCode(user.employeeCode || '')
+    setEditEmployeeCode((user.employeeCode || '').slice(0, EMPLOYEE_CODE_MAX_LENGTH))
     setEditOffice(user.office || '')
     setEditUserLevel(user.userLevel || '')
     setEditOfficeRepresentative(user.officeRepresentative || '')
@@ -869,7 +870,8 @@ const RegisteredUsers: React.FC = () => {
                         <input
                           type="text"
                           value={addEmployeeCode}
-                          onChange={(e) => setAddEmployeeCode(e.target.value)}
+                          onChange={(e) => setAddEmployeeCode(e.target.value.slice(0, EMPLOYEE_CODE_MAX_LENGTH))}
+                          maxLength={EMPLOYEE_CODE_MAX_LENGTH}
                           className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                           style={{ backgroundColor: modalInputBg, border: `1px solid ${modalInputBorder}`, color: modalTextPrimary }}
                         />
@@ -1087,7 +1089,8 @@ const RegisteredUsers: React.FC = () => {
                   <input
                     type="text"
                     value={editEmployeeCode}
-                    onChange={(e) => setEditEmployeeCode(e.target.value)}
+                    onChange={(e) => setEditEmployeeCode(e.target.value.slice(0, EMPLOYEE_CODE_MAX_LENGTH))}
+                    maxLength={EMPLOYEE_CODE_MAX_LENGTH}
                     className="w-full px-2 py-1 rounded border"
                     style={{ borderColor: inputBorder, backgroundColor: inputBg, color: textPrimary }}
                   />

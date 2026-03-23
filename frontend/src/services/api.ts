@@ -102,10 +102,10 @@ class ApiService {
   }
 
   async updateUser(
-    id: number,
+    id: number | string,
     data: { verified?: boolean; [key: string]: any }
   ): Promise<ApiResponse<any>> {
-    return this.request<any>(`/users/${id}/`, {
+    return this.request<any>(`/users/${encodeURIComponent(String(id))}/`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })

@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
 from ..supabase_client import get_supabase_admin_client
+from .auth import _profile_to_user, _row_to_user
 
 logger = logging.getLogger(__name__)
 
@@ -82,48 +83,107 @@ def users_list(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def _users_update_dict_from_request(request):
+    """Fields for `users` table (app registrations)."""
+    update_data = {}
+    if 'verified' in request.data:
+        update_data['verified'] = bool(request.data.get('verified'))
+    if 'employeeCode' in request.data:
+        update_data['employee_code'] = request.data.get('employeeCode')
+    if 'lastName' in request.data:
+        update_data['last_name'] = request.data.get('lastName')
+    if 'firstName' in request.data:
+        update_data['first_name'] = request.data.get('firstName')
+    if 'middleName' in request.data:
+        update_data['middle_name'] = request.data.get('middleName')
+    if 'office' in request.data:
+        office = request.data.get('office')
+        update_data['office'] = office if office else None
+    if 'userPassword' in request.data and request.data.get('userPassword'):
+        update_data['user_password'] = make_password(request.data.get('userPassword'))
+    if 'userLevel' in request.data:
+        update_data['user_level'] = request.data.get('userLevel')
+    if 'officeRepresentative' in request.data:
+        office_rep = request.data.get('officeRepresentative')
+        update_data['office_representative'] = office_rep if office_rep else None
+    return update_data
+
+
+def _profiles_update_dict_from_request(request):
+    """Fields for `profiles` table (Supabase Auth); uses full_name instead of split names."""
+    prof_update = {}
+    if 'employeeCode' in request.data:
+        prof_update['employee_code'] = request.data.get('employeeCode')
+    if 'office' in request.data:
+        office = request.data.get('office')
+        prof_update['office'] = office if office else None
+    if 'userLevel' in request.data:
+        prof_update['user_level'] = request.data.get('userLevel')
+    if 'officeRepresentative' in request.data:
+        office_rep = request.data.get('officeRepresentative')
+        prof_update['office_representative'] = office_rep if office_rep else None
+    if any(k in request.data for k in ['firstName', 'lastName', 'middleName']):
+        ln = (request.data.get('lastName') or '').strip()
+        fn = (request.data.get('firstName') or '').strip()
+        mn = (request.data.get('middleName') or '').strip()
+        mid = ''
+        if mn and mn != '-':
+            mid = f' {mn}'
+        prof_update['full_name'] = f"{ln}, {fn}{mid}".strip()
+    return prof_update
+
+
 @api_view(['PUT', 'PATCH'])
 @permission_classes([AllowAny])
 def users_update(request, item_id):
-    """Update a user (e.g. set verified=true for approval)."""
+    """Update a user in `users` (int id) or `profiles` (UUID string). Returns unified camelCase `user`."""
     try:
         supabase = get_supabase_admin_client()
-        update_data = {}
+        item_id_str = str(item_id).strip()
+        if not item_id_str:
+            return Response({
+                'success': False,
+                'error': 'Invalid id'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        if 'verified' in request.data:
-            update_data['verified'] = bool(request.data.get('verified'))
-        if 'employeeCode' in request.data:
-            update_data['employee_code'] = request.data.get('employeeCode')
-        if 'lastName' in request.data:
-            update_data['last_name'] = request.data.get('lastName')
-        if 'firstName' in request.data:
-            update_data['first_name'] = request.data.get('firstName')
-        if 'middleName' in request.data:
-            update_data['middle_name'] = request.data.get('middleName')
-        if 'office' in request.data:
-            office = request.data.get('office')
-            update_data['office'] = office if office else None
-        if 'userPassword' in request.data and request.data.get('userPassword'):
-            update_data['user_password'] = make_password(request.data.get('userPassword'))
-        if 'userLevel' in request.data:
-            update_data['user_level'] = request.data.get('userLevel')
-        if 'officeRepresentative' in request.data:
-            office_rep = request.data.get('officeRepresentative')
-            update_data['office_representative'] = office_rep if office_rep else None
+        users_update_data = _users_update_dict_from_request(request)
+        prof_update_data = _profiles_update_dict_from_request(request)
 
-        if not update_data:
+        if not users_update_data and not prof_update_data:
             return Response({
                 'success': False,
                 'error': 'No data provided for update'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        response = supabase.table('users').update(update_data).eq('id', item_id).execute()
+        try:
+            uid_int = int(item_id_str)
+        except ValueError:
+            uid_int = None
 
-        if response.data:
-            return Response({
-                'success': True,
-                'data': response.data[0] if isinstance(response.data, list) else response.data
-            }, status=status.HTTP_200_OK)
+        # 1) App registrations (integer id on `users`)
+        if uid_int is not None and users_update_data:
+            response = supabase.table('users').update(users_update_data).eq('id', uid_int).execute()
+            if response.data:
+                row = response.data[0] if isinstance(response.data, list) else response.data
+                user_obj = _row_to_user(row)
+                if user_obj:
+                    return Response({
+                        'success': True,
+                        'user': user_obj
+                    }, status=status.HTTP_200_OK)
+
+        # 2) Supabase Auth profiles (non-integer id, typically UUID)
+        if uid_int is None and prof_update_data:
+            response = supabase.table('profiles').update(prof_update_data).eq('id', item_id_str).execute()
+            if response.data:
+                row = response.data[0] if isinstance(response.data, list) else response.data
+                user_obj = _profile_to_user(row)
+                if user_obj:
+                    return Response({
+                        'success': True,
+                        'user': user_obj
+                    }, status=status.HTTP_200_OK)
+
         return Response({
             'success': False,
             'error': 'User not found or update failed'

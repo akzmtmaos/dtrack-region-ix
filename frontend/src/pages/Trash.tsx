@@ -6,7 +6,6 @@ import { apiService } from '../services/api'
 import Table from '../components/Table'
 import Pagination from '../components/Pagination'
 import Button from '../components/Button'
-import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import { TRASH_RETENTION_DAYS, formatDaysLeftLabel } from '../constants/trash'
 
 interface TrashDocument {
@@ -58,9 +57,6 @@ const Trash: React.FC = () => {
   const [selected, setSelected] = useState<number[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
-  const [permModalOpen, setPermModalOpen] = useState(false)
-  const [permBulk, setPermBulk] = useState(false)
-  const [permId, setPermId] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
 
   const level = (user?.userLevel ?? '').toLowerCase()
@@ -140,52 +136,6 @@ const Trash: React.FC = () => {
     }
   }
 
-  const openPermanentSingle = (id: number) => {
-    setPermBulk(false)
-    setPermId(id)
-    setPermModalOpen(true)
-  }
-
-  const openPermanentBulk = () => {
-    if (selected.length === 0) return
-    setPermBulk(true)
-    setPermId(null)
-    setPermModalOpen(true)
-  }
-
-  const confirmPermanent = () => {
-    void (async () => {
-      setBusy(true)
-      if (permBulk && selected.length > 0) {
-        const res = await apiService.bulkPermanentDeleteDocumentSource(selected, employeeCode)
-        setBusy(false)
-        if (res.success) {
-          showSuccess('Document(s) permanently deleted')
-          setSelected([])
-          fetchTrash()
-        } else {
-          const msg = res.error || 'Delete failed'
-          setError(msg)
-          showError(msg)
-        }
-        return
-      }
-      if (permId != null) {
-        const res = await apiService.permanentDeleteDocumentSource(permId, employeeCode)
-        setBusy(false)
-        if (res.success) {
-          showSuccess('Document permanently deleted')
-          setItems((prev) => prev.filter((d) => d.id !== permId))
-          setSelected((prev) => prev.filter((x) => x !== permId))
-        } else {
-          const msg = res.error || 'Delete failed'
-          setError(msg)
-          showError(msg)
-        }
-      }
-    })()
-  }
-
   const textPrimary = theme === 'dark' ? '#e5e7eb' : '#111827'
   const textSecondary = theme === 'dark' ? '#9ca3af' : '#6b7280'
 
@@ -230,13 +180,6 @@ const Trash: React.FC = () => {
           >
             Restore{selected.length > 0 ? ` (${selected.length})` : ''}
           </Button>
-          <Button
-            variant="danger"
-            disabled={selected.length === 0 || busy}
-            onClick={openPermanentBulk}
-          >
-            Delete{selected.length > 0 ? ` (${selected.length})` : ''}
-          </Button>
         </div>
       </div>
 
@@ -270,6 +213,7 @@ const Trash: React.FC = () => {
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Subject</th>
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Type</th>
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Deleted</th>
+            <th className={`px-4 py-2 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Days left</th>
             <th className={`px-4 py-2 text-left text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Actions</th>
           </tr>
         </thead>
@@ -307,56 +251,28 @@ const Trash: React.FC = () => {
                 <td className="px-4 py-2 text-xs whitespace-nowrap" style={{ color: textSecondary }}>
                   {formatDeleted(doc.deletedAt)}
                 </td>
-                <td className="px-4 py-2 text-xs whitespace-nowrap tabular-nums" title={`Permanent delete after ${TRASH_RETENTION_DAYS} days in Trash`}>
+                <td className="px-4 py-2 text-xs whitespace-nowrap tabular-nums" title={`Auto-removed after ${TRASH_RETENTION_DAYS} days in Trash`}>
                   <DaysLeftCell deletedAt={doc.deletedAt} textPrimary={textPrimary} textSecondary={textSecondary} theme={theme} />
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => handleRestore(doc.id)}
-                      title="Restore"
-                      aria-label="Restore"
-                      className="inline-flex items-center justify-center p-1.5 rounded-md bg-[#3ecf8e] text-white hover:opacity-90 disabled:opacity-50"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => openPermanentSingle(doc.id)}
-                      title="Delete permanently"
-                      aria-label="Delete permanently"
-                      className="inline-flex items-center justify-center p-1.5 rounded-md border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleRestore(doc.id)}
+                    title="Restore"
+                    aria-label="Restore"
+                    className="inline-flex items-center justify-center p-1.5 rounded-md bg-[#3ecf8e] text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                  </button>
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </Table>
-
-      <DeleteConfirmationModal
-        isOpen={permModalOpen}
-        onClose={() => setPermModalOpen(false)}
-        onConfirm={confirmPermanent}
-        title="Delete?"
-        message={
-          permBulk
-            ? 'Removes destinations first. Cannot undo.'
-            : 'Removes linked destinations. Cannot undo.'
-        }
-        isBulk={permBulk}
-        count={permBulk ? selected.length : 1}
-      />
     </div>
   )
 }

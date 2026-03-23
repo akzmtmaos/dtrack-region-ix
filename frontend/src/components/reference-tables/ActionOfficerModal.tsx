@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import SearchableSelect from '../SearchableSelect'
 import { apiService } from '../../services/api'
+import { EMPLOYEE_CODE_MAX_LENGTH } from '../../constants/user'
 
 interface ActionOfficerModalProps {
   isOpen: boolean
@@ -69,7 +70,7 @@ const ActionOfficerModal: React.FC<ActionOfficerModalProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        employeeCode: initialData.employeeCode || '',
+        employeeCode: (initialData.employeeCode || '').slice(0, EMPLOYEE_CODE_MAX_LENGTH),
         lastName: initialData.lastName || '',
         firstName: initialData.firstName || '',
         middleName: initialData.middleName || '',
@@ -97,9 +98,11 @@ const ActionOfficerModal: React.FC<ActionOfficerModalProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+    const next =
+      name === 'employeeCode' ? value.slice(0, EMPLOYEE_CODE_MAX_LENGTH) : value
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: next
     }))
     if (errors[name]) {
       setErrors(prev => ({
@@ -226,6 +229,7 @@ const ActionOfficerModal: React.FC<ActionOfficerModalProps> = ({
                     name="employeeCode"
                     value={formData.employeeCode}
                     onChange={handleChange}
+                    maxLength={EMPLOYEE_CODE_MAX_LENGTH}
                     placeholder="Enter employee code"
                     className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                     style={{

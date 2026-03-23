@@ -26,6 +26,7 @@ def _row_to_user(row):
         'office': row.get('office') or '',
         'userLevel': row.get('user_level') or '',
         'officeRepresentative': row.get('office_representative') or '',
+        'source': 'users',
     }
 
 
@@ -43,6 +44,7 @@ def _profile_to_user(profile_row):
         'office': profile_row.get('office') or '',
         'userLevel': profile_row.get('user_level') or '',
         'officeRepresentative': profile_row.get('office_representative') or '',
+        'source': 'profiles',
     }
 
 

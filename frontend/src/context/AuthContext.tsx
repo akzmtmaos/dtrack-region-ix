@@ -3,7 +3,7 @@ import { apiService } from '../services/api'
 
 const STORAGE_KEY = 'doh_user'
 
-interface User {
+export interface User {
   id: string | number
   username?: string
   email?: string
@@ -15,6 +15,8 @@ interface User {
   userLevel?: string
   office?: string
   officeRepresentative?: string
+  /** `users` = app registration; `profiles` = Supabase Auth (e.g. admin) */
+  source?: 'users' | 'profiles'
 }
 
 interface AuthContextType {
@@ -23,6 +25,8 @@ interface AuthContextType {
   logout: () => Promise<void>
   user: User | null
   loading: boolean
+  /** Merge session after profile PATCH (camelCase user from API). */
+  syncUserFromBackend: (backendUser: Record<string, unknown>) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,6 +37,7 @@ function backendUserToAppUser(backendUser: Record<string, unknown>): User {
   const lastName = (backendUser.lastName ?? backendUser.last_name ?? '') as string
   const middleName = (backendUser.middleName ?? backendUser.middle_name ?? '') as string
   const fullName = [lastName, firstName, middleName].filter(Boolean).join(', ')
+  const src = backendUser.source as User['source'] | undefined
   return {
     id,
     username: (backendUser.employeeCode ?? backendUser.employee_code ?? '') as string,
@@ -44,6 +49,7 @@ function backendUserToAppUser(backendUser: Record<string, unknown>): User {
     userLevel: (backendUser.userLevel ?? backendUser.user_level ?? '') as string,
     office: (backendUser.office ?? '') as string,
     officeRepresentative: (backendUser.officeRepresentative ?? backendUser.office_representative ?? '') as string,
+    source: src,
   }
 }
 
@@ -87,6 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(STORAGE_KEY)
   }
 
+  const syncUserFromBackend = (backendUser: Record<string, unknown>) => {
+    const appUser = backendUserToAppUser(backendUser)
+    setUser(appUser)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appUser))
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -95,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         user,
         loading,
+        syncUserFromBackend,
       }}
     >
       {children}

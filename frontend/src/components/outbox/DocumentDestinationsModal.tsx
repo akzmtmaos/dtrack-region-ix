@@ -71,7 +71,8 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
   const [attachmentLoading, setAttachmentLoading] = useState(false)
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
 
-  const hasAttachment = !!(document?.attachedDocumentFilename?.trim() || document?.attachmentList?.trim())
+  const hasStoragePath = !!(document?.attachmentList?.trim())
+  const showsAttachmentFilename = !!(document?.attachedDocumentFilename?.trim())
 
   const handleDownloadAttachment = async () => {
     if (!document?.id) return
@@ -195,24 +196,30 @@ const DocumentDestinationsModal: React.FC<DocumentDestinationsModalProps> = ({
               <label className="font-medium whitespace-nowrap" style={{ color: textPrimary, width: '200px' }}>Attached Document Filename</label>
               <div className="flex-1 flex items-center gap-2 min-w-0">
                 <Value>{document.attachedDocumentFilename}</Value>
-                {hasAttachment && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleDownloadAttachment}
-                      disabled={attachmentLoading}
-                      className="flex-shrink-0 inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50"
-                      style={{ color: '#ffffff', backgroundColor: '#3ecf8e' }}
-                      onMouseEnter={(e) => { if (!attachmentLoading) e.currentTarget.style.backgroundColor = '#35b87a' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3ecf8e' }}
-                    >
-                      {attachmentLoading ? 'Downloading…' : 'Download'}
-                    </button>
-                  </>
+                {hasStoragePath && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadAttachment}
+                    disabled={attachmentLoading}
+                    className="flex-shrink-0 inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+                    style={{ color: '#ffffff', backgroundColor: '#3ecf8e' }}
+                    onMouseEnter={(e) => { if (!attachmentLoading) e.currentTarget.style.backgroundColor = '#35b87a' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3ecf8e' }}
+                  >
+                    {attachmentLoading ? 'Downloading…' : 'Download'}
+                  </button>
                 )}
               </div>
             </div>
-            {hasAttachment && attachmentError && (
+            {showsAttachmentFilename && !hasStoragePath && (
+              <div className="flex items-start gap-3">
+                <div style={{ width: '200px' }} />
+                <p className="text-[11px] leading-snug flex-1" style={{ color: textSecondary }}>
+                  A filename is shown, but no file path is stored. Edit the document in Outbox and attach the file again.
+                </p>
+              </div>
+            )}
+            {attachmentError && (
               <div className="flex items-center gap-3">
                 <div style={{ width: '200px' }} />
                 <span className="text-xs" style={{ color: '#ef4444' }}>{attachmentError}</span>

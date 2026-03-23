@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
+import type { User } from '../../context/AuthContext'
 import { apiService } from '../../services/api'
 import SearchableSelect from '../SearchableSelect'
 
@@ -30,64 +32,31 @@ interface AddDocumentModalProps {
   onUpdate?: (document: any, pendingFile?: File | null) => void
 }
 
-/** User row from GET /users/ — used to filter by office for originating employee dropdowns */
-interface OutboxUserRow {
-  id: number | string
-  employeeCode: string
-  firstName: string
-  lastName: string
-  middleName: string
-  office: string
-}
-
-function normalizeOfficeName(s: string): string {
-  return (s || '').trim().toLowerCase()
-}
-
-function formatUserDisplayName(u: Pick<OutboxUserRow, 'firstName' | 'lastName' | 'middleName' | 'employeeCode'>): string {
-  const mid = u.middleName && u.middleName !== '-' ? ` ${u.middleName}` : ''
-  const name = `${u.lastName}, ${u.firstName}${mid}`.trim()
-  if (name.replace(/[, ]/g, '')) return name
-  return u.employeeCode || ''
-}
-
-function mapApiUserToRow(item: any): OutboxUserRow {
-  return {
-    id: item.id,
-    employeeCode: String(item.employee_code ?? ''),
-    firstName: String(item.first_name ?? ''),
-    lastName: String(item.last_name ?? ''),
-    middleName: String(item.middle_name ?? ''),
-    office: String(item.office ?? ''),
+/** Display name for Internal source = logged-in user (First Middle Last, no "Last, First" comma). */
+function formatInternalEmployeeFromUser(user: User | null): string {
+  if (!user) return ''
+  const fn = (user.firstName || '').trim()
+  const mn = (user.middleName || '').trim()
+  const ln = (user.lastName || '').trim()
+  const mid = mn && mn !== '-' ? mn : ''
+  const parts = [fn, mid, ln].filter((p) => p.length > 0)
+  if (parts.length > 0) {
+    return parts.join(' ').replace(/\s+/g, ' ').trim()
   }
+  return (user.fullName || user.employeeCode || '').trim()
 }
 
-function usersForOffice(users: OutboxUserRow[], office: string): OutboxUserRow[] {
-  const o = normalizeOfficeName(office)
-  if (!o) return []
-  return users.filter((u) => normalizeOfficeName(u.office) === o)
-}
-
-function toSelectOptions(users: OutboxUserRow[]): Array<{ id: number | string; value: string; label: string }> {
-  return users.map((u) => {
-    const value = formatUserDisplayName(u)
-    const label = u.employeeCode ? `${value} (${u.employeeCode})` : value
-    return { id: u.id, value, label }
-  })
-}
-
-function mergeLegacyEmployeeOption(
-  options: Array<{ id: number | string; value: string; label: string }>,
-  currentValue: string
-): Array<{ id: number | string; value: string; label: string }> {
-  const v = (currentValue || '').trim()
-  if (!v) return options
-  if (options.some((o) => o.value === v)) return options
-  return [{ id: '__legacy__', value: v, label: `${v} (saved)` }, ...options]
+function internalFieldsFromUser(user: User | null): { office: string; employee: string } {
+  if (!user) return { office: '', employee: '' }
+  return {
+    office: (user.office || '').trim(),
+    employee: formatInternalEmployeeFromUser(user),
+  }
 }
 
 const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, onAdd, editingDocument, onUpdate }) => {
   const { theme } = useTheme()
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     subject: '',
     documentType: '',
@@ -106,40 +75,19 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [documentTypes, setDocumentTypes] = useState<Array<{ id: number; document_type: string }>>([])
-  const [offices, setOffices] = useState<Array<{ id: number; office: string }>>([])
-  const [allUsers, setAllUsers] = useState<OutboxUserRow[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingFileRef = useRef<File | null>(null)
 
   const RequiredAsterisk = () => <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>*</span>
 
-  // Fetch document types and offices when modal opens
+  // Fetch document types when modal opens
   useEffect(() => {
     if (isOpen) {
       const fetchLookups = async () => {
         try {
-          const [docTypeRes, officeRes, usersRes] = await Promise.all([
-            apiService.getDocumentType(),
-            apiService.getOffice(),
-            apiService.getUsers(),
-          ])
-
+          const docTypeRes = await apiService.getDocumentType()
           if (docTypeRes.success && docTypeRes.data) {
             setDocumentTypes(docTypeRes.data)
-          }
-
-          if (officeRes.success && officeRes.data) {
-            const mappedOffices = (officeRes.data as any[]).map((item: any) => ({
-              id: item.id,
-              office: item.office || '',
-            }))
-            setOffices(mappedOffices)
-          }
-
-          if (usersRes.success && usersRes.data && Array.isArray(usersRes.data)) {
-            setAllUsers((usersRes.data as any[]).map(mapApiUserToRow))
-          } else {
-            setAllUsers([])
           }
         } catch (error) {
           console.error('Failed to fetch lookups:', error)
@@ -149,15 +97,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     }
   }, [isOpen])
 
-  // Prefill form when editing
+  // Prefill form when editing; Internal source always uses current user's office & name
   useEffect(() => {
     if (isOpen && editingDocument) {
+      const internal = internalFieldsFromUser(user)
       setFormData({
         subject: editingDocument.subject || '',
         documentType: editingDocument.documentType || '',
         sourceType: editingDocument.sourceType || '',
-        internalOriginatingOffice: editingDocument.internalOriginatingOffice || '',
-        internalOriginatingEmployee: editingDocument.internalOriginatingEmployee || '',
+        internalOriginatingOffice:
+          editingDocument.sourceType === 'Internal' ? internal.office : editingDocument.internalOriginatingOffice || '',
+        internalOriginatingEmployee:
+          editingDocument.sourceType === 'Internal' ? internal.employee : editingDocument.internalOriginatingEmployee || '',
         externalOriginatingOffice: editingDocument.externalOriginatingOffice || '',
         externalOriginatingEmployee: editingDocument.externalOriginatingEmployee || '',
         noOfPages: editingDocument.noOfPages || '',
@@ -184,17 +135,18 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
         remarks: ''
       })
     }
-  }, [isOpen, editingDocument])
+  }, [isOpen, editingDocument, user])
 
-  const internalEmployeeOptions = useMemo(() => {
-    const raw = toSelectOptions(usersForOffice(allUsers, formData.internalOriginatingOffice))
-    return mergeLegacyEmployeeOption(raw, formData.internalOriginatingEmployee)
-  }, [allUsers, formData.internalOriginatingOffice, formData.internalOriginatingEmployee])
-
-  const externalEmployeeOptions = useMemo(() => {
-    const raw = toSelectOptions(usersForOffice(allUsers, formData.externalOriginatingOffice))
-    return mergeLegacyEmployeeOption(raw, formData.externalOriginatingEmployee)
-  }, [allUsers, formData.externalOriginatingOffice, formData.externalOriginatingEmployee])
+  // Keep Internal fields in sync with profile when logged-in user loads or source type is Internal
+  useEffect(() => {
+    if (!isOpen || formData.sourceType !== 'Internal') return
+    const { office, employee } = internalFieldsFromUser(user)
+    setFormData((prev) => {
+      if (prev.sourceType !== 'Internal') return prev
+      if (prev.internalOriginatingOffice === office && prev.internalOriginatingEmployee === employee) return prev
+      return { ...prev, internalOriginatingOffice: office, internalOriginatingEmployee: employee }
+    })
+  }, [isOpen, formData.sourceType, user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -217,11 +169,11 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
       newErrors.subject = 'Subject is required'
     }
     if (formData.sourceType === 'Internal') {
-      if (!formData.internalOriginatingOffice.trim()) {
-        newErrors.internalOriginatingOffice = 'Internal Originating Office is required'
+      if (!user?.office?.trim()) {
+        newErrors.internalOriginatingOffice = 'Your profile has no office. Update your profile first.'
       }
-      if (!formData.internalOriginatingEmployee.trim()) {
-        newErrors.internalOriginatingEmployee = 'Internal Originating Employee is required'
+      if (!formatInternalEmployeeFromUser(user)) {
+        newErrors.internalOriginatingEmployee = 'Your profile has no display name. Update your profile first.'
       }
     }
     if (formData.sourceType === 'External') {
@@ -244,12 +196,13 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
     e.preventDefault()
     
     if (validate()) {
+      const internal = internalFieldsFromUser(user)
       const documentData: any = {
         subject: formData.subject,
         documentType: formData.documentType,
         sourceType: formData.sourceType,
-        internalOriginatingOffice: formData.internalOriginatingOffice,
-        internalOriginatingEmployee: formData.internalOriginatingEmployee,
+        internalOriginatingOffice: formData.sourceType === 'Internal' ? internal.office : formData.internalOriginatingOffice,
+        internalOriginatingEmployee: formData.sourceType === 'Internal' ? internal.employee : formData.internalOriginatingEmployee,
         externalOriginatingOffice: formData.externalOriginatingOffice,
         externalOriginatingEmployee: formData.externalOriginatingEmployee,
         noOfPages: formData.noOfPages,
@@ -430,14 +383,22 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                     ]}
                     value={formData.sourceType}
                     onChange={(value) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        sourceType: value
-                      }))
+                      setFormData((prev) => {
+                        const next = { ...prev, sourceType: value }
+                        if (value === 'Internal') {
+                          const int = internalFieldsFromUser(user)
+                          return {
+                            ...next,
+                            internalOriginatingOffice: int.office,
+                            internalOriginatingEmployee: int.employee,
+                          }
+                        }
+                        return next
+                      })
                       if (errors.sourceType) {
-                        setErrors(prev => ({
+                        setErrors((prev) => ({
                           ...prev,
-                          sourceType: ''
+                          sourceType: '',
                         }))
                       }
                     }}
@@ -452,44 +413,27 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 </div>
               </div>
 
-              {/* Internal sub-form */}
+              {/* Internal: use logged-in user office & name (not editable) */}
               {formData.sourceType === 'Internal' && (
-                <div className="space-y-4 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                <div className="space-y-3 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                  <p className="text-[11px] pl-0" style={{ color: textSecondary }}>
+                    Internal source uses <strong style={{ color: textPrimary }}>your account</strong> office and name. Update them in Profile if needed.
+                  </p>
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
-                      Internal Originating Office <RequiredAsterisk />
+                      Your office <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <SearchableSelect
-                        options={[...offices].sort((a, b) =>
-                          a.office.localeCompare(b.office)
-                        ).map(o => ({
-                          id: o.id,
-                          value: o.office,
-                          label: o.office,
-                        }))}
-                        value={formData.internalOriginatingOffice}
-                        onChange={(value) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            internalOriginatingOffice: value,
-                            internalOriginatingEmployee: '',
-                          }))
-                          if (errors.internalOriginatingOffice) {
-                            setErrors(prev => ({
-                              ...prev,
-                              internalOriginatingOffice: '',
-                            }))
-                          }
-                          if (errors.internalOriginatingEmployee) {
-                            setErrors(prev => ({ ...prev, internalOriginatingEmployee: '' }))
-                          }
-                        }}
-                        placeholder="Select internal originating office"
+                      <div
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md min-h-[30px] flex items-center"
                         style={{
-                          borderColor: errors.internalOriginatingOffice ? '#ef4444' : inputBorder,
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.internalOriginatingOffice ? '#ef4444' : inputBorder}`,
+                          color: textPrimary,
                         }}
-                      />
+                      >
+                        {formData.internalOriginatingOffice.trim() || '—'}
+                      </div>
                       {errors.internalOriginatingOffice && (
                         <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.internalOriginatingOffice}</p>
                       )}
@@ -498,34 +442,19 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
-                      Internal Originating Employee <RequiredAsterisk />
+                      Employee Name <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <SearchableSelect
-                        options={internalEmployeeOptions}
-                        value={formData.internalOriginatingEmployee}
-                        onChange={(value) => {
-                          setFormData((prev) => ({ ...prev, internalOriginatingEmployee: value }))
-                          if (errors.internalOriginatingEmployee) {
-                            setErrors((prev) => ({ ...prev, internalOriginatingEmployee: '' }))
-                          }
-                        }}
-                        placeholder={
-                          !formData.internalOriginatingOffice.trim()
-                            ? 'Select an office first'
-                            : 'Select employee'
-                        }
-                        disabled={!formData.internalOriginatingOffice.trim()}
+                      <div
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md min-h-[30px] flex items-center"
                         style={{
-                          borderColor: errors.internalOriginatingEmployee ? '#ef4444' : inputBorder,
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.internalOriginatingEmployee ? '#ef4444' : inputBorder}`,
+                          color: textPrimary,
                         }}
-                      />
-                      {formData.internalOriginatingOffice.trim() &&
-                        internalEmployeeOptions.filter((o) => o.id !== '__legacy__').length === 0 && (
-                          <p className="mt-1 text-xs" style={{ color: textSecondary }}>
-                            No users found for this office. Register users with this office in Registered Users.
-                          </p>
-                        )}
+                      >
+                        {formData.internalOriginatingEmployee.trim() || '—'}
+                      </div>
                       {errors.internalOriginatingEmployee && (
                         <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.internalOriginatingEmployee}</p>
                       )}
@@ -534,42 +463,34 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
                 </div>
               )}
 
-              {/* External sub-form */}
+              {/* External: free text for other agencies / contacts */}
               {formData.sourceType === 'External' && (
                 <div className="space-y-4 pl-4" style={{ borderLeft: `2px solid ${borderColor}` }}>
+                  <p className="text-[11px] pl-0" style={{ color: textSecondary }}>
+                    Enter the external office or agency and contact person (e.g. other LGU, NGO, private hospital).
+                  </p>
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
-                      External Originating Office
+                      External office / agency <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <SearchableSelect
-                        options={[...offices].sort((a, b) =>
-                          a.office.localeCompare(b.office)
-                        ).map(o => ({
-                          id: o.id,
-                          value: o.office,
-                          label: o.office,
-                        }))}
+                      <input
+                        type="text"
+                        name="externalOriginatingOffice"
                         value={formData.externalOriginatingOffice}
-                        onChange={(value) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            externalOriginatingOffice: value,
-                            externalOriginatingEmployee: '',
-                          }))
-                          if (errors.externalOriginatingOffice) {
-                            setErrors(prev => ({
-                              ...prev,
-                              externalOriginatingOffice: '',
-                            }))
-                          }
-                          if (errors.externalOriginatingEmployee) {
-                            setErrors(prev => ({ ...prev, externalOriginatingEmployee: '' }))
-                          }
-                        }}
-                        placeholder="Select external originating office"
+                        onChange={handleChange}
+                        placeholder="e.g. Regional Office X, City Health Office, NGO name…"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                         style={{
-                          borderColor: errors.externalOriginatingOffice ? '#ef4444' : inputBorder,
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.externalOriginatingOffice ? '#ef4444' : inputBorder}`,
+                          color: textPrimary,
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#3ecf8e'
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = errors.externalOriginatingOffice ? '#ef4444' : inputBorder
                         }}
                       />
                       {errors.externalOriginatingOffice && (
@@ -580,34 +501,28 @@ const AddDocumentModal: React.FC<AddDocumentModalProps> = ({ isOpen, onClose, on
 
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-medium whitespace-nowrap" style={{ color: textPrimary, width: '183px' }}>
-                      External Originating Employee <RequiredAsterisk />
+                      External contact / employee <RequiredAsterisk />
                     </label>
                     <div className="flex-1">
-                      <SearchableSelect
-                        options={externalEmployeeOptions}
+                      <input
+                        type="text"
+                        name="externalOriginatingEmployee"
                         value={formData.externalOriginatingEmployee}
-                        onChange={(value) => {
-                          setFormData((prev) => ({ ...prev, externalOriginatingEmployee: value }))
-                          if (errors.externalOriginatingEmployee) {
-                            setErrors((prev) => ({ ...prev, externalOriginatingEmployee: '' }))
-                          }
-                        }}
-                        placeholder={
-                          !formData.externalOriginatingOffice.trim()
-                            ? 'Select an office first'
-                            : 'Select employee'
-                        }
-                        disabled={!formData.externalOriginatingOffice.trim()}
+                        onChange={handleChange}
+                        placeholder="Name or role of contact at the external agency"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
                         style={{
-                          borderColor: errors.externalOriginatingEmployee ? '#ef4444' : inputBorder,
+                          backgroundColor: inputBg,
+                          border: `1px solid ${errors.externalOriginatingEmployee ? '#ef4444' : inputBorder}`,
+                          color: textPrimary,
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#3ecf8e'
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = errors.externalOriginatingEmployee ? '#ef4444' : inputBorder
                         }}
                       />
-                      {formData.externalOriginatingOffice.trim() &&
-                        externalEmployeeOptions.filter((o) => o.id !== '__legacy__').length === 0 && (
-                          <p className="mt-1 text-xs" style={{ color: textSecondary }}>
-                            No users found for this office. Register users with this office in Registered Users.
-                          </p>
-                        )}
                       {errors.externalOriginatingEmployee && (
                         <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>{errors.externalOriginatingEmployee}</p>
                       )}

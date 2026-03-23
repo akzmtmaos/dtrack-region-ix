@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { apiService } from '../services/api'
 import SearchableSelect from '../components/SearchableSelect'
+import PasswordInputWithToggle from '../components/PasswordInputWithToggle'
 import { useToast } from '../context/ToastContext'
 import logo from '../assets/doh-logo.png'
+import { EMPLOYEE_CODE_MAX_LENGTH } from '../constants/user'
 
 const Register: React.FC = () => {
   const [password, setPassword] = useState('')
@@ -195,7 +197,8 @@ const Register: React.FC = () => {
                   type="text"
                   required
                   value={employeeCode}
-                  onChange={(e) => setEmployeeCode(e.target.value)}
+                  onChange={(e) => setEmployeeCode(e.target.value.slice(0, EMPLOYEE_CODE_MAX_LENGTH))}
+                  maxLength={EMPLOYEE_CODE_MAX_LENGTH}
                   placeholder="Employee code"
                   className={inputClass}
                 />
@@ -261,25 +264,23 @@ const Register: React.FC = () => {
 
               <div>
                 <label className={labelClass}>Password <span className="text-red-500">*</span></label>
-                <input
-                  type="password"
-                  required
+                <PasswordInputWithToggle
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={setPassword}
                   placeholder="At least 6 characters"
-                  className={inputClass}
+                  required
+                  autoComplete="new-password"
                 />
               </div>
 
               <div>
                 <label className={labelClass}>Confirm password <span className="text-red-500">*</span></label>
-                <input
-                  type="password"
-                  required
+                <PasswordInputWithToggle
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={setConfirmPassword}
                   placeholder="Re-enter password"
-                  className={inputClass}
+                  required
+                  autoComplete="new-password"
                 />
               </div>
             </div>

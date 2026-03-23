@@ -93,6 +93,62 @@ def _payload_to_snake(data):
     }
 
 
+def _payload_to_snake_update(data):
+    """
+    Partial update: only map fields explicitly present in the request body.
+    This prevents wiping attachment_list (storage path) when the client omits attachmentList
+    — a common bug when using data.get('attachmentList', '') on every PUT.
+    Accepts camelCase (frontend) or snake_case keys.
+    """
+    if not isinstance(data, dict):
+        data = {}
+    out = {}
+    if 'subject' in data:
+        out['subject'] = data.get('subject', '')
+    if 'documentType' in data:
+        out['document_type'] = data.get('documentType', '')
+    if 'sourceType' in data:
+        out['source_type'] = data.get('sourceType') or None
+    if 'internalOriginatingOffice' in data:
+        out['internal_originating_office'] = data.get('internalOriginatingOffice', '')
+    if 'internalOriginatingEmployee' in data:
+        out['internal_originating_employee'] = data.get('internalOriginatingEmployee', '')
+    if 'externalOriginatingOffice' in data:
+        out['external_originating_office'] = data.get('externalOriginatingOffice', '')
+    if 'externalOriginatingEmployee' in data:
+        out['external_originating_employee'] = data.get('externalOriginatingEmployee', '')
+    if 'noOfPages' in data:
+        out['no_of_pages'] = data.get('noOfPages', '')
+    if 'attachedDocumentFilename' in data:
+        out['attached_document_filename'] = data.get('attachedDocumentFilename') or ''
+    if 'attachmentList' in data:
+        out['attachment_list'] = data.get('attachmentList') or ''
+    if 'userid' in data:
+        out['userid'] = data.get('userid', '')
+    if 'inSequence' in data:
+        out['in_sequence'] = data.get('inSequence', '')
+    if 'remarks' in data:
+        out['remarks'] = data.get('remarks', '')
+    # Raw snake_case (e.g. other API clients)
+    snake_only = (
+        ('document_type', 'document_type'),
+        ('attachment_list', 'attachment_list'),
+        ('attached_document_filename', 'attached_document_filename'),
+        ('internal_originating_office', 'internal_originating_office'),
+        ('internal_originating_employee', 'internal_originating_employee'),
+        ('external_originating_office', 'external_originating_office'),
+        ('external_originating_employee', 'external_originating_employee'),
+        ('no_of_pages', 'no_of_pages'),
+        ('source_type', 'source_type'),
+        ('in_sequence', 'in_sequence'),
+    )
+    for sk, fk in snake_only:
+        if sk in data and fk not in out:
+            v = data.get(sk)
+            out[fk] = v if v is not None else ''
+    return out
+
+
 def _is_connection_error(e):
     """True if error is due to network/DNS (e.g. getaddrinfo failed)."""
     if e is None:
@@ -212,9 +268,14 @@ def document_source_update(request, item_id):
         ec = _employee_scope_header(request)
         if ec and not _can_access_document_row(supabase, item_id, ec):
             return Response({'success': False, 'error': 'Not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
-        payload = _payload_to_snake(request.data)
+        payload = _payload_to_snake_update(request.data)
         # Server-managed (routing handoff); do not allow client to set custodian directly.
         payload.pop('current_custodian', None)
+        if not payload:
+            return Response({
+                'success': False,
+                'error': 'No fields to update. Send at least one field (e.g. subject, attachmentList).',
+            }, status=status.HTTP_400_BAD_REQUEST)
         response = supabase.table('document_source').update(payload).eq('id', item_id).execute()
         if response.data and len(response.data) > 0:
             return Response({
@@ -764,11 +825,22 @@ def document_source_attachment_url(request, item_id):
         ec = _employee_scope_header(request)
         if ec and not _can_download_attachment(supabase, item_id, ec):
             return Response({'success': False, 'error': 'Not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
-        row = supabase.table('document_source').select('attachment_list').eq('id', item_id).execute()
+        row = supabase.table('document_source').select('attachment_list, attached_document_filename').eq('id', item_id).execute()
         if not row.data or len(row.data) == 0:
             return Response({'success': False, 'error': 'Document not found'}, status=status.HTTP_404_NOT_FOUND)
-        path = (row.data[0] or {}).get('attachment_list') or ''
+        row0 = row.data[0] or {}
+        path = row0.get('attachment_list') or ''
+        display_name = (row0.get('attached_document_filename') or '').strip()
         if not path or not path.strip():
+            if display_name:
+                return Response({
+                    'success': False,
+                    'error': (
+                        'No file path in storage for this attachment. A filename is recorded, but the storage path '
+                        'is missing (often after a save that did not include the attachment path). '
+                        'Edit the document and attach the file again, or check that the upload completed.'
+                    ),
+                }, status=status.HTTP_404_NOT_FOUND)
             return Response({
                 'success': False,
                 'error': 'No attachment for this document. If you added a file, the upload may have failed (e.g. storage bucket not set up).',

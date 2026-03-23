@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import PasswordInputWithToggle from '../components/PasswordInputWithToggle'
 import logo from '../assets/doh-logo.png'
+import { EMPLOYEE_CODE_MAX_LENGTH } from '../constants/user'
 
 const Login: React.FC = () => {
   const [employeeCode, setEmployeeCode] = useState('')
@@ -69,7 +71,8 @@ const Login: React.FC = () => {
                 type="text"
                 required
                 value={employeeCode}
-                onChange={(e) => setEmployeeCode(e.target.value)}
+                onChange={(e) => setEmployeeCode(e.target.value.slice(0, EMPLOYEE_CODE_MAX_LENGTH))}
+                maxLength={EMPLOYEE_CODE_MAX_LENGTH}
                 className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
                 placeholder="Enter your employee code"
               />
@@ -79,14 +82,13 @@ const Login: React.FC = () => {
               <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <input
+              <PasswordInputWithToggle
                 id="password"
-                type="password"
-                required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                onChange={setPassword}
                 placeholder="Enter your password"
+                required
+                autoComplete="current-password"
               />
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -6,9 +6,9 @@ import { apiService } from '../services/api'
 
 /** Parse required date/time from a document destination row for overdue checks. */
 function parseRequiredDateTime(dest: { dateRequired?: string; timeRequired?: string }): Date | null {
-  const dr = (dest.dateRequired || '').trim()
+  const dr = String(dest.dateRequired ?? '').trim()
   if (!dr) return null
-  const tr = (dest.timeRequired || '').trim()
+  const tr = String(dest.timeRequired ?? '').trim()
   const combined = new Date(`${dr}T${tr || '23:59:59'}`)
   if (!Number.isNaN(combined.getTime())) return combined
   const dOnly = new Date(dr)
@@ -49,7 +49,7 @@ const Home: React.FC = () => {
   const quickLinks = [
     {
       to: '/outbox',
-      label: 'Outbox',
+      label: 'View Outbox',
       description: 'Create and track outgoing documents.',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,12 +94,28 @@ const Home: React.FC = () => {
         </svg>
       ),
     },
+    {
+      to: '/trash',
+      label: 'Trash',
+      description: 'Soft-deleted documents you can restore or remove.',
+      endUserOnly: true,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      ),
+    },
   ]
 
   const level = (user?.userLevel ?? '').toLowerCase()
   const isEndUser = level === 'end-user' || level === 'end-users'
 
-  const visibleLinks = quickLinks.filter((link) => !(link as any).adminOnly || !isEndUser)
+  const visibleLinks = quickLinks.filter((link) => {
+    const l = link as { adminOnly?: boolean; endUserOnly?: boolean }
+    if (l.adminOnly && isEndUser) return false
+    if (l.endUserOnly && !isEndUser) return false
+    return true
+  })
 
   const [recentDocs, setRecentDocs] = useState<RecentDocument[]>([])
   const [recentLoading, setRecentLoading] = useState(false)
@@ -110,11 +126,13 @@ const Home: React.FC = () => {
     inbox: number | null
     overdue: number | null
     users: number | null
+    trash: number | null
   }>({
     outbox: null,
     inbox: null,
     overdue: null,
     users: null,
+    trash: null,
   })
 
   const fetchRecentDocs = async () => {
@@ -158,25 +176,42 @@ const Home: React.FC = () => {
   useEffect(() => {
     if (!user) return
     let cancelled = false
-    const run = async () => {
-      setQuickMetrics({ outbox: null, inbox: null, overdue: null, users: null })
+    const refreshInFlightRef = { current: false } as React.MutableRefObject<boolean>
+
+    const refreshQuickMetrics = async () => {
+      // Keep current metrics visible while we refresh to avoid "4 -> -- -> 4 -> --" flicker.
+      // Also prevents overlapping requests when interval/visibility triggers happen close together.
+      if (refreshInFlightRef.current) return
+      refreshInFlightRef.current = true
       const ecRaw = (user.employeeCode ?? '').trim()
       const ecLower = ecRaw.toLowerCase()
       const hasEc = ecRaw.length > 0
       const srcEmployee = isEndUser ? ecRaw : undefined
 
       try {
-        const [srcRes, destRes, usersRes, inboxRes] = await Promise.all([
+        // Use allSettled so one failing API (e.g. destinations/inbox) does not zero out unrelated counts like Outbox.
+        const settled = await Promise.allSettled([
           apiService.getDocumentSource(srcEmployee),
           apiService.getDocumentDestination(),
           !isEndUser ? apiService.getUsers() : Promise.resolve({ success: true as const, data: [] as unknown[] }),
           hasEc ? apiService.getInboxDocuments(ecRaw) : Promise.resolve({ success: true as const, data: [] as unknown[] }),
+          isEndUser && ecRaw
+            ? apiService.getDocumentSourceTrash(ecRaw)
+            : Promise.resolve({ success: true as const, data: [] as unknown[] }),
         ])
         if (cancelled) return
 
-        const sources = srcRes?.success && Array.isArray(srcRes.data) ? srcRes.data : []
-        const dests = destRes?.success && Array.isArray(destRes.data) ? destRes.data : []
-        const usersList = usersRes?.success && Array.isArray(usersRes.data) ? usersRes.data : []
+        const unwrapList = (r: PromiseSettledResult<{ success?: boolean; data?: unknown }>) => {
+          if (r.status !== 'fulfilled') return [] as unknown[]
+          const res = r.value
+          return res?.success && Array.isArray(res.data) ? res.data : []
+        }
+
+        const sources = unwrapList(settled[0]) as Record<string, unknown>[]
+        const dests = unwrapList(settled[1]) as Record<string, unknown>[]
+        const usersList = unwrapList(settled[2]) as Record<string, unknown>[]
+        const inboxRows = unwrapList(settled[3])
+        const trashRows = unwrapList(settled[4])
 
         const outboxCount = sources.length
 
@@ -185,39 +220,59 @@ const Home: React.FC = () => {
           const officer = String(d.employeeActionOfficer ?? '')
             .trim()
             .toLowerCase()
-          return officer === ecLower
+          if (officer === ecLower) return true
+          // Same identity rules as backend: Name (CODE) format from Add Destination
+          if (ecLower && officer.includes(`(${ecLower})`)) return true
+          return false
         }
         const inboxDests = hasEc ? dests.filter(matchesInbox) : dests
-        const inboxCount = hasEc
-          ? (inboxRes?.success && Array.isArray(inboxRes.data) ? inboxRes.data.length : 0)
-          : inboxDests.length
+        const inboxCount = hasEc ? inboxRows.length : inboxDests.length
 
         const overduePool = hasEc ? inboxDests : dests
         const overdueCount = overduePool.filter((d) => isDestinationOverdue(d as Record<string, unknown>)).length
 
         const usersCount = !isEndUser ? usersList.length : 0
+        const trashCount = isEndUser ? trashRows.length : 0
 
         setQuickMetrics({
           outbox: outboxCount,
           inbox: inboxCount,
           overdue: overdueCount,
           users: usersCount,
+          trash: isEndUser ? trashCount : null,
         })
       } catch {
-        if (!cancelled) {
-          setQuickMetrics({ outbox: 0, inbox: 0, overdue: 0, users: 0 })
-        }
+        // Keep the previous metrics visible if a refresh fails.
+        // This avoids showing "--" repeatedly while requests are being retried.
+      } finally {
+        refreshInFlightRef.current = false
       }
     }
-    run()
+
+    // Initial load
+    refreshQuickMetrics()
+
+    // "Realtime" updates: refetch while on this page.
+    const intervalMs = 5000
+    const intervalId = window.setInterval(() => {
+      if (!cancelled) refreshQuickMetrics()
+    }, intervalMs)
+
+    const handleVisibility = () => {
+      if (!cancelled && document.visibilityState === 'visible') refreshQuickMetrics()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     return () => {
       cancelled = true
+      window.clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [user, isEndUser])
+  }, [user?.employeeCode, user?.userLevel, isEndUser])
 
   const recentDocsTop = useMemo(() => recentDocs.slice(0, 6), [recentDocs])
 
-  const metricForLink = (to: string): number | null => {
+  const metricForLink = (to: string): number | null | undefined => {
     switch (to) {
       case '/outbox':
         return quickMetrics.outbox
@@ -227,13 +282,15 @@ const Home: React.FC = () => {
         return quickMetrics.overdue
       case '/registered-users':
         return quickMetrics.users
+      case '/trash':
+        return quickMetrics.trash
       default:
         return null
     }
   }
 
-  const formatMetric = (n: number | null) => {
-    if (n === null) return '—'
+  const formatMetric = (n: number | null | undefined) => {
+    if (n == null || typeof n !== 'number') return '—'
     return n.toLocaleString()
   }
 
@@ -252,13 +309,21 @@ const Home: React.FC = () => {
     return palettes[hash % palettes.length]
   }
 
-  const lastAddedLabel = useMemo(() => {
-    const first = recentDocs[0]
-    if (!first?.createdAt) return '—'
-    const dt = new Date(first.createdAt)
-    if (Number.isNaN(dt.getTime())) return '—'
-    return dt.toLocaleString()
-  }, [recentDocs])
+  /** Full display name for Your Account (matches welcome line logic). */
+  const accountDisplayName = useMemo(() => {
+    if (!user) return '—'
+    const fromFull = (user.fullName || '').trim()
+    if (fromFull) return fromFull
+    const ln = (user.lastName || '').trim()
+    const fn = (user.firstName || '').trim()
+    const mn = (user.middleName || '').trim()
+    if (ln || fn) {
+      const mid = mn && mn !== '-' ? ` ${mn}` : ''
+      return `${ln}${ln && fn ? ', ' : ''}${fn}${mid}`.trim()
+    }
+    if (fn) return fn
+    return user.employeeCode || user.username || '—'
+  }, [user])
 
   return (
     <div
@@ -273,6 +338,64 @@ const Home: React.FC = () => {
             Welcome{user ? `, ${user.fullName || user.employeeCode || user.username}` : ''}. Here’s what’s been recently added to
             the Outbox (your view may be limited if you’re an End-User).
           </p>
+        </div>
+
+        {/* Quick Links — top of page for fast navigation */}
+        <div
+          className="mb-4 rounded-xl border p-4"
+          style={{
+            borderColor: border,
+            backgroundColor: isDark ? '#0f172a' : '#ffffff',
+          }}
+        >
+          <h2 className="text-sm font-semibold mb-3" style={{ color: textPrimary }}>
+            Quick Links
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {visibleLinks.map((link) => {
+              const m = metricForLink(link.to)
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="group rounded-xl border p-4 flex items-center gap-3 transition-transform duration-150 hover:border-emerald-500/40"
+                  style={{
+                    borderColor: isDark ? '#262626' : '#e5e7eb',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+                  }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.08)',
+                      color: '#22c55e',
+                    }}
+                  >
+                    {link.icon}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    <div className="text-sm font-semibold truncate group-hover:underline" style={{ color: textPrimary }}>
+                      {link.label}
+                    </div>
+                    <div className="text-[11px] leading-snug" style={{ color: textSecondary }}>
+                      {link.description}
+                    </div>
+                  </div>
+                  <div
+                    className="shrink-0 flex flex-col items-end justify-center self-stretch min-w-[3.25rem] pl-1"
+                    title="Count"
+                  >
+                    <span
+                      className="text-3xl sm:text-4xl font-bold tabular-nums leading-none text-right w-full"
+                      style={{ color: '#3ecf8e' }}
+                    >
+                      {formatMetric(m)}
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -318,11 +441,6 @@ const Home: React.FC = () => {
                     <h2 className="text-sm font-semibold leading-tight" style={{ color: textPrimary }}>
                       Recent Documents
                     </h2>
-                    <p className="text-[11px] mt-0.5 leading-tight" style={{ color: textSecondary }}>
-                      Last: <span style={{ color: textPrimary, fontWeight: 600 }}>{lastAddedLabel}</span>
-                      <span className="opacity-60 mx-1">·</span>
-                      {recentDocsTop.length} shown
-                    </p>
                   </div>
                 </div>
                 <Link
@@ -333,7 +451,7 @@ const Home: React.FC = () => {
                     color: '#ffffff',
                   }}
                 >
-                  Outbox
+                  View Outbox
                 </Link>
               </div>
             </div>
@@ -369,50 +487,62 @@ const Home: React.FC = () => {
                       const createdAt = doc.createdAt ? new Date(doc.createdAt) : null
                       const createdLabel =
                         createdAt && !Number.isNaN(createdAt.getTime())
-                          ? createdAt.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          ? createdAt.toLocaleString(undefined, { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                           : '—'
                       const typePalette = getTypePalette(doc.documentType)
 
                       return (
                         <div
                           key={doc.id}
-                          className="flex items-center gap-2 px-3 py-2"
+                          className="flex items-start gap-2 px-3 py-2"
                           style={{
                             backgroundColor: 'transparent',
                           }}
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                            {/* Line 1: everything except remarks; date aligned right */}
+                            <div className="flex items-start gap-2 text-[10px] sm:text-[11px] leading-snug">
+                              <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                                <span
+                                  className="font-semibold shrink-0 max-w-[min(100%,12rem)] truncate"
+                                  style={{ color: textPrimary }}
+                                  title={doc.documentControlNo}
+                                >
+                                  {doc.documentControlNo || '—'}
+                                </span>
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 whitespace-normal break-words text-left"
+                                  style={{
+                                    backgroundColor: typePalette.chipBg,
+                                    borderColor: typePalette.chipBorder,
+                                    color: typePalette.chipText,
+                                  }}
+                                >
+                                  {doc.documentType || '—'}
+                                </span>
+                                <span className="min-w-0 flex-1 basis-[6rem]" style={{ color: textPrimary }} title={doc.subject || undefined}>
+                                  {doc.subject || '—'}
+                                </span>
+                                {(doc.routeNo || '').trim() !== '' && (
+                                  <span className="shrink-0 opacity-90" style={{ color: textSecondary }}>
+                                    · {doc.routeNo.trim()}
+                                  </span>
+                                )}
+                              </div>
                               <span
-                                className="text-[11px] font-semibold truncate max-w-[140px] sm:max-w-[200px]"
-                                style={{ color: textPrimary }}
-                                title={doc.documentControlNo}
+                                className="shrink-0 tabular-nums text-right max-w-[9rem] leading-tight"
+                                style={{ color: textSecondary }}
                               >
-                                {doc.documentControlNo || '—'}
-                              </span>
-                              <span
-                                className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 whitespace-normal break-words text-left"
-                                style={{
-                                  backgroundColor: typePalette.chipBg,
-                                  borderColor: typePalette.chipBorder,
-                                  color: typePalette.chipText,
-                                }}
-                              >
-                                {doc.documentType || '—'}
-                              </span>
-                              <span className="text-[10px] shrink-0 hidden sm:inline" style={{ color: textSecondary }}>
                                 {createdLabel}
                               </span>
                             </div>
-                            <div className="text-[10px] truncate mt-0.5 leading-snug" style={{ color: textSecondary }} title={doc.subject}>
-                              {doc.subject || '—'}
-                              {(doc.routeNo || doc.remarks) && (
-                                <span className="opacity-80">
-                                  {' '}
-                                  · R {doc.routeNo || '—'}
-                                  {doc.remarks ? ` · ${doc.remarks}` : ''}
-                                </span>
-                              )}
+                            {/* Line 2: remarks only */}
+                            <div
+                              className="text-[10px] leading-snug line-clamp-2"
+                              style={{ color: textSecondary }}
+                              title={doc.remarks || undefined}
+                            >
+                              {doc.remarks?.trim() ? doc.remarks : <span className="opacity-50">—</span>}
                             </div>
                           </div>
                           <button
@@ -489,6 +619,18 @@ const Home: React.FC = () => {
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="uppercase tracking-wide text-[10px] font-semibold" style={{ color: textSecondary }}>
+                    Name
+                  </span>
+                  <span className="text-right pl-2 min-w-0 break-words max-w-[65%]" style={{ color: textPrimary, fontWeight: 600 }}>
+                    {accountDisplayName}
+                  </span>
+                </div>
+                <div
+                  className="h-px"
+                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="uppercase tracking-wide text-[10px] font-semibold" style={{ color: textSecondary }}>
                     Role
                   </span>
                   <span className="text-right truncate pl-2" style={{ color: textPrimary, fontWeight: 600 }}>
@@ -537,62 +679,6 @@ const Home: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div
-          className="mt-4 rounded-xl border p-4"
-          style={{
-            borderColor: border,
-            backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          }}
-        >
-          <h2 className="text-sm font-semibold mb-3" style={{ color: textPrimary }}>
-            Quick Links
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {visibleLinks.map((link) => {
-              const m = metricForLink(link.to)
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="group rounded-xl border p-4 flex items-start gap-3 transition-transform duration-150 hover:border-emerald-500/40"
-                  style={{
-                    borderColor: isDark ? '#262626' : '#e5e7eb',
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
-                  }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.08)',
-                      color: '#22c55e',
-                    }}
-                  >
-                    {link.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-semibold truncate group-hover:underline min-w-0" style={{ color: textPrimary }}>
-                        {link.label}
-                      </div>
-                      <div
-                        className="shrink-0 text-lg font-bold tabular-nums leading-none pt-0.5"
-                        style={{ color: '#3ecf8e' }}
-                        title="Count"
-                      >
-                        {formatMetric(m)}
-                      </div>
-                    </div>
-                    <div className="text-[11px] mt-1 leading-snug" style={{ color: textSecondary }}>
-                      {link.description}
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
           </div>
         </div>
       </div>
