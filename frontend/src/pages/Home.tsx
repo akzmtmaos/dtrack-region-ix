@@ -649,6 +649,18 @@ const Home: React.FC = () => {
                     {user?.employeeCode || '—'}
                   </span>
                 </div>
+                <div
+                  className="h-px"
+                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="uppercase tracking-wide text-[10px] font-semibold" style={{ color: textSecondary }}>
+                    Office
+                  </span>
+                  <span className="text-right pl-2 min-w-0 break-words max-w-[65%]" style={{ color: textPrimary, fontWeight: 600 }}>
+                    {user?.office || '—'}
+                  </span>
+                </div>
               </div>
 
               <div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
@@ -25,6 +25,12 @@ const DocumentByOffice: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
+  const ITEMS_PER_PAGE = 10
+
+  const pageDocuments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return documents.slice(start, start + ITEMS_PER_PAGE)
+  }, [documents, currentPage])
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -313,7 +319,7 @@ const DocumentByOffice: React.FC = () => {
               totalPages={totalPages}
               onPageChange={handlePageChange}
               totalItems={documents.length}
-              itemsPerPage={10}
+              itemsPerPage={ITEMS_PER_PAGE}
               showResultsText={false}
               compact={true}
             />
@@ -381,7 +387,7 @@ const DocumentByOffice: React.FC = () => {
               totalPages={totalPages}
               onPageChange={handlePageChange}
               totalItems={documents.length}
-              itemsPerPage={10}
+              itemsPerPage={ITEMS_PER_PAGE}
             />
           }
         >
@@ -443,14 +449,14 @@ const DocumentByOffice: React.FC = () => {
                   Loading...
                 </td>
               </tr>
-            ) : documents.length === 0 ? (
+            ) : pageDocuments.length === 0 ? (
               <tr>
                 <td colSpan={9} className={`px-4 py-2 text-center text-xs ${theme === 'dark' ? 'text-white' : 'text-gray-500'}`}>
                   No documents found
                 </td>
               </tr>
             ) : (
-              documents.map((doc) => (
+              pageDocuments.map((doc) => (
                 <tr key={doc.id} className={`transition-colors ${theme === 'dark' ? 'hover:bg-dark-hover' : 'hover:bg-gray-50'}`}>
                   <td className="px-4 py-2 whitespace-nowrap text-xs text-left">
                     <span

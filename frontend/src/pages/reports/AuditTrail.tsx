@@ -1,51 +1,108 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
 import Pagination from '../../components/Pagination'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
+import { apiService } from '../../services/api'
 
-interface Document {
+type AuditStatus = 'PENDING' | 'ACCOMPLISHED' | 'FAILED' | 'SENT'
+
+interface AuditLogRow {
   id: number
+  sequenceNo: number
   documentNumber: string
   subject: string
-  recipient: string
-  dateSent: string
-  status: string
+  recipient: string // "Receiver" column (originating employee)
+  dateSent: string // kept for existing export/print compatibility
+  documentType: string
+
+  details: string
+  destinationOfficer: string
+  destinationOffice: string
+
+  dateReleased: string
+  timeReleased: string
+  dateRequired: string
+  timeRequired: string
+  dateReceived: string
+  timeReceived: string
+  dateAccomplished: string
+  timeAccomplished: string
+
+  actionTaken: string
+  actionTakenBy: string
+  remarks: string
+
+  status: AuditStatus
   priority: string
 }
 
 const AuditTrail: React.FC = () => {
   const { theme } = useTheme()
-  const documents: Document[] = []
+  const { user } = useAuth()
+  const ITEMS_PER_PAGE = 10
+
+  const [documents, setDocuments] = useState<AuditLogRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(1)
+
+  const filteredDocuments = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return documents
+    return documents.filter((d) => {
+      const hay = [
+        d.documentNumber,
+        d.subject,
+        d.recipient,
+        d.documentType,
+        d.details,
+        d.destinationOfficer,
+        d.destinationOffice,
+        d.actionTaken,
+        d.remarks,
+        d.status,
+      ]
+        .map((x) => String(x ?? '').toLowerCase())
+        .join(' ')
+      return hay.includes(q)
+    })
+  }, [documents, searchQuery])
+
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / ITEMS_PER_PAGE))
+  const paginatedDocuments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredDocuments.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredDocuments, currentPage])
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    if (page < 1 || page > totalPages) return
+    setCurrentPage(page)
   }
 
   const getStatusColor = (status: string) => {
     if (theme === 'dark') {
       switch (status) {
-        case 'Sent':
+        case 'SENT':
+        case 'ACCOMPLISHED':
           return 'bg-green-500/20 text-green-400'
-        case 'Pending':
+        case 'PENDING':
           return 'bg-yellow-500/20 text-yellow-400'
-        case 'Failed':
+        case 'FAILED':
           return 'bg-red-500/20 text-red-400'
         default:
           return 'bg-gray-500/20 text-gray-400'
       }
     } else {
       switch (status) {
-        case 'Sent':
+        case 'SENT':
+        case 'ACCOMPLISHED':
           return 'bg-green-100 text-green-800'
-        case 'Pending':
+        case 'PENDING':
           return 'bg-yellow-100 text-yellow-800'
-        case 'Failed':
+        case 'FAILED':
           return 'bg-red-100 text-red-800'
         default:
           return 'bg-gray-100 text-gray-800'
@@ -78,6 +135,119 @@ const AuditTrail: React.FC = () => {
       }
     }
   }
+
+  const t = (v: unknown): string => String(v ?? '').trim()
+  const formatNonEmpty = (v: unknown): string => {
+    const s = t(v)
+    return s ? s : '—'
+  }
+
+  const deriveStatus = (dest: {
+    dateReceived?: string
+    dateActedUpon?: string
+  }): AuditStatus => {
+    if (t(dest.dateActedUpon)) return 'ACCOMPLISHED'
+    if (t(dest.dateReceived)) return 'PENDING'
+    return 'PENDING'
+  }
+
+  useEffect(() => {
+    const run = async () => {
+      setLoading(true)
+      try {
+        const level = (user?.userLevel ?? '').toLowerCase()
+        const isEndUser = level === 'end-user' || level === 'end-users'
+        const employeeCode = isEndUser ? t(user?.employeeCode) : undefined
+
+        const srcRes = await apiService.getDocumentSource(employeeCode)
+        const sources = srcRes?.success && Array.isArray(srcRes.data) ? srcRes.data : []
+
+        const settled = await Promise.allSettled(
+          sources.map(async (src: any) => {
+            const destRes = await apiService.getDocumentDestination(src.id)
+            const destinations = destRes?.success && Array.isArray(destRes.data) ? destRes.data : []
+            destinations.sort((a: any, b: any) => Number(a.sequenceNo ?? a.sequence_no ?? 0) - Number(b.sequenceNo ?? b.sequence_no ?? 0))
+
+            const receiver = t(src.internalOriginatingEmployee) || t(src.externalOriginatingEmployee)
+            const documentNumber = t(src.documentControlNo)
+            const subject = t(src.subject)
+            const documentType = t(src.documentType)
+            const dateSent = t(src.createdAt)
+
+            return destinations.map((d: any) => {
+              const destinationOfficer = t(d.employeeActionOfficer)
+              const destinationOffice = t(d.destinationOffice)
+              const status = deriveStatus({
+                dateReceived: d.dateReceived,
+                dateActedUpon: d.dateActedUpon,
+              })
+
+              const details =
+                t(d.actionRequired) ||
+                t(d.actionTaken) ||
+                t(d.remarks) ||
+                t(d.remarksOnActionTaken) ||
+                '—'
+
+              const actionTaken = t(d.actionTaken)
+              const actionTakenBy = status === 'ACCOMPLISHED' ? destinationOfficer : destinationOfficer
+              const remarks = t(d.remarksOnActionTaken) || t(d.remarks)
+
+              return {
+                id: Number(d.id),
+                sequenceNo: Number(d.sequenceNo ?? 0),
+                documentNumber: documentNumber || '—',
+                subject: subject || '—',
+                recipient: receiver || '—',
+                dateSent: dateSent || '—',
+                documentType: documentType || '—',
+
+                details,
+                destinationOfficer: destinationOfficer || '—',
+                destinationOffice: destinationOffice || '—',
+
+                dateReleased: t(d.dateReleased) || '—',
+                timeReleased: t(d.timeReleased) || '—',
+                dateRequired: t(d.dateRequired) || '—',
+                timeRequired: t(d.timeRequired) || '—',
+                dateReceived: t(d.dateReceived) || '—',
+                timeReceived: t(d.timeReceived) || '—',
+                dateAccomplished: t(d.dateActedUpon) || '—',
+                timeAccomplished: t(d.timeActedUpon) || '—',
+
+                actionTaken: actionTaken || '—',
+                actionTakenBy: actionTakenBy || '—',
+                remarks: remarks || '—',
+
+                status,
+                priority: '—',
+              }
+            })
+          })
+        )
+
+        const allRows = settled
+          .filter((s): s is PromiseFulfilledResult<AuditLogRow[]> => s.status === 'fulfilled')
+          .flat()
+
+        // Sort newest first-ish: document number then sequence
+        allRows.sort((a, b) => {
+          const cn = a.documentNumber.localeCompare(b.documentNumber)
+          if (cn !== 0) return cn
+          return a.sequenceNo - b.sequenceNo
+        })
+
+        setDocuments(allRows)
+        setCurrentPage(1)
+      } catch {
+        setDocuments([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    run()
+  }, [user?.employeeCode, user?.userLevel])
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank')
@@ -377,7 +547,7 @@ const AuditTrail: React.FC = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
-            totalItems={documents.length}
+              totalItems={filteredDocuments.length}
             itemsPerPage={10}
             showResultsText={false}
             compact={true}
@@ -424,6 +594,11 @@ const AuditTrail: React.FC = () => {
             type="text"
             placeholder="Search..."
             className="w-48"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
             icon={
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -445,7 +620,7 @@ const AuditTrail: React.FC = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
-            totalItems={documents.length}
+            totalItems={filteredDocuments.length}
             itemsPerPage={10}
           />
         }
@@ -552,7 +727,15 @@ const AuditTrail: React.FC = () => {
         <tbody className={`divide-y ${
           theme === 'dark' ? 'bg-dark-panel divide-dark-hover' : 'bg-white divide-gray-200'
         }`}>
-          {documents.length === 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={20} className={`px-6 py-8 text-center text-sm ${
+                theme === 'dark' ? 'text-white' : 'text-gray-500'
+              }`}>
+                Loading...
+              </td>
+            </tr>
+          ) : filteredDocuments.length === 0 ? (
             <tr>
               <td colSpan={20} className={`px-6 py-8 text-center text-sm ${
                 theme === 'dark' ? 'text-white' : 'text-gray-500'
@@ -561,7 +744,7 @@ const AuditTrail: React.FC = () => {
               </td>
             </tr>
           ) : (
-            documents.map((doc) => (
+            paginatedDocuments.map((doc) => (
               <tr 
                 key={doc.id} 
                 className={`transition-colors ${
@@ -581,82 +764,82 @@ const AuditTrail: React.FC = () => {
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
+                  {doc.details}
+                </td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {doc.documentType}
+                </td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   {doc.recipient}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {doc.dateSent}
+                  {doc.destinationOfficer}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.destinationOffice}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.dateReleased}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.timeReleased}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.dateRequired}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.timeRequired}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.dateReceived}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.timeReceived}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.dateAccomplished}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.timeAccomplished}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.actionTaken}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
+                  {doc.actionTakenBy}
                 </td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  -
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
-                </td>
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  -
+                  {doc.remarks}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
