@@ -10,6 +10,7 @@ import DeleteConfirmationModal from '../../components/DeleteConfirmationModal'
 import { apiService } from '../../services/api'
 import { DELETE_ROW_ACTION_BUTTON_CLASS } from '../../constants/deleteActionStyles'
 import { usePagination } from '../../hooks/usePagination'
+import { useToast } from '../../context/ToastContext'
 
 interface ActionOfficerItem {
   id: number | string
@@ -21,11 +22,12 @@ interface ActionOfficerItem {
   userPassword?: string
   userLevel: string
   officeRepresentative: string
-  source?: 'users' | 'profiles'
+  source?: 'users' | 'profiles' | 'action-officer'
 }
 
 const ActionOfficer: React.FC = () => {
   const { theme } = useTheme()
+  const { showSuccess, showError } = useToast()
   const [items, setItems] = useState<ActionOfficerItem[]>([])
   const [selectedItems, setSelectedItems] = useState<(number | string)[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -116,16 +118,10 @@ const ActionOfficer: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await apiService.getUsers()
+      const response = await apiService.getActionOfficer()
       if (response.success && response.data) {
         const raw = Array.isArray(response.data) ? response.data : []
-        // Show only users whose User Level is Action Officer (or Action Officers)
-        const actionOfficerLevel = (level: string) => {
-          const l = (level || '').toLowerCase()
-          return l === 'action officer' || l === 'action officers' || l.includes('action officer')
-        }
         const mappedItems: ActionOfficerItem[] = raw
-          .filter((item: any) => actionOfficerLevel(item.user_level || item.userLevel || ''))
           .map((item: any) => ({
             id: item.id,
             employeeCode: item.employee_code || '',
@@ -133,9 +129,9 @@ const ActionOfficer: React.FC = () => {
             firstName: item.first_name || '',
             middleName: item.middle_name || '',
             office: item.office || '',
-            userLevel: item.user_level || '',
-            officeRepresentative: item.office_representative || '',
-            source: item.source,
+            userLevel: item.user_level || item.userLevel || '',
+            officeRepresentative: item.office_representative || item.officeRepresentative || '',
+            source: 'action-officer',
           }))
         setItems(mappedItems)
       } else {
@@ -174,18 +170,46 @@ const ActionOfficer: React.FC = () => {
     setIsDeleteModalOpen(true)
   }
 
+  const handleDelete = (item: ActionOfficerItem) => {
+    setDeleteType('single')
+    setDeleteId(item.id)
+    setDeleteItem(item)
+    setDeleteItemName(`${item.firstName} ${item.lastName} (${item.employeeCode})`)
+    setIsDeleteModalOpen(true)
+  }
+
   const confirmBulkDelete = async () => {
     setLoading(true)
     setError(null)
     try {
-      const toRemove = items.filter(item => selectedItems.includes(item.id) && item.source === 'users' && typeof item.id === 'number')
-      for (const item of toRemove) {
-        await apiService.updateUser(item.id as number, { userLevel: 'End-User' })
+      const selected = items.filter((item) => selectedItems.includes(item.id))
+
+      const userIds = selected
+        .filter((i) => i.source === 'users')
+        .map((i) => (typeof i.id === 'number' ? i.id : Number(i.id)))
+        .filter((id) => Number.isFinite(id))
+
+      const actionOfficerIds = selected
+        .filter((i) => i.source === 'action-officer')
+        .map((i) => (typeof i.id === 'number' ? i.id : Number(i.id)))
+        .filter((id) => Number.isFinite(id))
+
+      // Legacy behavior: "de-action-officer" users by setting their user level.
+      for (const id of userIds) {
+        await apiService.updateUser(id, { userLevel: 'End-User' })
       }
+
+      // Current behavior: remove rows from action_officer table.
+      if (actionOfficerIds.length > 0) {
+        await apiService.bulkDeleteActionOfficer(actionOfficerIds)
+      }
+
       await fetchItems()
       setSelectedItems([])
+      showSuccess(`Deleted ${actionOfficerIds.length > 0 ? actionOfficerIds.length : userIds.length} action officer(s)`)
     } catch (err) {
       setError('An error occurred while removing items')
+      showError('Failed to delete action officer(s)')
     } finally {
       setLoading(false)
     }
@@ -207,31 +231,49 @@ const ActionOfficer: React.FC = () => {
     officeRepresentative: string
   }) => {
     if (!editingItem) return
-    if (editingItem.source !== 'users' || typeof editingItem.id !== 'number') {
-      setError('This user can only be edited from Registered Users.')
+    if (typeof editingItem.id !== 'number') {
+      setError('Invalid Action Officer id')
       return
     }
     setLoading(true)
     setError(null)
     try {
       const payload: Record<string, unknown> = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        middleName: data.middleName,
         employeeCode: data.employeeCode,
+        lastName: data.lastName,
+        firstName: data.firstName,
+        middleName: data.middleName,
         office: data.office,
         userLevel: data.userLevel,
         officeRepresentative: data.officeRepresentative,
       }
       if (data.userPassword?.trim()) payload.userPassword = data.userPassword
-      const response = await apiService.updateUser(editingItem.id, payload)
-      if (response.success) {
-        await fetchItems()
-        setIsModalOpen(false)
-        setEditingItem(null)
-      } else {
-        setError(response.error || 'Failed to update item')
+
+      if (editingItem.source === 'action-officer') {
+        const response = await apiService.updateActionOfficer(editingItem.id, payload as any)
+        if (response.success) {
+          await fetchItems()
+          setIsModalOpen(false)
+          setEditingItem(null)
+        } else {
+          setError(response.error || 'Failed to update item')
+        }
+        return
       }
+
+      if (editingItem.source === 'users') {
+        const response = await apiService.updateUser(editingItem.id, payload)
+        if (response.success) {
+          await fetchItems()
+          setIsModalOpen(false)
+          setEditingItem(null)
+        } else {
+          setError(response.error || 'Failed to update item')
+        }
+        return
+      }
+
+      setError('Unsupported source for Action Officer')
     } catch (err) {
       setError('An error occurred while saving')
     } finally {
@@ -239,18 +281,11 @@ const ActionOfficer: React.FC = () => {
     }
   }
 
-  const handleDelete = (item: ActionOfficerItem) => {
-    setDeleteType('single')
-    setDeleteId(item.id)
-    setDeleteItem(item)
-    setDeleteItemName(`${item.firstName} ${item.lastName} (${item.employeeCode})`)
-    setIsDeleteModalOpen(true)
-  }
-
   const confirmSingleDelete = async () => {
     if (!deleteId || !deleteItem) return
-    if (deleteItem.source !== 'users' || typeof deleteItem.id !== 'number') {
-      setError('This user can only be managed from Registered Users.')
+    const idNum = typeof deleteItem.id === 'number' ? deleteItem.id : Number(deleteItem.id)
+    if (!Number.isFinite(idNum)) {
+      setError('Invalid Action Officer id')
       setDeleteId(null)
       setDeleteItem(null)
       setDeleteItemName('')
@@ -260,14 +295,31 @@ const ActionOfficer: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await apiService.updateUser(deleteItem.id, { userLevel: 'End-User' })
-      if (response.success) {
-        await fetchItems()
+      if (deleteItem.source === 'action-officer') {
+        const response = await apiService.deleteActionOfficer(idNum)
+        if (response.success) {
+          await fetchItems()
+          showSuccess('Action officer deleted')
+        } else {
+          setError(response.error || 'Failed to remove item')
+          showError(response.error || 'Failed to remove item')
+        }
+      } else if (deleteItem.source === 'users') {
+        const response = await apiService.updateUser(idNum, { userLevel: 'End-User' })
+        if (response.success) {
+          await fetchItems()
+          showSuccess('Action officer removed')
+        } else {
+          setError(response.error || 'Failed to remove item')
+          showError(response.error || 'Failed to remove item')
+        }
       } else {
-        setError(response.error || 'Failed to remove item')
+        setError('Unsupported source for Action Officer')
+        showError('Unsupported source for Action Officer')
       }
     } catch (err) {
       setError('An error occurred while removing item')
+      showError('An error occurred while removing item')
     } finally {
       setLoading(false)
       setDeleteId(null)
@@ -668,7 +720,7 @@ const ActionOfficer: React.FC = () => {
                   onMouseLeave={hideTooltip}
                   onPointerLeave={hideTooltip}
                 >
-                  {item.source === 'users' ? (
+                  {item.source === 'users' || item.source === 'action-officer' ? (
                     <div className="flex items-center gap-1">
                       <TooltipLabel label="Edit">
                         <button
@@ -741,7 +793,11 @@ const ActionOfficer: React.FC = () => {
           setDeleteItemName('')
         }}
         onConfirm={deleteType === 'bulk' ? confirmBulkDelete : confirmSingleDelete}
-        message={deleteType === 'bulk' ? 'Selected users will no longer be Action Officers (their User Level will be set to End-User).' : 'This user will no longer be an Action Officer (User Level will be set to End-User).'}
+        message={
+          deleteType === 'bulk'
+            ? 'Selected action officer(s) will be deleted.'
+            : 'This action officer will be deleted.'
+        }
         itemName={deleteItemName}
         isBulk={deleteType === 'bulk'}
         count={selectedItems.length}

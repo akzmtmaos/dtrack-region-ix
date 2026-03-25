@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
@@ -36,6 +36,9 @@ interface Document {
   remarks: string
 }
 
+const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100]
+const DEFAULT_ITEMS_PER_PAGE = 10
+
 const Outbox: React.FC = () => {
   const { theme } = useTheme()
   const { showSuccess, showError, showWarning } = useToast()
@@ -51,7 +54,7 @@ const Outbox: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState<number>(DEFAULT_ITEMS_PER_PAGE)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleteType, setDeleteType] = useState<'single' | 'bulk'>('single')
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -87,8 +90,27 @@ const Outbox: React.FC = () => {
   }
 
   useEffect(() => {
+    setCurrentPage(1)
     fetchDocuments()
   }, [user?.employeeCode, user?.userLevel])
+
+  useEffect(() => {
+    // Changing items/page should always go back to the first page.
+    setCurrentPage(1)
+  }, [itemsPerPage])
+
+  const totalPages = Math.max(1, Math.ceil(documents.length / itemsPerPage) || 1)
+  const page = Math.min(currentPage, totalPages)
+  const paginatedDocuments = useMemo(() => {
+    const start = (page - 1) * itemsPerPage
+    return documents.slice(start, start + itemsPerPage)
+  }, [documents, page, itemsPerPage])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [documents.length, totalPages, currentPage])
 
   // Open a specific document (inline "inside document" view) when arriving with ?doc=<id>, e.g. from Home
   useEffect(() => {
@@ -150,12 +172,6 @@ const Outbox: React.FC = () => {
 
   // Helper for red asterisk
   const RequiredAsterisk = () => <span className="text-red-500">*</span>;
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
-  }
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -618,16 +634,35 @@ const Outbox: React.FC = () => {
         )}
 
         <div className="flex justify-between items-center gap-3">
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
             <Pagination
-              currentPage={currentPage}
+              currentPage={page}
               totalPages={totalPages}
-              onPageChange={handlePageChange}
+              onPageChange={setCurrentPage}
               totalItems={documents.length}
-              itemsPerPage={10}
+              itemsPerPage={itemsPerPage}
               showResultsText={false}
               compact={true}
             />
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: textSecondary }}>Per page:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value))
+                }}
+                className="px-2 py-1 text-xs rounded border"
+                style={{
+                  borderColor: theme === 'dark' ? '#4a4b4c' : '#e5e5e5',
+                  backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                  color: textPrimary,
+                }}
+              >
+                {ITEMS_PER_PAGE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -711,11 +746,11 @@ const Outbox: React.FC = () => {
             contentElevated={hoveredRowId !== null}
             pagination={
               <Pagination
-                currentPage={currentPage}
+                currentPage={page}
                 totalPages={totalPages}
-                onPageChange={handlePageChange}
+                onPageChange={setCurrentPage}
                 totalItems={documents.length}
-                itemsPerPage={10}
+                itemsPerPage={itemsPerPage}
               />
             }
           >
@@ -791,7 +826,7 @@ const Outbox: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                documents.map((doc, idx) => {
+                paginatedDocuments.map((doc, idx) => {
                   // Background on <tr> is unreliable in tables; use classes on each <td> for full-row hover + selection.
                   const isSelected = selectedItems.includes(doc.id)
                   const rowHoverCell =

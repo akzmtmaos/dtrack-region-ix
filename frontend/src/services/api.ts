@@ -610,6 +610,17 @@ class ApiService {
     })
   }
 
+  /** Audit Trail (server-side audit logs). Pass employeeCode to scope to owner's documents. */
+  async getAuditTrail(employeeCode?: string): Promise<ApiResponse<any[]>> {
+    const headers: Record<string, string> = {}
+    if (employeeCode != null && String(employeeCode).trim()) {
+      headers['X-Employee-Code'] = String(employeeCode).trim()
+    }
+    return this.request<any[]>('/audit-trail/', {
+      ...(Object.keys(headers).length ? { headers } : {}),
+    })
+  }
+
   // Document Destination endpoints
   async getDocumentDestination(documentSourceId?: number): Promise<ApiResponse<any[]>> {
     const url = documentSourceId != null
