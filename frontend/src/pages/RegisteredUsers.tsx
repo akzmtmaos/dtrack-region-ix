@@ -3,9 +3,17 @@ import { useTheme } from '../context/ThemeContext'
 import { apiService } from '../services/api'
 import { usePagination } from '../hooks/usePagination'
 import Input from '../components/Input'
+import PageSizeSelect from '../components/PageSizeSelect'
 import SearchableSelect from '../components/SearchableSelect'
 import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'
 import { EMPLOYEE_CODE_MAX_LENGTH } from '../constants/user'
+import {
+  canManageRegisteredUsers,
+  canVerifyRegisteredUser,
+  isActionOfficer,
+  isAdministrator,
+} from '../utils/userPermissions'
 
 interface RegisteredUser {
   id: number | string
@@ -22,7 +30,10 @@ interface RegisteredUser {
 
 const RegisteredUsers: React.FC = () => {
   const { theme } = useTheme()
+  const { user: authUser } = useAuth()
   const { showSuccess, showError } = useToast()
+  const actingUserOpts = { actingEmployeeCode: authUser?.employeeCode?.trim() || undefined }
+  const canAdmin = authUser ? canManageRegisteredUsers(authUser) : false
   const [users, setUsers] = useState<RegisteredUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,7 +84,9 @@ const RegisteredUsers: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await apiService.getUsers()
+      const viewerEc =
+        authUser?.employeeCode?.trim() || authUser?.username?.trim() || undefined
+      const response = await apiService.getUsers(viewerEc)
       if (response.success && response.data) {
         const mapped = (response.data as any[]).map((item: any) => ({
           id: item.id,
@@ -156,7 +169,7 @@ const RegisteredUsers: React.FC = () => {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [authUser?.employeeCode, authUser?.username])
 
   // Load user levels and offices for the manual add form
   useEffect(() => {
@@ -258,7 +271,7 @@ const RegisteredUsers: React.FC = () => {
   }
 
   const openEditModal = (user: RegisteredUser) => {
-    if (user.source !== 'users') return
+    if (user.source !== 'users' || !canAdmin) return
     setEditingUser(user)
     setEditFirstName(user.firstName || '')
     setEditLastName(user.lastName || '')
@@ -376,10 +389,17 @@ const RegisteredUsers: React.FC = () => {
   return (
     <div className="pt-4 pb-8">
       <h1
-        className={`text-2xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
+        className={`text-2xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
       >
         Registered Users
       </h1>
+      <p className="text-xs mb-4 max-w-3xl" style={{ color: textSecondary }}>
+        Pending accounts may be approved by an administrator, or by an Action Officer who is head of the office (Office Rep.: Yes) for users assigned to the same office.
+        {authUser &&
+          isActionOfficer(authUser) &&
+          !isAdministrator(authUser) &&
+          ' As an Action Officer, you only see accounts in your office.'}
+      </p>
 
       <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -527,18 +547,20 @@ const RegisteredUsers: React.FC = () => {
             iconPosition="left"
           />
 
-          <button
-            type="button"
-            onClick={() => {
-              setShowAddModal(true)
-              setAddError('')
-              setAddSuccessMessage('')
-            }}
-            className="px-3 py-1.5 rounded-md text-xs font-semibold text-white"
-            style={{ backgroundColor: '#4b8b3b' }}
-          >
-            Add user
-          </button>
+          {canAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddModal(true)
+                setAddError('')
+                setAddSuccessMessage('')
+              }}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold text-white"
+              style={{ backgroundColor: '#4b8b3b' }}
+            >
+              Add user
+            </button>
+          )}
         </div>
       </div>
 
@@ -652,7 +674,7 @@ const RegisteredUsers: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-xs whitespace-nowrap">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {user.source === 'users' && (
+                          {user.source === 'users' && canAdmin && (
                             <button
                               type="button"
                               title="Edit user"
@@ -664,15 +686,22 @@ const RegisteredUsers: React.FC = () => {
                               </svg>
                             </button>
                           )}
-                          {user.source === 'users' && !user.verified && (
+                          {user.source === 'users' &&
+                            !user.verified &&
+                            authUser &&
+                            canVerifyRegisteredUser(authUser, user) && (
                             <button
                               type="button"
                               title="Approve user"
                               disabled={approvingId === user.id}
                               onClick={async () => {
-                                setApprovingId(user.id)
+                                setApprovingId(Number(user.id))
                                 try {
-                                  const res = await apiService.updateUser(Number(user.id), { verified: true })
+                                  const res = await apiService.updateUser(
+                                    Number(user.id),
+                                    { verified: true },
+                                    actingUserOpts
+                                  )
                                   if (res.success) {
                                     showSuccess('User approved')
                                     await fetchUsers()
@@ -713,26 +742,11 @@ const RegisteredUsers: React.FC = () => {
                 <span className="text-xs" style={{ color: textSecondary }}>
                   Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} users
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: textSecondary }}>Per page:</span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value))
-                      setCurrentPage(1)
-                    }}
-                    className="px-2 py-1 text-xs rounded border"
-                    style={{ borderColor, backgroundColor: inputBg, color: textPrimary }}
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <div className="flex gap-1">
+                <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
+                <div className="flex gap-1">
                     <button
                       type="button"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage <= 1}
                       className="px-2 py-1 text-xs rounded border disabled:opacity-50"
                       style={{ borderColor, color: textPrimary }}
@@ -744,7 +758,7 @@ const RegisteredUsers: React.FC = () => {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage >= totalPages}
                       className="px-2 py-1 text-xs rounded border disabled:opacity-50"
                       style={{ borderColor, color: textPrimary }}
@@ -752,7 +766,6 @@ const RegisteredUsers: React.FC = () => {
                       Next
                     </button>
                   </div>
-                </div>
               </div>
             )}
           </>
@@ -785,7 +798,7 @@ const RegisteredUsers: React.FC = () => {
                       Add user (manual)
                     </h2>
                     <p className="text-xs" style={{ color: modalTextSecondary }}>
-                      This will create a new account in the registered users list. You still need to approve the account before the user can sign in.
+                      This will create a new account in the registered users list. An administrator or the office head (Action Officer, Office Rep.: Yes) for that office must approve the account before the user can sign in.
                     </p>
                   </div>
                   <button

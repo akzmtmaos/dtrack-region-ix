@@ -3,6 +3,7 @@ import { useTheme } from '../../context/ThemeContext'
 import type { DocumentDestinationRow } from './DocumentDestinationsModal'
 import type { DocumentSource } from './DocumentDestinationsModal'
 import { apiService } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import SearchableSelect from '../SearchableSelect'
 
 /** Map API user row to a stable shape (snake_case from backend). */
@@ -59,6 +60,9 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
   nextSequenceNo
 }) => {
   const { theme } = useTheme()
+  const { user: authUser } = useAuth()
+  const viewerEc =
+    authUser?.employeeCode?.trim() || authUser?.username?.trim() || undefined
   const [destinationOffice, setDestinationOffice] = useState('')
   const [employeeActionOfficer, setEmployeeActionOfficer] = useState('')
   const [allUsers, setAllUsers] = useState<OfficeUserRow[]>([])
@@ -79,7 +83,7 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
         const [officeRes, actionReqRes, usersRes] = await Promise.all([
           apiService.getOffice(),
           apiService.getActionRequired(),
-          apiService.getUsers(),
+          apiService.getUsers(viewerEc),
         ])
 
         if (officeRes.success && officeRes.data) {
@@ -109,7 +113,7 @@ const AddDestinationRowModal: React.FC<AddDestinationRowModalProps> = ({
       }
     }
     fetchLookups()
-  }, [isOpen])
+  }, [isOpen, viewerEc])
 
   const usersForDestinationOffice = useMemo(() => {
     const o = destinationOffice.trim()

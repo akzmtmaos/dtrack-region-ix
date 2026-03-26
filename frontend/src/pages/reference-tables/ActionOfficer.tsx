@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
+import PageSizeSelect from '../../components/PageSizeSelect'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
@@ -11,6 +12,7 @@ import { apiService } from '../../services/api'
 import { DELETE_ROW_ACTION_BUTTON_CLASS } from '../../constants/deleteActionStyles'
 import { usePagination } from '../../hooks/usePagination'
 import { useToast } from '../../context/ToastContext'
+import { useAuth } from '../../context/AuthContext'
 
 interface ActionOfficerItem {
   id: number | string
@@ -27,7 +29,9 @@ interface ActionOfficerItem {
 
 const ActionOfficer: React.FC = () => {
   const { theme } = useTheme()
+  const { user: authUser } = useAuth()
   const { showSuccess, showError } = useToast()
+  const actingUserOpts = { actingEmployeeCode: authUser?.employeeCode?.trim() || undefined }
   const [items, setItems] = useState<ActionOfficerItem[]>([])
   const [selectedItems, setSelectedItems] = useState<(number | string)[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -40,6 +44,7 @@ const ActionOfficer: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const [tooltip, setTooltip] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null)
   const [tooltipMounted, setTooltipMounted] = useState(false)
@@ -90,7 +95,7 @@ const ActionOfficer: React.FC = () => {
     paginatedItems
   } = usePagination({
     items,
-    itemsPerPage: 20,
+    itemsPerPage,
     searchQuery,
     searchFilter: (item, query) => {
       const searchLower = query.toLowerCase()
@@ -121,18 +126,17 @@ const ActionOfficer: React.FC = () => {
       const response = await apiService.getActionOfficer()
       if (response.success && response.data) {
         const raw = Array.isArray(response.data) ? response.data : []
-        const mappedItems: ActionOfficerItem[] = raw
-          .map((item: any) => ({
-            id: item.id,
-            employeeCode: item.employee_code || '',
-            lastName: item.last_name || '',
-            firstName: item.first_name || '',
-            middleName: item.middle_name || '',
-            office: item.office || '',
-            userLevel: item.user_level || item.userLevel || '',
-            officeRepresentative: item.office_representative || item.officeRepresentative || '',
-            source: 'action-officer',
-          }))
+        const mappedItems: ActionOfficerItem[] = raw.map((item: any) => ({
+          id: item.id,
+          employeeCode: item.employee_code || '',
+          lastName: item.last_name || '',
+          firstName: item.first_name || '',
+          middleName: item.middle_name || '',
+          office: item.office || '',
+          userLevel: item.user_level || item.userLevel || '',
+          officeRepresentative: item.office_representative || item.officeRepresentative || '',
+          source: item.source === 'users' ? 'users' : 'action-officer',
+        }))
         setItems(mappedItems)
       } else {
         setError(response.error || 'Failed to fetch items')
@@ -196,7 +200,7 @@ const ActionOfficer: React.FC = () => {
 
       // Legacy behavior: "de-action-officer" users by setting their user level.
       for (const id of userIds) {
-        await apiService.updateUser(id, { userLevel: 'End-User' })
+        await apiService.updateUser(id, { userLevel: 'End-User' }, actingUserOpts)
       }
 
       // Current behavior: remove rows from action_officer table.
@@ -262,7 +266,7 @@ const ActionOfficer: React.FC = () => {
       }
 
       if (editingItem.source === 'users') {
-        const response = await apiService.updateUser(editingItem.id, payload)
+        const response = await apiService.updateUser(editingItem.id, payload, actingUserOpts)
         if (response.success) {
           await fetchItems()
           setIsModalOpen(false)
@@ -305,7 +309,7 @@ const ActionOfficer: React.FC = () => {
           showError(response.error || 'Failed to remove item')
         }
       } else if (deleteItem.source === 'users') {
-        const response = await apiService.updateUser(idNum, { userLevel: 'End-User' })
+        const response = await apiService.updateUser(idNum, { userLevel: 'End-User' }, actingUserOpts)
         if (response.success) {
           await fetchItems()
           showSuccess('Action officer removed')
@@ -489,6 +493,14 @@ const ActionOfficer: React.FC = () => {
       <h1 className={`text-2xl font-semibold mb-1 ${
         theme === 'dark' ? 'text-white' : 'text-gray-800'
       }`}>Action Officer</h1>
+      <p
+        className={`text-xs mb-4 max-w-3xl ${
+          theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+        }`}
+      >
+        Anyone with User Level <span className="font-medium">Action Officer</span> in Registered Users is listed here too
+        (unless the same employee code already exists in this reference table).
+      </p>
       {error && (
         <div className={`mb-4 p-3 rounded-md ${
           theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
@@ -498,16 +510,17 @@ const ActionOfficer: React.FC = () => {
       )}
       
       <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={20}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -569,7 +582,7 @@ const ActionOfficer: React.FC = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={20}
+            itemsPerPage={itemsPerPage}
           />
         }
       >

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import type { User } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Pagination from '../components/Pagination'
+import PageSizeSelect, { DEFAULT_ITEMS_PER_PAGE } from '../components/PageSizeSelect'
 import Input from '../components/Input'
 import Table from '../components/Table'
 import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
@@ -59,8 +60,6 @@ function docToView(d: Record<string, unknown>): DocumentView {
   }
 }
 
-const ITEMS_PER_PAGE = 10
-
 /** Same pattern as Add Destination / Routing Slip: "First M. Last (CODE)" for identity matching. */
 function formatNameWithEmployeeCode(u: User | null): string {
   if (!u) return ''
@@ -86,6 +85,7 @@ const Inbox: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
   const [detailDoc, setDetailDoc] = useState<DocumentView | null>(null)
 
   const employeeCode = (user?.employeeCode ?? '').trim()
@@ -135,16 +135,20 @@ const Inbox: React.FC = () => {
     })
   }, [rows, search])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage) || 1)
   const page = Math.min(currentPage, totalPages)
   const pageRows = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE
-    return filtered.slice(start, start + ITEMS_PER_PAGE)
-  }, [filtered, page])
+    const start = (page - 1) * itemsPerPage
+    return filtered.slice(start, start + itemsPerPage)
+  }, [filtered, page, itemsPerPage])
 
   useEffect(() => {
     setCurrentPage(1)
   }, [search, rows.length])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
 
   const formatReceived = (r: InboxApiRow) => {
     const dest = r.destination
@@ -192,16 +196,17 @@ const Inbox: React.FC = () => {
       </p>
 
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             totalItems={filtered.length}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Input
@@ -245,7 +250,7 @@ const Inbox: React.FC = () => {
               totalPages={totalPages}
               onPageChange={setCurrentPage}
               totalItems={filtered.length}
-              itemsPerPage={ITEMS_PER_PAGE}
+              itemsPerPage={itemsPerPage}
             />
           }
         >

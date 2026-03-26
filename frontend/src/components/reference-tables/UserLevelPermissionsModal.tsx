@@ -124,12 +124,12 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
       style={{ backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)' }}
     >
       <div
-        className="rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
+        className="rounded-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
         style={{ backgroundColor: modalBg, border: `1px solid ${borderColor}` }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderColor}` }}>
+        <div className="px-4 py-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
           <h2 className="text-lg font-semibold mb-1" style={{ color: textPrimary }}>
             User Level Permissions
           </h2>
@@ -148,7 +148,7 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                     Tables/Views
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
                       <input
                         type="checkbox"
                         checked={selectAll.addCopy}
@@ -159,11 +159,11 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                           borderColor: checkboxBorder
                         }}
                       />
-                      <span>Add/Copy</span>
+                      <span className="whitespace-nowrap">Add/Copy</span>
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
-                    <div className="flex items-center justify-center gap-2">
+                  <th className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
                       <input
                         type="checkbox"
                         checked={selectAll.delete}
@@ -174,11 +174,11 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                           borderColor: checkboxBorder
                         }}
                       />
-                      <span>Delete</span>
+                      <span className="whitespace-nowrap">Delete</span>
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
-                    <div className="flex items-center justify-center gap-2">
+                  <th className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
                       <input
                         type="checkbox"
                         checked={selectAll.edit}
@@ -189,11 +189,11 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                           borderColor: checkboxBorder
                         }}
                       />
-                      <span>Edit</span>
+                      <span className="whitespace-nowrap">Edit</span>
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
-                    <div className="flex items-center justify-center gap-2">
+                  <th className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wider" style={{ color: theme === 'dark' ? '#d1d5db' : '#6b7280', borderBottom: `1px solid ${borderColor}` }}>
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
                       <input
                         type="checkbox"
                         checked={selectAll.listSearchView}
@@ -225,10 +225,10 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                       style={{ backgroundColor: rowBg }}
                       className="hover:opacity-90 transition-opacity"
                     >
-                      <td className="px-4 py-3 text-sm" style={{ color: textColor, fontWeight: table.color !== 'normal' ? '600' : '400' }}>
-                        {table.displayName}
+                      <td className="px-2 py-2 text-sm align-middle" style={{ color: textColor, fontWeight: table.color !== 'normal' ? '600' : '400' }}>
+                        <span className="line-clamp-2 break-words">{table.displayName}</span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-1 py-2 text-center align-middle">
                         <input
                           type="checkbox"
                           checked={table.permissions.addCopy}
@@ -240,7 +240,7 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                           }}
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-1 py-2 text-center align-middle">
                         <input
                           type="checkbox"
                           checked={table.permissions.delete}
@@ -252,7 +252,7 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                           }}
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-1 py-2 text-center align-middle">
                         <input
                           type="checkbox"
                           checked={table.permissions.edit}
@@ -264,7 +264,7 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
                           }}
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-1 py-2 text-center align-middle">
                         <input
                           type="checkbox"
                           checked={table.permissions.listSearchView}
@@ -286,7 +286,7 @@ const UserLevelPermissionsModal: React.FC<UserLevelPermissionsModalProps> = ({
 
         {/* Footer */}
         <div
-          className="px-6 py-4 flex justify-end gap-2"
+          className="px-4 py-3 flex justify-end gap-2"
           style={{ borderTop: `1px solid ${borderColor}`, backgroundColor: modalBg }}
         >
           <button

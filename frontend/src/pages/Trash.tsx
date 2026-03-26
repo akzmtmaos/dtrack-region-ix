@@ -3,8 +3,10 @@ import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 import { apiService } from '../services/api'
+import { documentSourceListEmployeeCode } from '../utils/userPermissions'
 import Table from '../components/Table'
 import Pagination from '../components/Pagination'
+import PageSizeSelect, { DEFAULT_ITEMS_PER_PAGE } from '../components/PageSizeSelect'
 import Button from '../components/Button'
 import { TRASH_RETENTION_DAYS, formatDaysLeftLabel } from '../constants/trash'
 
@@ -56,17 +58,15 @@ const Trash: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<number[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
   const [busy, setBusy] = useState(false)
 
-  const level = (user?.userLevel ?? '').toLowerCase()
-  const isEndUser = level === 'end-user' || level === 'end-users'
-  const employeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
+  const scopedListEmployeeCode = documentSourceListEmployeeCode(user)
 
   const fetchTrash = useCallback(() => {
     setLoading(true)
     setError(null)
-    apiService.getDocumentSourceTrash(employeeCode).then((res) => {
+    apiService.getDocumentSourceTrash(scopedListEmployeeCode).then((res) => {
       if (!res.success || !Array.isArray(res.data)) {
         setItems([])
         setError(res.error || 'Failed to load Trash')
@@ -79,14 +79,19 @@ const Trash: React.FC = () => {
       setError(msg)
       showError(msg)
     }).finally(() => setLoading(false))
-  }, [employeeCode])
+  }, [scopedListEmployeeCode])
 
   useEffect(() => {
     fetchTrash()
   }, [fetchTrash])
 
-  const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage))
-  const pageItems = items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
+
+  const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage) || 1)
+  const page = Math.min(currentPage, totalPages)
+  const pageItems = items.slice((page - 1) * itemsPerPage, page * itemsPerPage)
 
   const toggleAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) setSelected(pageItems.map((d) => d.id))
@@ -109,7 +114,7 @@ const Trash: React.FC = () => {
 
   const handleRestore = async (id: number) => {
     setBusy(true)
-    const res = await apiService.restoreDocumentSource(id, employeeCode)
+    const res = await apiService.restoreDocumentSource(id, scopedListEmployeeCode)
     setBusy(false)
     if (res.success) {
       setItems((prev) => prev.filter((d) => d.id !== id))
@@ -123,7 +128,7 @@ const Trash: React.FC = () => {
     if (selected.length === 0) return
     if (!window.confirm(`Restore ${selected.length}?`)) return
     setBusy(true)
-    const res = await apiService.bulkRestoreDocumentSource(selected, employeeCode)
+    const res = await apiService.bulkRestoreDocumentSource(selected, scopedListEmployeeCode)
     setBusy(false)
     if (res.success) {
       showSuccess(`${selected.length} document(s) restored to Outbox`)
@@ -161,9 +166,9 @@ const Trash: React.FC = () => {
       )}
 
       <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             totalItems={items.length}
@@ -171,6 +176,7 @@ const Trash: React.FC = () => {
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -191,7 +197,7 @@ const Trash: React.FC = () => {
       <Table
         pagination={
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             totalItems={items.length}

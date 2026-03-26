@@ -40,7 +40,7 @@ flowchart LR
 | Element | Description |
 |--------|--------------|
 | **Staff** | External entity: DOH personnel (action officers, admins) who use the system to track and manage documents. |
-| **DOH Document Tracking System (DTRAK)** | The system as one process: web app (React frontend + Django API + Supabase). |
+| **DOH Document Tracking System (DTRAK)** | The system as one process: web app (React frontend + Laravel API + MySQL). |
 | **Arrows** | Data flows. Labels describe what is sent (e.g., login credentials, document data, reports). |
 
 ---

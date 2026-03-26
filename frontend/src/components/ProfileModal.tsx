@@ -164,7 +164,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
 
     setSaving(true)
     try {
-      const res = (await apiService.updateUser(user.id, payload)) as {
+      const acting =
+        user.employeeCode?.trim() || user.username?.trim() || ''
+      const res = (await apiService.updateUser(user.id, payload, {
+        actingEmployeeCode: acting || undefined,
+      })) as {
         success: boolean
         user?: Record<string, unknown>
         error?: string

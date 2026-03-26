@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import Pagination from '../../components/Pagination'
+import PageSizeSelect, { DEFAULT_ITEMS_PER_PAGE } from '../../components/PageSizeSelect'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
@@ -73,12 +74,15 @@ function detailsFromMeta(meta: any): string {
 const AuditTrail: React.FC = () => {
   const { theme } = useTheme()
   const { user } = useAuth()
-  const ITEMS_PER_PAGE = 10
 
   const [rows, setRows] = useState<AuditEventRow[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  /** Inclusive calendar bounds (YYYY-MM-DD); empty = no bound. */
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
 
   const employeeCodeHeader = safeStr(user?.employeeCode)
   const isEndUser =
@@ -111,7 +115,7 @@ const AuditTrail: React.FC = () => {
     }
 
     run()
-  }, [user?.employeeCode, user?.userLevel])
+  }, [user?.employeeCode, user?.userLevel, dateFrom, dateTo])
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -134,17 +138,25 @@ const AuditTrail: React.FC = () => {
     })
   }, [rows, searchQuery])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage))
   const page = Math.min(currentPage, totalPages)
 
   useEffect(() => {
     if (currentPage !== page) setCurrentPage(page)
   }, [currentPage, page])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [dateFrom, dateTo])
+
   const paginated = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE
-    return filtered.slice(start, start + ITEMS_PER_PAGE)
-  }, [filtered, page])
+    const start = (page - 1) * itemsPerPage
+    return filtered.slice(start, start + itemsPerPage)
+  }, [filtered, page, itemsPerPage])
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank')
@@ -307,20 +319,68 @@ const AuditTrail: React.FC = () => {
     <div className="pt-4 pb-8">
       <h1 className={`text-2xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Audit Trail</h1>
 
+      <p className={`text-xs mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+        Filter by event date (server). Use both dates for a range; set the same date twice for a single day. Leave blank for all loaded events.
+      </p>
+
       <div className="flex justify-between items-center gap-3 flex-wrap">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             totalItems={filtered.length}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div
+            className={`flex flex-wrap items-center gap-2 rounded-md border px-2 py-1.5 ${
+              theme === 'dark' ? 'border-[#4a4b4c] bg-[#202225]' : 'border-gray-300 bg-gray-50'
+            }`}
+          >
+            <span className={`text-xs font-medium whitespace-nowrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              Date range
+            </span>
+            <Input
+              type="date"
+              aria-label="From date"
+              title="From date (inclusive)"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-[140px]"
+            />
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>to</span>
+            <Input
+              type="date"
+              aria-label="To date"
+              title="To date (inclusive)"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-[140px]"
+            />
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDateFrom('')
+                  setDateTo('')
+                }}
+                className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
+                  theme === 'dark'
+                    ? 'text-green-400 hover:bg-[#2d2f33]'
+                    : 'text-green-700 hover:bg-gray-200'
+                }`}
+              >
+                Clear dates
+              </button>
+            )}
+          </div>
+
           <Button onClick={handlePrint} variant="secondary">Print</Button>
           <Button onClick={handleExportToExcel} variant="secondary">Excel</Button>
           <Button onClick={handleExportToWord} variant="secondary">Word</Button>
@@ -347,7 +407,7 @@ const AuditTrail: React.FC = () => {
               totalPages={totalPages}
               onPageChange={setCurrentPage}
               totalItems={filtered.length}
-              itemsPerPage={ITEMS_PER_PAGE}
+              itemsPerPage={itemsPerPage}
             />
           }
         >

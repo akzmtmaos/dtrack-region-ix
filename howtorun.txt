@@ -1,2 +1,4 @@
-cd C:\Users\ACER\Desktop\doh-document-tracking-system\laravel-api-tmp
+cd C:\Users\ACER\Desktop\doh-document-tracking-system\backend
 & "C:\xampp\php\php.exe" artisan serve --host=127.0.0.1 --port=8000
+
+If ADMIN cannot sign in after migrating to Laravel: import schemas\03_seed_admin_account.sql in phpMyAdmin (or mysql CLI) so users.employee_code=ADMIN exists with verified=1 and bcrypt password.

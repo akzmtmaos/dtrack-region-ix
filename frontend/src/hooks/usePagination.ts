@@ -35,6 +35,11 @@ export function usePagination<T>({
     setCurrentPage(1)
   }, [searchQuery])
 
+  // Reset to page 1 when page size changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
+
   // Filter items based on search query
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) {

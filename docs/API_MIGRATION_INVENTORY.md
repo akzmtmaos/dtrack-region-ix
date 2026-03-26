@@ -1,4 +1,4 @@
-# Django + Supabase → Laravel + MySQL — API inventory & cutover checklist
+# Legacy API → Laravel + MySQL — API inventory & cutover checklist
 
 The React app calls **`/api/...`** (see `frontend/src/services/api.ts` and `frontend/vite.config.ts` proxy to `http://localhost:8000`). **URLs, JSON shapes, and `success` wrappers must stay compatible** so the UI does not change.
 
@@ -6,8 +6,8 @@ The React app calls **`/api/...`** (see `frontend/src/services/api.ts` and `fron
 
 - Success: `{ "success": true, "data": ... }` or `{ "success": true, "user": ... }` (auth).
 - Error: `{ "success": false, "error": "..." }` with appropriate HTTP status.
-- Reference tables return **snake_case** fields as stored in the DB (e.g. `action_required`, `employee_code`), matching current Supabase responses.
-- Document / inbox responses use **camelCase** keys (see Django `_row_to_camel`).
+- Reference tables return **snake_case** fields as stored in the DB (e.g. `action_required`, `employee_code`), matching the legacy API responses.
+- Document / inbox responses use **camelCase** keys (see the legacy row->camel helper).
 
 ## Headers used by the frontend
 
@@ -17,7 +17,7 @@ The React app calls **`/api/...`** (see `frontend/src/services/api.ts` and `fron
 
 Optional query fallback: `employee_code` (attachment URL).
 
-## Endpoint map (Django `backend/api/urls.py` → Laravel)
+## Endpoint map (legacy API → Laravel)
 
 | Method | Path | Notes |
 |--------|------|--------|
@@ -44,8 +44,8 @@ Optional query fallback: `employee_code` (attachment URL).
 | DELETE | `/api/document-source/{id}/permanent/` | Only if in trash |
 | POST | `/api/document-source/bulk-permanent-delete/` | |
 | POST | `/api/document-source/upload-attachment/` | Multipart: `file`, `documentId` |
-| GET | `/api/document-source/{id}/attachment-url/` | Returns `{ success, url }` — local Laravel should return a **download URL** (not Supabase signed URL) |
-| POST | `/api/document-source/purge-expired-trash/` | Optional; secured by `X-Trash-Purge-Secret` in Django |
+| GET | `/api/document-source/{id}/attachment-url/` | Returns `{ success, url }` — local Laravel should return a **download URL** (not a signed URL) |
+| POST | `/api/document-source/purge-expired-trash/` | Optional; secured by `X-Trash-Purge-Secret` (if enabled) |
 | GET | `/api/inbox/` | Requires `X-Employee-Code`; returns `{ inboxType, destination?, document }` |
 | GET | `/api/document-destination/?document_source_id=` | |
 | POST | `/api/document-destination/create/` | Triggers custodian recompute |
@@ -53,15 +53,15 @@ Optional query fallback: `employee_code` (attachment URL).
 
 ## Behaviour to preserve
 
-1. **Login**: `users` table first (hashed password; Django `pbkdf2_sha256$…` or legacy plaintext upgrade). Fallback: `profiles` + email auth was Supabase-specific — Laravel drop-in implements **users + optional profiles** without Supabase Auth email login unless you add it.
+1. **Login**: `users` table first (hashed password; legacy plaintext upgrade). Laravel drop-in implements **users + optional profiles**.
 2. **`current_custodian`**: Recomputed from destinations (latest received step) or creator `userid`.
-3. **Identity matching**: `employee_action_officer` and originating fields may be `Name (CODE)`; match logic uses code substring and name candidates (see Django `_employee_identity_matches`, `_build_employee_match_candidates`).
+3. **Identity matching**: `employee_action_officer` and originating fields may be `Name (CODE)`; match logic uses code substring and name candidates.
 4. **Attachments**: Store files on disk under `storage/app/...`; `attachment_list` holds relative path; `attachment-url` returns an HTTP URL the browser can open.
 
 ## Database
 
 - Import or migrate schema to **MySQL/MariaDB** (XAMPP). The Laravel drop-in includes migrations mirroring the main tables.
-- **Data migration** from Supabase/Postgres: export CSV → transform column names → import (separate one-off script).
+- **Data migration** from legacy Postgres export: export CSV → transform column names → import (separate one-off script).
 
 ## Frontend changes (optional)
 
@@ -70,11 +70,11 @@ Optional query fallback: `employee_code` (attachment URL).
 
 ## Laravel drop-in (this repo)
 
-Implementation files and setup steps live in [`laravel-api/README.md`](../laravel-api/README.md) (copy into a Composer-generated Laravel project, then migrate MySQL).
+Implementation files and setup steps live in [`backend/README.md`](../backend/README.md) (full Laravel app in `backend/`; configure MySQL and run migrations).
 
 ## Quick verification
 
-1. `GET /api/health/` → `200`, `{ "status": "healthy", "message": "..." }` (matches the old Django health payload)
+1. `GET /api/health/` → `200`, `{ "status": "healthy", "message": "..." }` (matches the old health payload)
 2. Register + login → same `user` shape as before (`employeeCode`, `firstName`, …).
 3. Create document → `documentControlNo` populated; Outbox list shows row.
 4. Add destination → Inbox shows row for action officer; record receipt → custodian updates.

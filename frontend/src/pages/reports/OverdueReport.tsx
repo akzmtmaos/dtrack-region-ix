@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
+import PageSizeSelect, { DEFAULT_ITEMS_PER_PAGE } from '../../components/PageSizeSelect'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
@@ -19,11 +20,18 @@ const OverdueReport: React.FC = () => {
   const { theme } = useTheme()
   const documents: Document[] = []
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
+  const totalPages = Math.max(1, Math.ceil(documents.length / itemsPerPage) || 1)
+  const page = Math.min(currentPage, totalPages)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
+
+  const handlePageChange = (nextPage: number) => {
+    if (nextPage >= 1 && nextPage <= totalPages) {
+      setCurrentPage(nextPage)
     }
   }
 
@@ -320,16 +328,17 @@ const OverdueReport: React.FC = () => {
       }`}>Overdue Reports</h1>
       
       <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={documents.length}
-            itemsPerPage={10}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -390,11 +399,11 @@ const OverdueReport: React.FC = () => {
       <Table
         pagination={
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={documents.length}
-            itemsPerPage={10}
+            itemsPerPage={itemsPerPage}
           />
         }
       >

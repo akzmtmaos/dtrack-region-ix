@@ -97,17 +97,34 @@ class ApiService {
   }
 
   // Users (registered accounts – used by Registered Users page)
-  async getUsers(): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>('/users/')
+  /** Optional viewer code: Action Officers only receive users/profiles in the same office (server-side). */
+  async getUsers(viewerEmployeeCode?: string): Promise<ApiResponse<any[]>> {
+    const headers: Record<string, string> = {}
+    const v = viewerEmployeeCode?.trim()
+    if (v) headers['X-Viewer-Employee-Code'] = v
+    return this.request<any[]>('/users/', {
+      ...(Object.keys(headers).length ? { headers } : {}),
+    })
   }
 
   async updateUser(
     id: number | string,
-    data: { verified?: boolean; [key: string]: any }
+    data: { verified?: boolean; [key: string]: any },
+    options?: { actingEmployeeCode?: string }
   ): Promise<ApiResponse<any>> {
+    const headers: Record<string, string> = {}
+    const code = options?.actingEmployeeCode?.trim()
+    const bodyPayload =
+      code !== undefined && code !== ''
+        ? { ...data, actingEmployeeCode: code }
+        : { ...data }
+    if (code) {
+      headers['X-Acting-Employee-Code'] = code
+    }
     return this.request<any>(`/users/${encodeURIComponent(String(id))}/`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(bodyPayload),
+      headers,
     })
   }
 
@@ -610,13 +627,23 @@ class ApiService {
     })
   }
 
-  /** Audit Trail (server-side audit logs). Pass employeeCode to scope to owner's documents. */
-  async getAuditTrail(employeeCode?: string): Promise<ApiResponse<any[]>> {
+  /** Audit Trail (server-side audit logs). Pass employeeCode to scope to owner's documents. Optional `dateFrom` / `dateTo` as YYYY-MM-DD (inclusive). */
+  async getAuditTrail(
+    employeeCode?: string,
+    options?: { dateFrom?: string; dateTo?: string }
+  ): Promise<ApiResponse<any[]>> {
     const headers: Record<string, string> = {}
     if (employeeCode != null && String(employeeCode).trim()) {
       headers['X-Employee-Code'] = String(employeeCode).trim()
     }
-    return this.request<any[]>('/audit-trail/', {
+    const params = new URLSearchParams()
+    const df = options?.dateFrom?.trim()
+    const dt = options?.dateTo?.trim()
+    if (df) params.set('date_from', df)
+    if (dt) params.set('date_to', dt)
+    const qs = params.toString()
+    const path = qs ? `/audit-trail/?${qs}` : '/audit-trail/'
+    return this.request<any[]>(path, {
       ...(Object.keys(headers).length ? { headers } : {}),
     })
   }

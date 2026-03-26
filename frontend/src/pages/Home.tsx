@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { apiService } from '../services/api'
+import { documentSourceListEmployeeCode } from '../utils/userPermissions'
 
 /** Parse required date/time from a document destination row for overdue checks. */
 function parseRequiredDateTime(dest: { dateRequired?: string; timeRequired?: string }): Date | null {
@@ -139,8 +140,7 @@ const Home: React.FC = () => {
     setRecentLoading(true)
     setRecentError(null)
     try {
-      const employeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
-      const res = await apiService.getDocumentSource(employeeCode)
+      const res = await apiService.getDocumentSource(documentSourceListEmployeeCode(user))
       if (!res || !res.success) {
         setRecentDocs([])
         setRecentError(res?.error || 'Failed to load recent documents')
@@ -183,21 +183,30 @@ const Home: React.FC = () => {
       // Also prevents overlapping requests when interval/visibility triggers happen close together.
       if (refreshInFlightRef.current) return
       refreshInFlightRef.current = true
-      const ecRaw = (user.employeeCode ?? '').trim()
+      const ecRaw =
+        (user.employeeCode ?? user.username ?? '').trim()
       const ecLower = ecRaw.toLowerCase()
       const hasEc = ecRaw.length > 0
-      const srcEmployee = isEndUser ? ecRaw : undefined
+      const srcEmployee = documentSourceListEmployeeCode(user)
+      const viewerEc = ecRaw || undefined
+      const trashEmployeeCode: string | undefined = isEndUser
+        ? ecRaw || undefined
+        : documentSourceListEmployeeCode(user)
 
       try {
         // Use allSettled so one failing API (e.g. destinations/inbox) does not zero out unrelated counts like Outbox.
         const settled = await Promise.allSettled([
           apiService.getDocumentSource(srcEmployee),
           apiService.getDocumentDestination(),
-          !isEndUser ? apiService.getUsers() : Promise.resolve({ success: true as const, data: [] as unknown[] }),
+          !isEndUser
+            ? apiService.getUsers(viewerEc)
+            : Promise.resolve({ success: true as const, data: [] as unknown[] }),
           hasEc ? apiService.getInboxDocuments(ecRaw) : Promise.resolve({ success: true as const, data: [] as unknown[] }),
           isEndUser && ecRaw
             ? apiService.getDocumentSourceTrash(ecRaw)
-            : Promise.resolve({ success: true as const, data: [] as unknown[] }),
+            : !isEndUser
+              ? apiService.getDocumentSourceTrash(trashEmployeeCode)
+              : Promise.resolve({ success: true as const, data: [] as unknown[] }),
         ])
         if (cancelled) return
 
@@ -232,14 +241,14 @@ const Home: React.FC = () => {
         const overdueCount = overduePool.filter((d) => isDestinationOverdue(d as Record<string, unknown>)).length
 
         const usersCount = !isEndUser ? usersList.length : 0
-        const trashCount = isEndUser ? trashRows.length : 0
+        const trashCount = trashRows.length
 
         setQuickMetrics({
           outbox: outboxCount,
           inbox: inboxCount,
           overdue: overdueCount,
           users: usersCount,
-          trash: isEndUser ? trashCount : null,
+          trash: trashCount,
         })
       } catch {
         // Keep the previous metrics visible if a refresh fails.

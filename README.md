@@ -1,72 +1,39 @@
 # DOH Document Tracking System
 
-A comprehensive document tracking system for the Department of Health (DOH) built with React + TypeScript + Tailwind CSS (frontend) and Django REST Framework (backend).
+A comprehensive document tracking system for the Department of Health (DOH) built with React + TypeScript + Tailwind CSS (frontend) and Laravel (backend).
 
 ## Project Structure
 
 ```
 doh-document-tracking-system/
-├── backend/          # Django backend application
-│   ├── doh_tracking/ # Django project settings
-│   ├── api/          # API endpoints and business logic
-│   └── manage.py     # Django management script
+├── backend/          # Laravel API (MySQL via XAMPP)
 ├── frontend/         # React + TypeScript frontend
-│   └── src/          # React source files
 └── README.md         # This file
 ```
 
 ## Prerequisites
 
-- Python 3.8 or higher
 - Node.js 18 or higher
 - npm or yarn
+- PHP + Composer for Laravel
 
-## Backend Setup (Django)
+## Backend Setup (Laravel)
 
-1. Navigate to the backend directory:
+1. Navigate to the Laravel API directory:
    ```bash
    cd backend
    ```
-
-2. Create a virtual environment (recommended):
+2. Install PHP dependencies:
    ```bash
-   python -m venv venv
+   composer install
    ```
-
-3. Activate the virtual environment:
-   - On Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-
-4. Install dependencies:
+3. Configure your database in `.env`, then run migrations:
    ```bash
-   pip install -r requirements.txt
+   php artisan migrate
    ```
-
-5. Create a `.env` file in the backend directory (copy from `.env.example`):
+4. Start the backend:
    ```bash
-   cp .env.example .env
-   ```
-   Then edit `.env` and set your `SECRET_KEY`.
-
-6. Run migrations:
-   ```bash
-   python manage.py migrate
-   ```
-
-7. Create a superuser (optional, for admin access):
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-8. Run the development server:
-   ```bash
-   python manage.py runserver
+   php artisan serve --host=127.0.0.1 --port=8000
    ```
 
 The backend API will be available at `http://localhost:8000`
@@ -93,10 +60,10 @@ The frontend will be available at `http://localhost:3000`
 ## Available Scripts
 
 ### Backend
-- `python manage.py runserver` - Start the Django development server
-- `python manage.py migrate` - Apply database migrations
-- `python manage.py createsuperuser` - Create an admin user
-- `python manage.py makemigrations` - Create new migrations
+- `php artisan serve` - Start the Laravel development server
+- `php artisan migrate` - Apply database migrations
+- `php artisan key:generate` - Generate app key (if needed)
+- `php artisan make:migration` - Create a new migration
 
 ### Frontend
 - `npm run dev` - Start the Vite development server
@@ -115,23 +82,18 @@ The frontend will be available at `http://localhost:3000`
 - **Axios** - HTTP client
 
 ### Backend
-- **Django 4.2** - Web framework
-- **Django REST Framework** - API framework
-- **django-cors-headers** - CORS handling
-- **python-dotenv** - Environment variable management
+- **Laravel** - API framework
+- **MySQL** - Database (via XAMPP)
 
 ## Development Notes
 
-- The backend API is configured to accept requests from `http://localhost:3000`
-- CORS is enabled for development
-- The backend uses SQLite by default (can be changed to PostgreSQL/MySQL in production)
-- Media files are stored in `backend/media/` directory
+- The frontend proxies API calls to the Laravel backend at `http://localhost:8000`.
 
 ## Next Steps
 
-1. Define your data models in `backend/api/models.py`
-2. Create serializers in `backend/api/serializers.py`
-3. Implement API views in `backend/api/views.py`
+1. Define your data models in `backend/app/Models/`
+2. Implement controllers in `backend/app/Http/Controllers/`
+3. Update API routes in `backend/routes/api.php`
 4. Build React components in `frontend/src/components/`
 5. Set up routing and pages in `frontend/src/`
 

@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
+import PageSizeSelect, { DEFAULT_ITEMS_PER_PAGE } from '../../components/PageSizeSelect'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
 import { apiService } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
+import { documentSourceListEmployeeCode } from '../../utils/userPermissions'
 
 interface Document {
   id: number | string
@@ -22,19 +25,25 @@ const DocumentByOfficeControlNo: React.FC = () => {
   const { theme } = useTheme()
   const [documents, setDocuments] = useState<Document[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
   const [loading, setLoading] = useState(true)
-  const ITEMS_PER_PAGE = 10
+
+  const totalPages = Math.max(1, Math.ceil(documents.length / itemsPerPage) || 1)
+  const page = Math.min(currentPage, totalPages)
 
   const pageDocuments = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE
-    return documents.slice(start, start + ITEMS_PER_PAGE)
-  }, [documents, currentPage])
+    const start = (page - 1) * itemsPerPage
+    return documents.slice(start, start + itemsPerPage)
+  }, [documents, page, itemsPerPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
 
   useEffect(() => {
     const fetchDocuments = async () => {
       setLoading(true)
-      const res = await apiService.getDocumentSource()
+      const res = await apiService.getDocumentSource(documentSourceListEmployeeCode(user))
       if (res.success && Array.isArray(res.data)) {
         const mapped: Document[] = (res.data as any[]).map((row: any) => ({
           id: row.id ?? '',
@@ -54,15 +63,13 @@ const DocumentByOfficeControlNo: React.FC = () => {
           remarks: row.remarks ?? '',
         }))
         setDocuments(mapped)
-        setTotalPages(Math.max(1, Math.ceil(mapped.length / 10)))
       } else {
         setDocuments([])
-        setTotalPages(1)
       }
       setLoading(false)
     }
     fetchDocuments()
-  }, [])
+  }, [user])
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -316,16 +323,17 @@ const DocumentByOfficeControlNo: React.FC = () => {
       }`}>Document By Office Control No.</h1>
       
       <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={documents.length}
-              itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -386,11 +394,11 @@ const DocumentByOfficeControlNo: React.FC = () => {
       <Table
         pagination={
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={documents.length}
-              itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
           />
         }
       >

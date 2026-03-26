@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Pagination from '../../components/Pagination'
+import PageSizeSelect from '../../components/PageSizeSelect'
 import Button from '../../components/Button'
 import UserLevelsModal from '../../components/reference-tables/UserLevelsModal'
 import UserLevelPermissionsModal from '../../components/reference-tables/UserLevelPermissionsModal'
@@ -32,6 +33,7 @@ const UserLevels: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const [tooltip, setTooltip] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null)
   const [tooltipMounted, setTooltipMounted] = useState(false)
@@ -82,7 +84,7 @@ const UserLevels: React.FC = () => {
     paginatedItems
   } = usePagination({
     items,
-    itemsPerPage: 20,
+    itemsPerPage,
     searchQuery,
     searchFilter: (item, query) => {
       const searchLower = query.toLowerCase()
@@ -293,16 +295,17 @@ const UserLevels: React.FC = () => {
       )}
       
       <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={20}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -353,7 +356,7 @@ const UserLevels: React.FC = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={20}
+            itemsPerPage={itemsPerPage}
           />
         }
       >

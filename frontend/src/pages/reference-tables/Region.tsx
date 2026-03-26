@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../../context/ThemeContext'
 import Pagination from '../../components/Pagination'
+import PageSizeSelect from '../../components/PageSizeSelect'
 import Input from '../../components/Input'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
@@ -34,6 +35,7 @@ const Region: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const [tooltip, setTooltip] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null)
   const [tooltipMounted, setTooltipMounted] = useState(false)
@@ -456,16 +458,17 @@ const Region: React.FC = () => {
       )}
       
       <div className="flex justify-between items-center gap-3">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={20}
+            itemsPerPage={itemsPerPage}
             showResultsText={false}
             compact={true}
           />
+          <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -540,7 +543,7 @@ const Region: React.FC = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalItems={filteredItems.length}
-            itemsPerPage={20}
+            itemsPerPage={itemsPerPage}
           />
         }
       >

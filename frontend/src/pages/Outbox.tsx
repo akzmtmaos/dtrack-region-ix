@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 import { apiService } from '../services/api'
+import { documentSourceListEmployeeCode } from '../utils/userPermissions'
 import AddDocumentModal from '../components/outbox/AddDocumentModal'
 import DocumentDetailModal from '../components/outbox/DocumentDetailModal'
 import { type DocumentDestinationRow } from '../components/outbox/DocumentDestinationsModal'
@@ -11,6 +12,7 @@ import AddDestinationRowModal from '../components/outbox/AddDestinationRowModal'
 import ActionButtons from '../components/outbox/ActionButtons'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import Pagination from '../components/Pagination'
+import PageSizeSelect, { DEFAULT_ITEMS_PER_PAGE } from '../components/PageSizeSelect'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Table from '../components/Table'
@@ -36,8 +38,16 @@ interface Document {
   remarks: string
 }
 
-const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100]
-const DEFAULT_ITEMS_PER_PAGE = 10
+/** Prefer stored filename; else basename from attachment path (Laravel stores relative path in attachment_list). */
+function attachmentDisplayLabel(doc: Pick<Document, 'attachedDocumentFilename' | 'attachmentList'>): string {
+  const name = (doc.attachedDocumentFilename || '').trim()
+  if (name) return name
+  const list = (doc.attachmentList || '').trim()
+  if (!list) return ''
+  const normalized = list.replace(/\\/g, '/')
+  const seg = normalized.split('/').filter(Boolean).pop()
+  return seg || list
+}
 
 const Outbox: React.FC = () => {
   const { theme } = useTheme()
@@ -71,16 +81,12 @@ const Outbox: React.FC = () => {
   const [pendingDestinationDeleteIds, setPendingDestinationDeleteIds] = useState<number[]>([])
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
 
-  const level = (user?.userLevel ?? '').toLowerCase()
-  const isEndUser = level === 'end-user' || level === 'end-users'
-  /** Pass to delete APIs so End-Users can only soft-delete their own documents */
-  const deleteEmployeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
+  /** End-User: own documents only. Action Officer (non-admin): same-office + related. Admin: all. */
+  const scopedListEmployeeCode = documentSourceListEmployeeCode(user)
 
-  // Fetch documents: End-User only sees their own (filtered by userid = employeeCode)
   const fetchDocuments = () => {
     setDocumentsFetchDone(false)
-    const employeeCode = isEndUser ? (user?.employeeCode ?? '') : undefined
-    apiService.getDocumentSource(employeeCode).then((res) => {
+    apiService.getDocumentSource(scopedListEmployeeCode).then((res) => {
       if (!res) return
       const raw = res.success && res.data != null ? res.data : []
       const list = Array.isArray(raw) ? raw : []
@@ -196,7 +202,7 @@ const Outbox: React.FC = () => {
   }
 
   const confirmBulkDelete = () => {
-    apiService.bulkDeleteDocumentSource(selectedItems, deleteEmployeeCode).then((res) => {
+    apiService.bulkDeleteDocumentSource(selectedItems, scopedListEmployeeCode).then((res) => {
       if (!res.success) {
         showError(res.error || 'Could not move documents to Trash')
         return
@@ -345,7 +351,7 @@ const Outbox: React.FC = () => {
 
   const confirmSingleDelete = () => {
     if (!deleteId) return
-    apiService.deleteDocumentSource(deleteId, deleteEmployeeCode).then((res) => {
+    apiService.deleteDocumentSource(deleteId, scopedListEmployeeCode).then((res) => {
       if (!res.success) {
         showError(res.error || 'Could not move document to Trash')
         return
@@ -450,11 +456,12 @@ const Outbox: React.FC = () => {
                 <th>Subject</th>
                 <th>Document Type</th>
                 <th>Source Type</th>
+                <th>Attached file</th>
               </tr>
             </thead>
             <tbody>
               ${documents.length === 0 
-                ? '<tr><td colspan="5" class="no-data">No documents found</td></tr>'
+                ? '<tr><td colspan="6" class="no-data">No documents found</td></tr>'
                 : documents.map(doc => `
                   <tr>
                     <td>${doc.documentControlNo || '—'}</td>
@@ -462,6 +469,7 @@ const Outbox: React.FC = () => {
                     <td>${doc.subject || '—'}</td>
                     <td>${doc.documentType || '—'}</td>
                     <td>${doc.sourceType || '—'}</td>
+                    <td>${attachmentDisplayLabel(doc) || '—'}</td>
                   </tr>
                 `).join('')
               }
@@ -482,7 +490,7 @@ const Outbox: React.FC = () => {
 
   const handleExportToExcel = () => {
     // Create CSV content
-    const headers = ['Document Control No.', 'Route No.', 'Subject', 'Document Type', 'Source Type']
+    const headers = ['Document Control No.', 'Route No.', 'Subject', 'Document Type', 'Source Type', 'Attached file']
     const csvRows = [headers.join(',')]
 
     documents.forEach(doc => {
@@ -491,7 +499,8 @@ const Outbox: React.FC = () => {
         `"${(doc.routeNo || '').replace(/"/g, '""')}"`,
         `"${(doc.subject || '').replace(/"/g, '""')}"`,
         `"${(doc.documentType || '').replace(/"/g, '""')}"`,
-        `"${(doc.sourceType || '').replace(/"/g, '""')}"`
+        `"${(doc.sourceType || '').replace(/"/g, '""')}"`,
+        `"${(attachmentDisplayLabel(doc) || '').replace(/"/g, '""')}"`
       ]
       csvRows.push(row.join(','))
     })
@@ -567,11 +576,12 @@ const Outbox: React.FC = () => {
                 <th>Subject</th>
                 <th>Document Type</th>
                 <th>Source Type</th>
+                <th>Attached file</th>
               </tr>
             </thead>
             <tbody>
               ${documents.length === 0 
-                ? '<tr><td colspan="5" class="no-data">No documents found</td></tr>'
+                ? '<tr><td colspan="6" class="no-data">No documents found</td></tr>'
                 : documents.map(doc => `
                   <tr>
                     <td>${doc.documentControlNo || '—'}</td>
@@ -579,6 +589,7 @@ const Outbox: React.FC = () => {
                     <td>${doc.subject || '—'}</td>
                     <td>${doc.documentType || '—'}</td>
                     <td>${doc.sourceType || '—'}</td>
+                    <td>${attachmentDisplayLabel(doc) || '—'}</td>
                   </tr>
                 `).join('')
               }
@@ -644,25 +655,7 @@ const Outbox: React.FC = () => {
               showResultsText={false}
               compact={true}
             />
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: textSecondary }}>Per page:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value))
-                }}
-                className="px-2 py-1 text-xs rounded border"
-                style={{
-                  borderColor: theme === 'dark' ? '#4a4b4c' : '#e5e5e5',
-                  backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
-                  color: textPrimary,
-                }}
-              >
-                {ITEMS_PER_PAGE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </div>
+            <PageSizeSelect value={itemsPerPage} onChange={setItemsPerPage} />
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -797,6 +790,11 @@ const Outbox: React.FC = () => {
                 <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                 }`}>
+                  Attached file
+                </th>
+                <th className={`px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                   Actions
                 </th>
               </tr>
@@ -806,7 +804,7 @@ const Outbox: React.FC = () => {
             }`}>
               {documents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className={`px-4 py-12 text-center ${
+                  <td colSpan={8} className={`px-4 py-12 text-center ${
                     theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                   }`}>
                     <div className="flex flex-col items-center justify-center">
@@ -827,6 +825,7 @@ const Outbox: React.FC = () => {
                 </tr>
               ) : (
                 paginatedDocuments.map((doc, idx) => {
+                  const attachLabel = attachmentDisplayLabel(doc)
                   // Background on <tr> is unreliable in tables; use classes on each <td> for full-row hover + selection.
                   const isSelected = selectedItems.includes(doc.id)
                   const rowHoverCell =
@@ -884,6 +883,17 @@ const Outbox: React.FC = () => {
                       theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       {doc.sourceType || <span className="text-gray-500 italic">—</span>}
+                    </td>
+                    <td className={`px-4 py-2 text-xs max-w-[14rem] ${rowCell} ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      {attachLabel ? (
+                        <div className="truncate" title={attachLabel}>
+                          {attachLabel}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 italic">—</span>
+                      )}
                     </td>
                     <td className={`px-4 py-2 whitespace-nowrap ${rowCell}`} onClick={(e) => e.stopPropagation()}>
                       <ActionButtons
@@ -957,6 +967,12 @@ const Outbox: React.FC = () => {
               <div className="flex items-center gap-3">
                 <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Source Type</label>
                 <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center" style={{ backgroundColor: valueBg, color: textPrimary }}>{documentForDestinations.sourceType || '—'}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="font-medium whitespace-nowrap w-44" style={{ color: textSecondary }}>Attached file</label>
+                <div className="flex-1 px-2.5 py-1.5 rounded-md min-h-[28px] flex items-center break-all" style={{ backgroundColor: valueBg, color: textPrimary }} title={attachmentDisplayLabel(documentForDestinations) || undefined}>
+                  {attachmentDisplayLabel(documentForDestinations) || '—'}
+                </div>
               </div>
               {documentForDestinations.sourceType === 'Internal' && (
                 <>

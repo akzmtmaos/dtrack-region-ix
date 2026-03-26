@@ -109,7 +109,7 @@ const Register: React.FC = () => {
         return
       }
       const okMsg =
-        'Account created successfully. You will be able to sign in after an administrator approves your account.'
+        'Account created successfully. You will be able to sign in after an administrator or your office head approves your account.'
       setSuccessMessage(okMsg)
       showSuccess(okMsg)
       setTimeout(() => navigate('/login', { replace: true }), 3000)
