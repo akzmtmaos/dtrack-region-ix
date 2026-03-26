@@ -25,6 +25,7 @@ interface Document {
 
 const DocumentBySubject: React.FC = () => {
   const { theme } = useTheme()
+  const { user } = useAuth()
   const [documents, setDocuments] = useState<Document[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE)
